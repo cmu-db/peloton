@@ -52,45 +52,46 @@ class ConstraintCatalogEntry {
  public:
   ConstraintCatalogEntry(executor::LogicalTile *tile, int tupleId = 0);
 
-  inline oid_t GetConstraintOid() { return constraint_oid; }
-  inline const std::string &GetConstraintName() { return constraint_name; }
-  inline ConstraintType GetConstraintType() { return constraint_type; }
-  inline oid_t GetTableOid() { return table_oid; }
-  inline const std::vector<oid_t> &GetColumnIds() { return column_ids; }
-  inline oid_t GetIndexOid() { return index_oid; }
-  inline oid_t GetFKSinkTableOid() { return fk_sink_table_oid; }
+  inline oid_t GetConstraintOid() { return constraint_oid_; }
+  inline const std::string &GetConstraintName() { return constraint_name_; }
+  inline ConstraintType GetConstraintType() { return constraint_type_; }
+  inline oid_t GetTableOid() { return table_oid_; }
+  inline const std::vector<oid_t> &GetColumnIds() { return column_ids_; }
+  inline oid_t GetIndexOid() { return index_oid_; }
+  inline oid_t GetFKSinkTableOid() { return fk_sink_table_oid_; }
   inline const std::vector<oid_t> &GetFKSinkColumnIds() {
-    return fk_sink_col_ids;
+    return fk_sink_col_ids_;
   }
-  inline FKConstrActionType GetFKUpdateAction() { return fk_update_action; }
-  inline FKConstrActionType GetFKDeleteAction() { return fk_delete_action; }
+  inline FKConstrActionType GetFKUpdateAction() { return fk_update_action_; }
+  inline FKConstrActionType GetFKDeleteAction() { return fk_delete_action_; }
   inline const std::pair<ExpressionType, type::Value> &GetCheckExp() {
-    return check_exp;
+    return check_exp_;
   }
 
  private:
   // member variables
-  oid_t constraint_oid;
-  std::string constraint_name;
-  ConstraintType constraint_type;
-  oid_t table_oid;
-  std::vector<oid_t> column_ids;
-  oid_t index_oid;
-  oid_t fk_sink_table_oid;
-  std::vector<oid_t> fk_sink_col_ids;
-  FKConstrActionType fk_update_action;
-  FKConstrActionType fk_delete_action;
-  std::pair<ExpressionType, type::Value> check_exp;
+  oid_t constraint_oid_;
+  std::string constraint_name_;
+  ConstraintType constraint_type_;
+  oid_t table_oid_;
+  std::vector<oid_t> column_ids_;
+  oid_t index_oid_;
+  oid_t fk_sink_table_oid_;
+  std::vector<oid_t> fk_sink_col_ids_;
+  FKConstrActionType fk_update_action_;
+  FKConstrActionType fk_delete_action_;
+  std::pair<ExpressionType, type::Value> check_exp_;
 };
 
 class ConstraintCatalog : public AbstractCatalog {
   friend class ConstraintCatalogEntry;
-  friend class TableCatalogObject;
+  friend class TableCatalogEntry;
   friend class Catalog;
 
  public:
-  ConstraintCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                    concurrency::TransactionContext *txn);
+  ConstraintCatalog(concurrency::TransactionContext *txn,
+                    storage::Database *pg_catalog,
+                    type::AbstractPool *pool);
 
   ~ConstraintCatalog();
 
@@ -101,26 +102,29 @@ class ConstraintCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertConstraint(const std::shared_ptr<Constraint> constraint,
-                        type::AbstractPool *pool,
-                        concurrency::TransactionContext *txn);
+  bool InsertConstraint(concurrency::TransactionContext *txn,
+                        const std::shared_ptr<Constraint> constraint,
+                        type::AbstractPool *pool);
 
-  bool DeleteConstraints(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool DeleteConstraints(concurrency::TransactionContext *txn,
+                         oid_t table_oid);
 
-  bool DeleteConstraint(oid_t table_oid, oid_t constraint_oid,
-                        concurrency::TransactionContext *txn);
+  bool DeleteConstraint(concurrency::TransactionContext *txn,
+                        oid_t table_oid,
+                        oid_t constraint_oid);
 
  private:
   //===--------------------------------------------------------------------===//
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
-  GetConstraintCatalogEntries(oid_t table_oid,
-                              concurrency::TransactionContext *txn);
+  GetConstraintCatalogEntries(concurrency::TransactionContext *txn,
+                              oid_t table_oid);
 
   const std::shared_ptr<ConstraintCatalogEntry>
-  GetConstraintCatalogEntry(oid_t table_oid, oid_t constraint_oid,
-                            concurrency::TransactionContext *txn);
+  GetConstraintCatalogEntry(concurrency::TransactionContext *txn,
+                            oid_t table_oid,
+                            oid_t constraint_oid);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
@@ -139,7 +143,7 @@ class ConstraintCatalog : public AbstractCatalog {
     CHECK_EXP_BIN = 11,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 
   enum IndexId {
     PRIMARY_KEY = 0,

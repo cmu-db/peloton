@@ -106,7 +106,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 #endif
@@ -135,9 +135,11 @@ TEST_F(ConstraintsTests, DEFAULTTEST) {
   for (oid_t i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
     // COL_A
     if (i == 0) {
-      catalog->AddPrimaryKeyConstraint(data_table->GetDatabaseOid(),
-                                       data_table->GetOid(), {i}, "con_primary",
-                                       txn);
+      catalog->AddPrimaryKeyConstraint(txn,
+                                       data_table->GetDatabaseOid(),
+                                       data_table->GetOid(),
+                                       {i},
+                                       "con_primary");
     }
     // COL_B + COL_C + COL_D
     else {
@@ -190,26 +192,34 @@ TEST_F(ConstraintsTests, CHECKTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false, 0);
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema({column1}));
 
   std::string table_name("TEST_TABLE");
   auto result =
-      catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name,
-                           std::move(table_schema), txn, false);
+      catalog->CreateTable(txn,
+                           DEFAULT_DB_NAME,
+                           DEFAULT_SCHEMA_NAME,
+                           std::move(table_schema),
+                           table_name,
+                           false);
   EXPECT_EQ(ResultType::SUCCESS, result);
 
-  auto data_table = catalog->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto data_table = catalog->GetTableWithName(txn,
+                                              DEFAULT_DB_NAME,
+                                              DEFAULT_SCHEMA_NAME,
+                                              table_name);
   EXPECT_NE(nullptr, data_table);
 
   // add check constraint
   type::Value tmp_value = type::ValueFactory::GetIntegerValue(0);
-  catalog->AddCheckConstraint(
-      data_table->GetDatabaseOid(), data_table->GetOid(), {0}, "",
-      std::make_pair(ExpressionType::COMPARE_GREATERTHAN, tmp_value),
-      "con_check", txn);
+  catalog->AddCheckConstraint(txn,
+                              data_table->GetDatabaseOid(),
+                              data_table->GetOid(),
+                              {0},
+                              std::make_pair(ExpressionType::COMPARE_GREATERTHAN, tmp_value),
+                              "con_check");
   txn_manager.CommitTransaction(txn);
 
   // begin this transaction
@@ -238,7 +248,7 @@ TEST_F(ConstraintsTests, CHECKTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto result = catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  auto result = catalog->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   EXPECT_EQ(ResultType::SUCCESS, result);
   txn_manager.CommitTransaction(txn);
 }
@@ -250,20 +260,29 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::string db_name = "db1";
-  catalog->CreateDatabase(db_name, txn);
+  catalog->CreateDatabase(txn, db_name);
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "B", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, false);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       false);
 
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
-  catalog->AddUniqueConstraint(table->GetDatabaseOid(), table->GetOid(), {0},
-                               "con_unique", txn);
+  auto table = catalog->GetTableWithName(txn,
+                                         db_name,
+                                         DEFAULT_SCHEMA_NAME,
+                                         table_name);
+  catalog->AddUniqueConstraint(txn,
+                               table->GetDatabaseOid(),
+                               table->GetOid(),
+                               {0},
+                               "con_unique");
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -286,7 +305,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName(db_name, txn);
+  catalog->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -295,7 +314,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   std::string db_name = "db1";
-  catalog->CreateDatabase(db_name, txn);
+  catalog->CreateDatabase(txn, db_name);
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "A", false);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "B", false);
   auto column3 = catalog::Column(type::TypeId::INTEGER, 25, "C", false);
@@ -308,14 +327,23 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   columns.push_back(column3);
   std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
   std::string table_name("TEST_TABLE_1");
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, false);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       false);
 
   // Add multi-unique constraint
-  auto table = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                         table_name, txn);
-  catalog->AddUniqueConstraint(table->GetDatabaseOid(), table->GetOid(), cols,
-                               "con_unique", txn);
+  auto table = catalog->GetTableWithName(txn,
+                                         db_name,
+                                         DEFAULT_SCHEMA_NAME,
+                                         table_name);
+  catalog->AddUniqueConstraint(txn,
+                               table->GetDatabaseOid(),
+                               table->GetOid(),
+                               cols,
+                               "con_unique");
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -343,7 +371,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
 }
 #endif
@@ -366,20 +394,29 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::string db_name = "db2";
   std::string table_a_name = "tableA";
   std::string table_b_name = "tableB";
-  catalog::Catalog::GetInstance()->CreateDatabase(db_name, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, db_name);
 
   // Table A
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "a", false);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "b", false);
   std::unique_ptr<catalog::Schema> tableA_schema(
       new catalog::Schema({column1, column2}));
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_a_name,
-                       std::move(tableA_schema), txn);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(tableA_schema),
+                       table_a_name,
+                       false);
 
-  auto table_a = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                           table_a_name, txn);
-  catalog->AddPrimaryKeyConstraint(table_a->GetDatabaseOid(), table_a->GetOid(),
-                                   {0}, "con_primary", txn);
+  auto table_a = catalog->GetTableWithName(txn,
+                                           db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_a_name);
+  catalog->AddPrimaryKeyConstraint(txn,
+                                   table_a->GetDatabaseOid(),
+                                   table_a->GetOid(),
+                                   {0},
+                                   "con_primary");
   txn_manager.CommitTransaction(txn);
 
   // Table B
@@ -389,20 +426,35 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::unique_ptr<catalog::Schema> tableB_schema(
       new catalog::Schema({column3, column4}));
 
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_b_name,
-                       std::move(tableB_schema), txn);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(tableB_schema),
+                       table_b_name,
+                       false);
 
-  auto table_b = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                           table_b_name, txn);
-  catalog->AddPrimaryKeyConstraint(table_b->GetDatabaseOid(), table_b->GetOid(),
-                                   {0}, "con_primary", txn);
+  auto table_b = catalog->GetTableWithName(txn,
+                                           db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_b_name);
+  catalog->AddPrimaryKeyConstraint(txn,
+                                   table_b->GetDatabaseOid(),
+                                   table_b->GetOid(),
+                                   {0},
+                                   "con_primary");
 
   oid_t sink_table_id = table_b->GetOid();
   std::vector<oid_t> sink_col_ids = { table_b->GetSchema()->GetColumnID("b") };
   std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("b") };
-  catalog->AddForeignKeyConstraint(table_a->GetDatabaseOid(), table_a->GetOid(),
-      source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::NOACTION,
-      FKConstrActionType::NOACTION, "con_foreign", txn);
+  catalog->AddForeignKeyConstraint(txn,
+                                   table_a->GetDatabaseOid(),
+                                   table_a->GetOid(),
+                                   source_col_ids,
+                                   sink_table_id,
+                                   sink_col_ids,
+                                   FKConstrActionType::NOACTION,
+                                   FKConstrActionType::NOACTION,
+                                   "con_foreign");
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -433,7 +485,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -454,18 +506,24 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::string db_name = "db2";
   std::string table_a_name = "tableA";
   std::string table_b_name = "tableB";
-  catalog->CreateDatabase(db_name, txn);
+  catalog->CreateDatabase(txn, db_name);
 
   // TABLE A
   auto column1 = catalog::Column(type::TypeId::INTEGER, 25, "a", false);
   auto column2 = catalog::Column(type::TypeId::INTEGER, 25, "b", false);
   std::unique_ptr<catalog::Schema> tableA_schema(
       new catalog::Schema({column1, column2}));
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_a_name,
-                       std::move(tableA_schema), txn);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(tableA_schema),
+                       table_a_name,
+                       false);
 
-  auto table_a = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                           table_a_name, txn);
+  auto table_a = catalog->GetTableWithName(txn,
+                                           db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_a_name);
   txn_manager.CommitTransaction(txn);
 
   // TABLE B
@@ -475,16 +533,25 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   catalog::Schema *table_schema = new catalog::Schema({column3, column4});
   std::unique_ptr<catalog::Schema> tableB_schema(table_schema);
 
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_b_name,
-                       std::move(tableB_schema), txn);
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(tableB_schema),
+                       table_b_name,
+                       false);
 
   std::vector<oid_t> cols;
   cols.push_back(0);
   cols.push_back(1);
-  auto table_b = catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME,
-                                           table_b_name, txn);
-  catalog->AddPrimaryKeyConstraint(table_b->GetDatabaseOid(), table_b->GetOid(),
-                                   cols, "con_primary", txn);
+  auto table_b = catalog->GetTableWithName(txn,
+                                           db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_b_name);
+  catalog->AddPrimaryKeyConstraint(txn,
+                                   table_b->GetDatabaseOid(),
+                                   table_b->GetOid(),
+                                   cols,
+                                   "con_primary");
 
   // Create foreign key tableA.B -> tableB.B
   oid_t sink_table_id = table_b->GetOid();
@@ -492,9 +559,15 @@ TEST_F(ConstraintsTests, UNIQUETest) {
                                       table_b->GetSchema()->GetColumnID("b") };
   std::vector<oid_t> source_col_ids = { table_a->GetSchema()->GetColumnID("a"),
                                         table_a->GetSchema()->GetColumnID("b") };
-  catalog->AddForeignKeyConstraint(table_a->GetDatabaseOid(), table_a->GetOid(),
-      source_col_ids, sink_table_id, sink_col_ids, FKConstrActionType::RESTRICT,
-      FKConstrActionType::CASCADE, "con_foreign", txn);
+  catalog->AddForeignKeyConstraint(txn,
+                                   table_a->GetDatabaseOid(),
+                                   table_a->GetOid(),
+                                   source_col_ids,
+                                   sink_table_id,
+                                   sink_col_ids,
+                                   FKConstrActionType::RESTRICT,
+                                   FKConstrActionType::CASCADE,
+                                   "con_foreign");
   txn_manager.CommitTransaction(txn);
 
 
@@ -526,7 +599,7 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   // commit this transaction
   txn_manager.CommitTransaction(txn);
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(db_name, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
 }
 #endif

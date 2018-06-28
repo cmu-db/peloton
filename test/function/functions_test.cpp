@@ -44,23 +44,23 @@ TEST_F(FunctionsTests, CatalogTest) {
   auto &pg_language = catalog::LanguageCatalog::GetInstance();
   // Test "internal" language
   auto txn = txn_manager.BeginTransaction();
-  auto internal_lang = pg_language.GetLanguageByName("internal", txn);
+  auto internal_lang = pg_language.GetLanguageByName(txn, "internal");
   EXPECT_NE(nullptr, internal_lang);
-  internal_lang = pg_language.GetLanguageByOid(internal_lang->GetOid(), txn);
+  internal_lang = pg_language.GetLanguageByOid(txn, internal_lang->GetOid());
   EXPECT_NE(nullptr, internal_lang);
   EXPECT_EQ("internal", internal_lang->GetName());
 
   // test add/del language
   type::EphemeralPool pool;
   std::string lanname = "foo_lang";
-  pg_language.InsertLanguage(lanname, &pool, txn);
-  auto inserted_lang = pg_language.GetLanguageByName(lanname, txn);
+  pg_language.InsertLanguage(txn, lanname, &pool);
+  auto inserted_lang = pg_language.GetLanguageByName(txn, lanname);
   EXPECT_NE(nullptr, inserted_lang);
-  inserted_lang = pg_language.GetLanguageByOid(inserted_lang->GetOid(), txn);
+  inserted_lang = pg_language.GetLanguageByOid(txn, inserted_lang->GetOid());
   EXPECT_NE(nullptr, inserted_lang);
   EXPECT_EQ(lanname, inserted_lang->GetName());
-  pg_language.DeleteLanguage(lanname, txn);
-  inserted_lang = pg_language.GetLanguageByName(lanname, txn);
+  pg_language.DeleteLanguage(txn, lanname);
+  inserted_lang = pg_language.GetLanguageByName(txn, lanname);
   EXPECT_EQ(nullptr, inserted_lang);
 
   txn_manager.CommitTransaction(txn);
@@ -72,11 +72,16 @@ TEST_F(FunctionsTests, CatalogTest) {
   std::vector<type::TypeId> arg_types{type::TypeId::VARCHAR,
                                       type::TypeId::INTEGER};
 
-  catalog->AddBuiltinFunction(
-      func_name, arg_types, type::TypeId::INTEGER, internal_lang->GetOid(),
-      "TestFunc", function::BuiltInFuncType{OperatorId::Add, TestFunc}, txn);
+  catalog->AddBuiltinFunction(txn,
+                              func_name,
+                              function::BuiltInFuncType{OperatorId::Add,
+                                                        TestFunc},
+                              "TestFunc",
+                              type::TypeId::INTEGER,
+                              arg_types,
+                              internal_lang->GetOid());
 
-  auto inserted_proc = pg_proc.GetProcByName(func_name, arg_types, txn);
+  auto inserted_proc = pg_proc.GetProcByName(txn, func_name, arg_types);
   EXPECT_NE(nullptr, inserted_proc);
   EXPECT_EQ(internal_lang->GetOid(), inserted_proc->GetLangOid());
   type::TypeId ret_type = inserted_proc->GetRetType();
@@ -94,7 +99,7 @@ TEST_F(FunctionsTests, CatalogTest) {
 TEST_F(FunctionsTests, FuncCallTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -123,14 +128,14 @@ TEST_F(FunctionsTests, FuncCallTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(FunctionsTests, SubstrFuncCallTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(a DECIMAL, s VARCHAR);");
@@ -148,7 +153,7 @@ TEST_F(FunctionsTests, SubstrFuncCallTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

@@ -28,41 +28,55 @@ ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
 }
 
 ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." COLUMN_STATS_CATALOG_NAME
-                      " ("
-                      "database_id    INT NOT NULL, "
-                      "table_id       INT NOT NULL, "
-                      "column_id      INT NOT NULL, "
-                      "num_rows        INT NOT NULL, "
-                      "cardinality    DECIMAL NOT NULL, "
-                      "frac_null      DECIMAL NOT NULL, "
-                      "most_common_vals  VARCHAR, "
-                      "most_common_freqs VARCHAR, "
-                      "histogram_bounds  VARCHAR, "
-                      "column_name       VARCHAR, "
-                      "has_index         BOOLEAN);",
-                      txn) {
+    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+                           "." CATALOG_SCHEMA_NAME "." COLUMN_STATS_CATALOG_NAME
+                           " ("
+                           "database_id    INT NOT NULL, "
+                           "table_id       INT NOT NULL, "
+                           "column_id      INT NOT NULL, "
+                           "num_rows        INT NOT NULL, "
+                           "cardinality    DECIMAL NOT NULL, "
+                           "frac_null      DECIMAL NOT NULL, "
+                           "most_common_vals  VARCHAR, "
+                           "most_common_freqs VARCHAR, "
+                           "histogram_bounds  VARCHAR, "
+                           "column_name       VARCHAR, "
+                           "has_index         BOOLEAN);") {
   // unique key: (database_id, table_id, column_id)
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
-      {0, 1, 2}, COLUMN_STATS_CATALOG_NAME "_skey0", true, IndexType::BWTREE,
-      txn);
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      CATALOG_DATABASE_NAME,
+                                      CATALOG_SCHEMA_NAME,
+                                      COLUMN_STATS_CATALOG_NAME,
+                                      COLUMN_STATS_CATALOG_NAME "_skey0",
+                                      {0, 1, 2},
+                                      true,
+                                      IndexType::BWTREE);
   // non-unique key: (database_id, table_id)
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, COLUMN_STATS_CATALOG_NAME,
-      {0, 1}, COLUMN_STATS_CATALOG_NAME "_skey1", false, IndexType::BWTREE,
-      txn);
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      CATALOG_DATABASE_NAME,
+                                      CATALOG_SCHEMA_NAME,
+                                      COLUMN_STATS_CATALOG_NAME,
+                                      COLUMN_STATS_CATALOG_NAME "_skey1",
+                                      {0, 1},
+                                      false,
+                                      IndexType::BWTREE);
 }
 
 ColumnStatsCatalog::~ColumnStatsCatalog() {}
 
-bool ColumnStatsCatalog::InsertColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id, int num_rows,
-    double cardinality, double frac_null, std::string most_common_vals,
-    std::string most_common_freqs, std::string histogram_bounds,
-    std::string column_name, bool has_index, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool ColumnStatsCatalog::InsertColumnStats(concurrency::TransactionContext *txn,
+                                           oid_t database_id,
+                                           oid_t table_id,
+                                           oid_t column_id,
+                                           std::string column_name,
+                                           int num_rows,
+                                           double frac_null,
+                                           std::string most_common_vals,
+                                           std::string most_common_freqs,
+                                           std::string histogram_bounds,
+                                           double cardinality,
+                                           bool has_index,
+                                           type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -109,12 +123,13 @@ bool ColumnStatsCatalog::InsertColumnStats(
   tuple->SetValue(ColumnId::HAS_INDEX, val_has_index, nullptr);
 
   // Insert the tuple into catalog table
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool ColumnStatsCatalog::DeleteColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+bool ColumnStatsCatalog::DeleteColumnStats(concurrency::TransactionContext *txn,
+                                           oid_t database_id,
+                                           oid_t table_id,
+                                           oid_t column_id) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
@@ -122,12 +137,13 @@ bool ColumnStatsCatalog::DeleteColumnStats(
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
-    oid_t database_id, oid_t table_id, oid_t column_id,
-    concurrency::TransactionContext *txn) {
+std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(concurrency::TransactionContext *txn,
+                                                                             oid_t database_id,
+                                                                             oid_t table_id,
+                                                                             oid_t column_id) {
   std::vector<oid_t> column_ids(
       {ColumnId::NUM_ROWS, ColumnId::CARDINALITY, ColumnId::FRAC_NULL,
        ColumnId::MOST_COMMON_VALS, ColumnId::MOST_COMMON_FREQS,
@@ -140,7 +156,10 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() == 0) {
@@ -174,10 +193,11 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(
 }
 
 // Return value: number of column stats
-size_t ColumnStatsCatalog::GetTableStats(
-    oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
-    std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
-        &column_stats_map) {
+size_t ColumnStatsCatalog::GetTableStats(concurrency::TransactionContext *txn,
+                                         oid_t database_id,
+                                         oid_t table_id,
+                                         std::map<oid_t,
+                              std::unique_ptr<std::vector<type::Value>>> &column_stats_map) {
   std::vector<oid_t> column_ids(
       {ColumnId::COLUMN_ID, ColumnId::NUM_ROWS, ColumnId::CARDINALITY,
        ColumnId::FRAC_NULL, ColumnId::MOST_COMMON_VALS,
@@ -190,7 +210,10 @@ size_t ColumnStatsCatalog::GetTableStats(
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
   if (result_tiles->size() == 0) {

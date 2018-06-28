@@ -19,27 +19,30 @@
 namespace peloton {
 namespace catalog {
 
-TableMetricsCatalog::TableMetricsCatalog(const std::string &database_name,
-                                         concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." CATALOG_SCHEMA_NAME "." TABLE_METRICS_CATALOG_NAME
-                          " ("
-                          "table_oid      INT NOT NULL, "
-                          "reads          INT NOT NULL, "
-                          "updates        INT NOT NULL, "
-                          "deletes        INT NOT NULL, "
-                          "inserts        INT NOT NULL, "
-                          "time_stamp     INT NOT NULL);",
-                      txn) {
+TableMetricsCatalog::TableMetricsCatalog(concurrency::TransactionContext *txn,
+                                         const std::string &database_name)
+    : AbstractCatalog(txn, "CREATE TABLE " + database_name +
+    "." CATALOG_SCHEMA_NAME "." TABLE_METRICS_CATALOG_NAME
+    " ("
+    "table_oid      INT NOT NULL, "
+    "reads          INT NOT NULL, "
+    "updates        INT NOT NULL, "
+    "deletes        INT NOT NULL, "
+    "inserts        INT NOT NULL, "
+    "time_stamp     INT NOT NULL);") {
   // Add secondary index here if necessary
 }
 
 TableMetricsCatalog::~TableMetricsCatalog() {}
 
-bool TableMetricsCatalog::InsertTableMetrics(
-    oid_t table_oid, int64_t reads, int64_t updates, int64_t deletes,
-    int64_t inserts, int64_t time_stamp, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool TableMetricsCatalog::InsertTableMetrics(concurrency::TransactionContext *txn,
+                                             oid_t table_oid,
+                                             int64_t reads,
+                                             int64_t updates,
+                                             int64_t deletes,
+                                             int64_t inserts,
+                                             int64_t time_stamp,
+                                             type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -58,17 +61,16 @@ bool TableMetricsCatalog::InsertTableMetrics(
   tuple->SetValue(ColumnId::TIME_STAMP, val6, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool TableMetricsCatalog::DeleteTableMetrics(
-    oid_t table_oid, concurrency::TransactionContext *txn) {
+bool TableMetricsCatalog::DeleteTableMetrics(concurrency::TransactionContext *txn, oid_t table_oid) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
 }  // namespace catalog

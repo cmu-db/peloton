@@ -160,7 +160,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   LOG_INFO("Bootstrapping completed!");
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -182,18 +182,28 @@ TEST_F(UpdateTests, UpdatingOld) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, manager_id_column, name_column}));
 
-  catalog->CreateTable(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-                       std::move(table_schema), txn);
+  catalog->CreateTable(txn,
+                       DEFAULT_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "department_table",
+                       false);
   auto table_object =
-      catalog->GetTableObject(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                              "department_table", txn);
-  catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
-      table_object->GetTableOid(), {0}, "con_primary", txn);
+      catalog->GetTableCatalogEntry(txn,
+                              DEFAULT_DB_NAME,
+                              DEFAULT_SCHEMA_NAME,
+                              "department_table");
+  catalog->AddPrimaryKeyConstraint(txn,
+                                   table_object->GetDatabaseOid(),
+                                   table_object->GetTableOid(),
+                                   {0}, "con_primary");
 
   LOG_INFO("Table created!");
 
-  storage::DataTable *table = catalog->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  storage::DataTable *table = catalog->GetTableWithName(txn,
+                                                        DEFAULT_DB_NAME,
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "department_table");
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
@@ -419,7 +429,7 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace

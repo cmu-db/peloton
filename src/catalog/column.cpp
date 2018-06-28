@@ -47,6 +47,7 @@ const std::string Column::GetInfo() const {
 
   os << "Column[" << column_name_ << ", "
      << TypeIdToString(column_type_) << ", "
+
      << "Offset:" << column_offset_ << ", ";
 
   if (is_inlined_) {
@@ -63,6 +64,7 @@ const std::string Column::GetInfo() const {
   } else if (has_default_) {
     os << ", {DEFAULT:"
        << default_value_->ToString() << "}";
+
   }
 
   os << "]";

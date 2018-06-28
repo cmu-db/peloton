@@ -122,14 +122,23 @@ void TestingStatsUtil::CreateTable(bool has_primary_key) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateTable("emp_db", DEFAULT_SCHEMA_NAME, "department_table",
-                       std::move(table_schema), txn);
+  catalog->CreateTable(txn,
+                       "emp_db",
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "department_table",
+                       false);
 
   if (has_primary_key) {
-    auto table_object = catalog->GetTableObject("emp_db", DEFAULT_SCHEMA_NAME,
-                                                "department_table", txn);
-    catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
-        table_object->GetTableOid(), {0}, "con_primary", txn);
+    auto table_object = catalog->GetTableCatalogEntry(txn,
+                                                      "emp_db",
+                                                      DEFAULT_SCHEMA_NAME,
+                                                      "department_table");
+    catalog->AddPrimaryKeyConstraint(txn,
+                                     table_object->GetDatabaseOid(),
+                                     table_object->GetTableOid(),
+                                     {0},
+                                     "con_primary");
   }
   txn_manager.CommitTransaction(txn);
 }

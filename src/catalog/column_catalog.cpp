@@ -24,59 +24,74 @@
 namespace peloton {
 namespace catalog {
 
-ColumnCatalogObject::ColumnCatalogObject(executor::LogicalTile *tile,
+ColumnCatalogEntry::ColumnCatalogEntry(executor::LogicalTile *tile,
                                          int tupleId)
-    : table_oid(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
+    : table_oid_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::TABLE_OID)
                     .GetAs<oid_t>()),
-      column_name(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
+      column_name_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_NAME)
                       .ToString()),
-      column_id(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
+      column_id_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_ID)
                     .GetAs<oid_t>()),
-      column_offset(
+      column_offset_(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_OFFSET)
               .GetAs<oid_t>()),
-      column_type(StringToTypeId(
+      column_type_(StringToTypeId(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_TYPE)
               .ToString())),
-      column_length(
+      column_length_(
           tile->GetValue(tupleId, ColumnCatalog::ColumnId::COLUMN_LENGTH)
               .GetAs<uint32_t>()),
-      is_inlined(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
+      is_inlined_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_INLINED)
                      .GetAs<bool>()),
-      is_not_null(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
+      is_not_null_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::IS_NOT_NULL)
                       .GetAs<bool>()),
-      has_default(tile->GetValue(tupleId, ColumnCatalog::ColumnId::HAS_DEFAULT)
+      has_default_(tile->GetValue(tupleId, ColumnCatalog::ColumnId::HAS_DEFAULT)
                       .GetAs<bool>()) {
   // deserialize default value if the column has default constraint
-  if (has_default) {
+  if (has_default_) {
     auto dv_val =
         tile->GetValue(tupleId, ColumnCatalog::ColumnId::DEFAULT_VALUE_BIN);
     CopySerializeInput input_buffer(dv_val.GetData(), dv_val.GetLength());
-    default_value = type::Value::DeserializeFrom(input_buffer, column_type);
+    default_value_ = type::Value::DeserializeFrom(input_buffer, column_type_);
   }
 }
 
-ColumnCatalog::ColumnCatalog(storage::Database *pg_catalog,
-                             type::AbstractPool *pool,
-                             concurrency::TransactionContext *txn)
-    : AbstractCatalog(COLUMN_CATALOG_OID, COLUMN_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {
+ColumnCatalog::ColumnCatalog(concurrency::TransactionContext *txn,
+                             storage::Database *pg_catalog,
+                             type::AbstractPool *pool)
+    : AbstractCatalog(pg_catalog,
+                      InitializeSchema().release(),
+                      COLUMN_CATALOG_OID,
+                      COLUMN_CATALOG_NAME) {
   // Add indexes for pg_attribute
-  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
-           COLUMN_CATALOG_PKEY_OID, COLUMN_CATALOG_NAME "_pkey",
+  AddIndex(COLUMN_CATALOG_NAME "_pkey",
+           COLUMN_CATALOG_PKEY_OID,
+           {ColumnId::TABLE_OID, ColumnId::COLUMN_NAME},
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({ColumnId::TABLE_OID, ColumnId::COLUMN_ID}, COLUMN_CATALOG_SKEY0_OID,
-           COLUMN_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
-  AddIndex({ColumnId::TABLE_OID}, COLUMN_CATALOG_SKEY1_OID,
-           COLUMN_CATALOG_NAME "_skey1", IndexConstraintType::DEFAULT);
+  AddIndex(COLUMN_CATALOG_NAME "_skey0",
+           COLUMN_CATALOG_SKEY0_OID,
+           {ColumnId::TABLE_OID, ColumnId::COLUMN_ID},
+           IndexConstraintType::UNIQUE);
+  AddIndex(COLUMN_CATALOG_NAME "_skey1",
+           COLUMN_CATALOG_SKEY1_OID,
+           {ColumnId::TABLE_OID},
+           IndexConstraintType::DEFAULT);
 
   // Insert columns of pg_attribute table into pg_attribute itself
   uint32_t column_id = 0;
   for (auto column : catalog_table_->GetSchema()->GetColumns()) {
-    InsertColumn(COLUMN_CATALOG_OID, column.GetName(), column_id,
-                 column.GetOffset(), column.GetType(), column.GetLength(),
-                 column.IsInlined(), column.IsNotNull(), column.HasDefault(),
-                 column.GetDefaultValue(), pool, txn);
+    InsertColumn(txn,
+                 COLUMN_CATALOG_OID,
+                 column.GetName(),
+                 column_id,
+                 column.GetOffset(),
+                 column.GetType(),
+                 column.GetLength(),
+                 column.IsInlined(),
+                 column.IsNotNull(),
+                 column.HasDefault(),
+                 column.GetDefaultValue(),
+                 pool);
     column_id++;
   }
 }
@@ -93,7 +108,7 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   table_id_column.SetNotNull();
 
   auto column_name_column = catalog::Column(
-      type::TypeId::VARCHAR, max_name_size, "column_name", false);
+      type::TypeId::VARCHAR, max_name_size_, "column_name", false);
   column_name_column.SetNotNull();
 
   auto column_id_column = catalog::Column(
@@ -107,8 +122,9 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   column_offset_column.SetNotNull();
 
   auto column_type_column = catalog::Column(
-      type::TypeId::VARCHAR, max_name_size, "column_type", false);
+      type::TypeId::VARCHAR, max_name_size_, "column_type", false);
   column_type_column.SetNotNull();
+
 
   auto column_length_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -159,12 +175,18 @@ std::unique_ptr<catalog::Schema> ColumnCatalog::InitializeSchema() {
   return column_catalog_schema;
 }
 
-bool ColumnCatalog::InsertColumn(
-    oid_t table_oid, const std::string &column_name, oid_t column_id,
-    oid_t column_offset, type::TypeId column_type, size_t column_length,
-    bool is_inlined, bool is_not_null, bool is_default,
-    const std::shared_ptr<type::Value> default_value, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool ColumnCatalog::InsertColumn(concurrency::TransactionContext *txn,
+                                 oid_t table_oid,
+                                 const std::string &column_name,
+                                 oid_t column_id,
+                                 oid_t column_offset,
+                                 type::TypeId column_type,
+                                 size_t column_length,
+                                 bool is_inlined,
+                                 bool is_not_null,
+                                 bool is_default,
+                                 const std::shared_ptr<type::Value> default_value,
+                                 type::AbstractPool *pool) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -205,12 +227,12 @@ bool ColumnCatalog::InsertColumn(
   }
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool ColumnCatalog::DeleteColumn(oid_t table_oid,
-                                 const std::string &column_name,
-                                 concurrency::TransactionContext *txn) {
+bool ColumnCatalog::DeleteColumn(concurrency::TransactionContext *txn,
+                                 oid_t table_oid,
+                                 const std::string &column_name) {
   oid_t index_offset =
       IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
   std::vector<type::Value> values;
@@ -220,12 +242,12 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
 
   // delete column from cache
   auto pg_table = Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
+                      ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictColumnObject(column_name);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictColumnCatalogEntry(column_name);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
 /* @brief   delete all column records from the same table
@@ -234,25 +256,25 @@ bool ColumnCatalog::DeleteColumn(oid_t table_oid,
  * @param   txn  TransactionContext
  * @return  a vector of table oid
  */
-bool ColumnCatalog::DeleteColumns(oid_t table_oid,
-                                  concurrency::TransactionContext *txn) {
+bool ColumnCatalog::DeleteColumns(concurrency::TransactionContext *txn, oid_t table_oid) {
   oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // delete columns from cache
   auto pg_table = Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
+                      ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictAllColumnObjects();
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictAllColumnCatalogEntries();
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-bool ColumnCatalog::UpdateNotNullConstraint(
-    oid_t table_oid, const std::string &column_name, bool is_not_null,
-    concurrency::TransactionContext *txn) {
+bool ColumnCatalog::UpdateNotNullConstraint(concurrency::TransactionContext *txn,
+                                            oid_t table_oid,
+                                            const std::string &column_name,
+                                            bool is_not_null) {
   std::vector<oid_t> update_columns({ColumnId::IS_NOT_NULL});
   oid_t index_offset =
       IndexId::PRIMARY_KEY;  // Index of table_oid & column_name
@@ -269,18 +291,23 @@ bool ColumnCatalog::UpdateNotNullConstraint(
 
   // delete column from cache
   auto pg_table = Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
+                      ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictColumnObject(column_name);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictColumnCatalogEntry(column_name);
 
-  return UpdateWithIndexScan(update_columns, update_values, scan_values,
-                             index_offset, txn);
+  return UpdateWithIndexScan(txn,
+                             index_offset,
+                             scan_values,
+                             update_columns,
+                             update_values);
 }
 
-bool ColumnCatalog::UpdateDefaultConstraint(
-    oid_t table_oid, const std::string &column_name, bool has_default,
-    const type::Value *default_value, concurrency::TransactionContext *txn) {
+bool ColumnCatalog::UpdateDefaultConstraint(concurrency::TransactionContext *txn,
+                                            oid_t table_oid,
+                                            const std::string &column_name,
+                                            bool has_default,
+                                            const type::Value *default_value) {
   std::vector<oid_t> update_columns({ColumnId::HAS_DEFAULT,
                                      ColumnId::DEFAULT_VALUE_SRC,
                                      ColumnId::DEFAULT_VALUE_BIN});
@@ -314,45 +341,51 @@ bool ColumnCatalog::UpdateDefaultConstraint(
 
   // delete column from cache
   auto pg_table = Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
+                      ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(table_oid, txn);
-  table_object->EvictColumnObject(column_name);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
+  table_object->EvictColumnCatalogEntry(column_name);
 
-  return UpdateWithIndexScan(update_columns, update_values, scan_values,
-                             index_offset, txn);
+  return UpdateWithIndexScan(txn,
+                             index_offset,
+                             scan_values,
+                             update_columns,
+                             update_values);
 }
 
-const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-ColumnCatalog::GetColumnObjects(oid_t table_oid,
-                                concurrency::TransactionContext *txn) {
+const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogEntry>>
+ColumnCatalog::GetColumnCatalogEntries(concurrency::TransactionContext *txn,
+                                       oid_t table_oid) {
   // try get from cache
   auto pg_table = Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
+                      ->GetSystemCatalogs(database_oid_)
                       ->GetTableCatalog();
-  auto table_object = pg_table->GetTableObject(table_oid, txn);
+  auto table_object = pg_table->GetTableCatalogEntry(txn, table_oid);
   PELOTON_ASSERT(table_object && table_object->GetTableOid() == table_oid);
-  auto column_objects = table_object->GetColumnObjects(true);
+  auto column_objects = table_object->GetColumnCatalogEntries(true);
   if (column_objects.size() != 0) return column_objects;
 
   // cache miss, get from pg_attribute
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::SKEY_TABLE_OID;  // Index of table_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   for (auto &tile : (*result_tiles)) {
     for (auto tuple_id : *tile) {
       auto column_object =
-          std::make_shared<ColumnCatalogObject>(tile.get(), tuple_id);
-      table_object->InsertColumnObject(column_object);
+          std::make_shared<ColumnCatalogEntry>(tile.get(), tuple_id);
+      table_object->InsertColumnCatalogEntry(column_object);
     }
   }
 
-  return table_object->GetColumnObjects();
+  return table_object->GetColumnCatalogEntries();
 }
 
 }  // namespace catalog

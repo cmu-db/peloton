@@ -38,19 +38,23 @@ namespace catalog {
 
 class IndexMetricsCatalog : public AbstractCatalog {
  public:
-  IndexMetricsCatalog(const std::string &database_name,
-                      concurrency::TransactionContext *txn);
+  IndexMetricsCatalog(concurrency::TransactionContext *txn,
+                        const std::string &database_name);
   ~IndexMetricsCatalog();
 
   //===--------------------------------------------------------------------===//
   // Write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertIndexMetrics(oid_t table_oid, oid_t index_oid, int64_t reads,
-                          int64_t deletes, int64_t inserts, int64_t time_stamp,
-                          type::AbstractPool *pool,
-                          concurrency::TransactionContext *txn);
-  bool DeleteIndexMetrics(oid_t index_oid,
-                          concurrency::TransactionContext *txn);
+  bool InsertIndexMetrics(concurrency::TransactionContext *txn,
+                          oid_t table_oid,
+                          oid_t index_oid,
+                          int64_t reads,
+                          int64_t deletes,
+                          int64_t inserts,
+                          int64_t time_stamp,
+                          type::AbstractPool *pool);
+
+  bool DeleteIndexMetrics(concurrency::TransactionContext *txn, oid_t index_oid);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API

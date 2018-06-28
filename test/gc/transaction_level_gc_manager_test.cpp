@@ -207,7 +207,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("database0", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn, "database0"),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -372,7 +372,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("database0", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn, "database0"),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -487,7 +487,8 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("immutabilitydb", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               "immutabilitydb"),
       CatalogException);
   txn_manager.CommitTransaction(txn);
 }

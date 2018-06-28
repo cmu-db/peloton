@@ -144,12 +144,21 @@ void ZoneMapManager::CreateOrUpdateZoneMapInCatalog(
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  stats_catalog->DeleteColumnStatistics(database_id, table_id, tile_group_idx,
-                                        column_id, txn);
+  stats_catalog->DeleteColumnStatistics(txn,
+                                        database_id,
+                                        table_id,
+                                        tile_group_idx,
+                                        column_id);
 
-  stats_catalog->InsertColumnStatistics(database_id, table_id, tile_group_idx,
-                                        column_id, min, max, type, pool_.get(),
-                                        txn);
+  stats_catalog->InsertColumnStatistics(txn,
+                                        database_id,
+                                        table_id,
+                                        tile_group_idx,
+                                        column_id,
+                                        min,
+                                        max,
+                                        type,
+                                        pool_.get());
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
@@ -172,8 +181,11 @@ ZoneMapManager::GetZoneMapFromCatalog(oid_t database_id, oid_t table_id,
   auto stats_catalog = catalog::ZoneMapCatalog::GetInstance(nullptr);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result_vector = stats_catalog->GetColumnStatistics(
-      database_id, table_id, tile_group_idx, column_id, txn);
+  auto result_vector = stats_catalog->GetColumnStatistics(txn,
+                                                          database_id,
+                                                          table_id,
+                                                          tile_group_idx,
+                                                          column_id);
   txn_manager.CommitTransaction(txn);
 
   if (result_vector == nullptr) {

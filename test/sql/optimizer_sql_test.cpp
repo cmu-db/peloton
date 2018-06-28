@@ -45,7 +45,7 @@ class OptimizerSQLTests : public PelotonTest {
     // Destroy test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
@@ -57,7 +57,7 @@ class OptimizerSQLTests : public PelotonTest {
     // Create database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Create a table first
@@ -331,8 +331,10 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // using transaction to get table from catalog
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test2", txn);
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                 DEFAULT_DB_NAME,
+                                                                 DEFAULT_SCHEMA_NAME,
+                                                                 "test2");
   EXPECT_NE(nullptr, table);
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
@@ -353,8 +355,10 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   LOG_DEBUG("here");
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(
-                   DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test2", txn),
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                 DEFAULT_DB_NAME,
+                                                                 DEFAULT_SCHEMA_NAME,
+                                                                 "test2"),
                peloton::Exception);
   txn_manager.CommitTransaction(txn);
 }

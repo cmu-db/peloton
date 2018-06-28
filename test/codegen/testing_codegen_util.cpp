@@ -44,8 +44,8 @@ PelotonCodeGenTest::PelotonCodeGenTest(oid_t tuples_per_tilegroup,
   auto txn = txn_manager.BeginTransaction();
 
   // create test db
-  catalog->CreateDatabase(test_db_name, txn);
-  test_db = catalog->GetDatabaseWithName(test_db_name, txn);
+  catalog->CreateDatabase(txn, test_db_name);
+  test_db = catalog->GetDatabaseWithName(txn, test_db_name);
   // Create test table
   CreateTestTables(txn, tuples_per_tilegroup, layout_type);
 
@@ -57,7 +57,7 @@ PelotonCodeGenTest::~PelotonCodeGenTest() {
   auto *catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->DropDatabaseWithName(test_db_name, txn);
+  auto result = catalog->DropDatabaseWithName(txn, test_db_name);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
   codegen::QueryCache::Instance().Clear();
@@ -107,24 +107,39 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
   auto *catalog = catalog::Catalog::GetInstance();
   for (int i = 0; i < 4; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
-                         std::move(table_schema), txn, false,
-                         tuples_per_tilegroup, layout_type);
+    catalog->CreateTable(txn,
+                         test_db_name,
+                         DEFAULT_SCHEMA_NAME,
+                         std::move(table_schema),
+                         test_table_names[i],
+                         false,
+                         tuples_per_tilegroup,
+                         layout_type);
     test_table_oids.push_back(catalog
-                                  ->GetTableObject(test_db_name,
-                                                   DEFAULT_SCHEMA_NAME,
-                                                   test_table_names[i], txn)
+                                  ->GetTableCatalogEntry(txn,
+                                                         test_db_name,
+                                                         DEFAULT_SCHEMA_NAME,
+                                                         test_table_names[i])
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
     auto table_schema = CreateTestSchema();
-    catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, test_table_names[i],
-                         std::move(table_schema), txn, false,
-                         tuples_per_tilegroup, layout_type);
-    auto table_object = catalog->GetTableObject(test_db_name, DEFAULT_SCHEMA_NAME,
-                                                test_table_names[i], txn);
-    catalog->AddPrimaryKeyConstraint(table_object->GetDatabaseOid(),
-                                     table_object->GetTableOid(), {0}, "con_primary", txn);
+    catalog->CreateTable(txn,
+                         test_db_name,
+                         DEFAULT_SCHEMA_NAME,
+                         std::move(table_schema),
+                         test_table_names[i],
+                         false,
+                         tuples_per_tilegroup,
+                         layout_type);
+    auto table_object = catalog->GetTableCatalogEntry(txn, test_db_name,
+                                                      DEFAULT_SCHEMA_NAME,
+                                                      test_table_names[i]);
+    catalog->AddPrimaryKeyConstraint(txn,
+                                     table_object->GetDatabaseOid(),
+                                     table_object->GetTableOid(),
+                                     {0},
+                                     "con_primary");
     test_table_oids.push_back(table_object->GetTableOid());
   }
 }
@@ -208,12 +223,19 @@ void PelotonCodeGenTest::CreateAndLoadTableWithLayout(
   auto txn = txn_manager.BeginTransaction();
 
   // Insert table in catalog
-  catalog->CreateTable(test_db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, is_catalog,
-                       tuples_per_tilegroup, layout_type);
+  catalog->CreateTable(txn,
+                       test_db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       is_catalog,
+                       tuples_per_tilegroup,
+                       layout_type);
   // Get table reference
-  layout_table = catalog->GetTableWithName(test_db_name, DEFAULT_SCHEMA_NAME,
-                                           table_name, txn);
+  layout_table = catalog->GetTableWithName(txn,
+                                           test_db_name,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table_name);
   txn_manager.EndTransaction(txn);
 
   /////////////////////////////////////////////////////////

@@ -90,10 +90,13 @@ void Trigger::SerializeWhen(SerializeOutput &output, oid_t database_oid,
           case ExpressionType::VALUE_TUPLE: {
             auto e =
                 static_cast<const expression::TupleValueExpression *>(expr);
-            auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-                database_oid, table_oid, txn);
+            auto table_object =
+                catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+                    txn,
+                    database_oid,
+                    table_oid);
             auto column_object =
-                table_object->GetColumnObject(e->GetColumnName());
+                table_object->GetColumnCatalogEntry(e->GetColumnName());
             output.WriteInt(static_cast<int>(column_object->GetColumnType()));
             output.WriteInt(static_cast<int>(column_object->GetColumnId()));
             break;
