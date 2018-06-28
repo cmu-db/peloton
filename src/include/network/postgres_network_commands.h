@@ -49,13 +49,13 @@ class PostgresNetworkCommand {
 
   std::vector<PostgresValueType> ReadParamTypes();
 
-  std::vector<int16_t> ReadParamFormats();
+  std::vector<PostgresDataFormat> ReadParamFormats();
 
   // Why are bind parameter and param values different?
   void ReadParamValues(std::vector<BindParameter> &bind_parameters,
                        std::vector<type::Value> &param_values,
                        const std::vector<PostgresValueType> &param_types,
-                       const std::vector<int16_t> &formats);
+                       const std::vector<PostgresDataFormat> &formats);
 
   void ProcessTextParamValue(std::vector<BindParameter> &bind_parameters,
                              std::vector<type::Value> &param_values,
@@ -66,6 +66,8 @@ class PostgresNetworkCommand {
                                std::vector<type::Value> &param_values,
                                PostgresValueType type,
                                int32_t len);
+
+  std::vector<PostgresDataFormat> ReadResultFormats(size_t tuple_size);
 
   std::shared_ptr<ReadBuffer> in_;
  private:
@@ -81,7 +83,6 @@ DEFINE_COMMAND(ExecuteCommand, false);
 DEFINE_COMMAND(SyncCommand, true);
 DEFINE_COMMAND(CloseCommand, false);
 DEFINE_COMMAND(TerminateCommand, true);
-DEFINE_COMMAND(NullCommand, true);
 
 } // namespace network
 } // namespace peloton

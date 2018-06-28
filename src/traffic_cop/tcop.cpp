@@ -92,11 +92,10 @@ bool tcop::PrepareStatement(ClientProcessState &state,
   return true;
 }
 
-bool tcop::ExecuteStatement(
-    ClientProcessState &state,
-    const std::vector<int> &result_format,
-    std::vector<ResultValue> &result,
-    const CallbackFunc &callback) {
+bool tcop::ExecuteStatement(ClientProcessState &state,
+                            const std::vector<int> &result_format,
+                            std::vector<ResultValue> &result,
+                            const CallbackFunc &callback) {
 
   LOG_TRACE("Execute Statement of name: %s",
             state.statement_->GetStatementName().c_str());
@@ -139,7 +138,25 @@ bool tcop::ExecuteStatement(
           state.statement_->SetNeedsReplan(false);
         }
 
-        ExecuteHelper(state, result, result_format, txn, callback);
+        auto plan = state.statement_->GetPlanTree();
+        auto params = state.param_values_;
+
+        auto on_complete = [callback, &](executor::ExecutionResult p_status,
+                                         std::vector<ResultValue> &&values) {
+          state.p_status_ = p_status;
+          state.error_message_ = std::move(p_status.m_error_message);
+          result = std::move(values);
+          callback();
+        };
+
+        auto &pool = threadpool::MonoQueuePool::GetInstance();
+        pool.SubmitTask([txn, on_complete, &] {
+          executor::PlanExecutor::ExecutePlan(state.statement_->GetPlanTree(),
+                                              txn,
+                                              state.param_values_,
+                                              result_format,
+                                              on_complete);
+        });
         return false;
       }
     }
@@ -148,33 +165,6 @@ bool tcop::ExecuteStatement(
     state.error_message_ = e.what();
     return true;
   }
-}
-
-void tcop::ExecuteHelper(
-    ClientProcessState &state,
-    std::vector<ResultValue> &result,
-    const std::vector<int> &result_format,
-    concurrency::TransactionContext *txn,
-    const CallbackFunc &callback) {
-  auto plan = state.statement_->GetPlanTree();
-  auto params = state.param_values_;
-
-  auto on_complete = [callback, &](executor::ExecutionResult p_status,
-                                   std::vector<ResultValue> &&values) {
-    state.p_status_ = p_status;
-    state.error_message_ = std::move(p_status.m_error_message);
-    result = std::move(values);
-    callback();
-  };
-
-  auto &pool = threadpool::MonoQueuePool::GetInstance();
-  pool.SubmitTask([txn, on_complete, &] {
-    executor::PlanExecutor::ExecutePlan(state.statement_->GetPlanTree(),
-                                        txn,
-                                        state.param_values_,
-                                        result_format,
-                                        on_complete);
-  });
 }
 
 } // namespace tcop

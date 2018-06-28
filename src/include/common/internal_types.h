@@ -1452,6 +1452,16 @@ enum class SSLLevel {
 using CallbackFunc = std::function<void(void)>;
 using BindParameter = std::pair<type::TypeId, std::string>;
 
+enum class PostgresDataFormat : int16_t {
+  TEXT = 0,
+  BINARY = 1
+};
+
+enum class PostgresNetworkObjectType : uchar {
+  PORTAL = 'P',
+  STATEMENT = 'S'
+};
+
 // Eigen/Matrix types used in brain
 // TODO(saatvik): Generalize Eigen utilities across all types
 typedef std::vector<std::vector<float>> matrix_t;

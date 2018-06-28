@@ -27,7 +27,7 @@ Transition PostgresProtocolInterpreter::Process(std::shared_ptr<ReadBuffer> in,
   curr_input_packet_.Clear();
   PostgresPacketWriter writer(*out);
   if (command->FlushOnComplete()) out->ForceFlush();
-  return command->Exec(*this, writer, callback, thread_id_);
+  return command->Exec(*this, writer, callback);
 }
 
 bool PostgresProtocolInterpreter::TryBuildPacket(std::shared_ptr<ReadBuffer> &in) {
@@ -95,8 +95,6 @@ std::shared_ptr<PostgresNetworkCommand> PostgresProtocolInterpreter::PacketToCom
       return MAKE_COMMAND(CloseCommand);
     case NetworkMessageType::TERMINATE_COMMAND:
       return MAKE_COMMAND(TerminateCommand);
-    case NetworkMessageType::NULL_COMMAND:
-      return MAKE_COMMAND(NullCommand);
     default:
       throw NetworkProcessException("Unexpected Packet Type: " +
           std::to_string(static_cast<int>(curr_input_packet_.msg_type_)));

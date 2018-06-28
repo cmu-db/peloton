@@ -60,14 +60,21 @@ class PostgresPacketWriter {
   }
 
   /**
-   * Write out a packet with a single byte (e.g. SSL_YES or SSL_NO). This is a
-   * special case since no size field is provided.
+   * Write out a packet with a single type. Some messages will be
+   * special cases since no size field is provided. (SSL_YES, SSL_NO)
    * @param type Type of message to write out
    */
-  inline void WriteSingleBytePacket(NetworkMessageType type) {
+  inline void WriteSingleTypePacket(NetworkMessageType type) {
     // Make sure no active packet being constructed
     PELOTON_ASSERT(curr_packet_len_ == nullptr);
-    queue_.BufferWriteRawValue(type);
+    switch (type) {
+      case NetworkMessageType::SSL_YES:
+      case NetworkMessageType::SSL_NO:
+        queue_.BufferWriteRawValue(type);
+        break;
+      default:
+        BeginPacket(type).EndPacket();
+    }
   }
 
   /**
@@ -121,7 +128,7 @@ class PostgresPacketWriter {
   }
 
   /**
-   * Append an integer of specified length onto the write queue. (1, 2, 4, or 8
+   * Append a value of specified length onto the write queue. (1, 2, 4, or 8
    * bytes). It is assumed that these bytes need to be converted to network
    * byte ordering.
    * @tparam T type of value to read off. Has to be size 1, 2, 4, or 8.
@@ -129,7 +136,7 @@ class PostgresPacketWriter {
    * @return self-reference for chaining
    */
   template<typename T>
-  inline PostgresPacketWriter &AppendInt(T val) {
+  inline PostgresPacketWriter &AppendValue(T val) {
     // We only want to allow for certain type sizes to be used
     // After the static assert, the compiler should be smart enough to throw
     // away the other cases and only leave the relevant return statement.
@@ -192,6 +199,15 @@ class PostgresPacketWriter {
   inline void WriteEmptyQueryResponse() {
     BeginPacket(NetworkMessageType::EMPTY_QUERY_RESPONSE)
         .EndPacket();
+  }
+
+  inline void WriteTupleDescriptor(const std::vector<FieldInfo> &tuple_descriptor) {
+    if (tuple_descriptor.empty()) return;
+    BeginPacket(NetworkMessageType::ROW_DESCRIPTION)
+        .AppendValue<uint16_t>(tuple_descriptor.size());
+    for (auto &col : tuple_descriptor) {
+      AppendString(std::get<0>(col))()
+    }
   }
 
   /**
