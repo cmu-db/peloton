@@ -488,7 +488,7 @@ void BytecodeBuilder::AnalyseFunction() {
     // which are labeled and explained below.
     for (llvm::BasicBlock::const_iterator instr_iterator = bb->begin();
          instr_iterator != bb->end(); ++instr_iterator, ++instruction_index) {
-      const llvm::Instruction *instruction = instr_iterator;
+      const llvm::Instruction *instruction = &(*instr_iterator);
 
       bool is_non_zero_gep = false;
       if (instruction->getOpcode() == llvm::Instruction::GetElementPtr &&
@@ -828,7 +828,7 @@ void BytecodeBuilder::TranslateFunction() {
     // Interate all instruction in the basic block
     for (llvm::BasicBlock::const_iterator instr_iterator = bb->begin();
          instr_iterator != bb->end(); ++instr_iterator) {
-      const llvm::Instruction *instruction = instr_iterator;
+      const llvm::Instruction *instruction = &(*instr_iterator);
 
       // Dispatch to the respective translator function
       switch (instruction->getOpcode()) {
