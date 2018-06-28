@@ -71,7 +71,8 @@ void PostgresNetworkCommand::ReadParamValues(std::vector<BindParameter> &bind_pa
                                   param_types[i],
                                   param_len);
           break;
-        default:throw NetworkProcessException("Unexpected format code");
+        default:
+          throw NetworkProcessException("Unexpected format code");
       }
   }
 }
@@ -231,7 +232,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
-
+  
   // TODO(Yuchen): Hack. We only process the first statement in the packet now.
   // We should store the rest of statements that will not be processed right
   // away. For the hack, in most cases, it works. Because for example in psql,
@@ -243,7 +244,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
   QueryType query_type =
       StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
   interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
-
+  
   switch (query_type) {
     case QueryType::QUERY_PREPARE: {
       std::shared_ptr<Statement> statement(nullptr);
@@ -299,8 +300,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
         return Transition::PROCEED;
       }
 
-      auto status = tcop::ExecuteStatement(state,
-                                           callback);
+      auto status = tcop::ExecuteStatement(state, callback);
       if (state.is_queuing_) return Transition::NEED_RESULT;
       interpreter.ExecQueryMessageGetResult(status);
       return Transition::PROCEED;
@@ -455,7 +455,7 @@ Transition BindCommand::Exec(PostgresProtocolInterpreter &interpreter,
   // Group the parameter types and the parameters in this vector
   std::vector<std::pair<type::TypeId, std::string>> bind_parameters;
   std::vector<type::Value> param_values;
-
+  
   auto param_types = statement->GetParamTypes();
   ReadParamValues(bind_parameters, param_values, param_types, formats);
   state.result_format_ =
@@ -483,11 +483,12 @@ Transition DescribeCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteSingleTypePacket(NetworkMessageType::NO_DATA_RESPONSE);
     return Transition::PROCEED;
   }
-
+  
   auto mode = in_->ReadValue<PostgresNetworkObjectType>();
   std::string portal_name = in_->ReadString();
   switch (mode) {
     case PostgresNetworkObjectType::PORTAL:LOG_TRACE("Describe a portal");
+
       auto portal_itr = interpreter.portals_.find(portal_name);
       // TODO: error handling here
       // Ahmed: This is causing the continuously running thread
@@ -589,6 +590,6 @@ Transition TerminateCommand(PostgresProtocolInterpreter &,
                             PostgresPacketWriter &,
                             CallbackFunc) {
   return Transition::TERMINATE;
-}\
+}
 } // namespace network
 } // namespace peloton

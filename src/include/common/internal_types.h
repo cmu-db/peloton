@@ -1457,7 +1457,11 @@ enum class PostgresDataFormat : int16_t {
   BINARY = 1
 };
 
+<<<<<<< HEAD
 enum class PostgresNetworkObjectType : uchar {
+=======
+enum class PostgresDescribeType : uchar {
+>>>>>>> aaa37d1d17aee6e14c87188c769aab3db253b19c
   PORTAL = 'P',
   STATEMENT = 'S'
 };
