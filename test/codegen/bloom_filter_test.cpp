@@ -42,7 +42,7 @@ class BloomFilterCodegenTest : public PelotonCodeGenTest {
     // Create test db
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
   }
 
@@ -50,7 +50,7 @@ class BloomFilterCodegenTest : public PelotonCodeGenTest {
     // Drop test db
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
   }
 
@@ -165,7 +165,7 @@ TEST_F(BloomFilterCodegenTest, FalsePositiveRateTest) {
     func.ReturnAndFinish();
   }
 
-  ASSERT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef void (*ftype)(codegen::util::BloomFilter * bloom_filter, int *, int,
                         int *);
@@ -213,8 +213,10 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   int curr_size = 0;
   std::vector<int> numbers;
   std::unordered_set<int> number_set;
-  auto *table1 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                           table1_name, txn);
+  auto *table1 = catalog->GetTableWithName(txn,
+                                           DEFAULT_DB_NAME,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table1_name);
   while (curr_size < table1_target_size) {
     // Find a unique random number
     int random;
@@ -234,8 +236,10 @@ TEST_F(BloomFilterCodegenTest, PerformanceTest) {
   LOG_INFO("Finish populating test1");
 
   // Load the inner table which contains twice tuples as the outer table
-  auto *table2 = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                           table2_name, txn);
+  auto *table2 = catalog->GetTableWithName(txn,
+                                           DEFAULT_DB_NAME,
+                                           DEFAULT_SCHEMA_NAME,
+                                           table2_name);
   unsigned outer_table_cardinality = numbers.size() * outer_to_inner_ratio;
   for (unsigned i = 0; i < outer_table_cardinality; i++) {
     int number;
@@ -312,6 +316,7 @@ double BloomFilterCodegenTest::ExecuteJoin(std::string query,
         *plan, executor_context.GetParams().GetQueryParametersMap(), consumer);
 
     // Run
+    compiled_query->Compile();
     compiled_query->Execute(executor_context, consumer, &stats);
 
     LOG_INFO("Execution Time: %0.0f ms", stats.plan_ms);
@@ -334,9 +339,12 @@ void BloomFilterCodegenTest::CreateTable(std::string table_name, int tuple_size,
     curr_size += bigint_size;
   }
   auto *catalog = catalog::Catalog::GetInstance();
-  catalog->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name,
-      std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)), txn);
+  catalog->CreateTable(txn,
+                       DEFAULT_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::unique_ptr<catalog::Schema>(new catalog::Schema(cols)),
+                       table_name,
+                       false);
 }
 
 // Insert a tuple to specific table

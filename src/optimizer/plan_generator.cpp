@@ -156,10 +156,35 @@ void PlanGenerator::Visit(const QueryDerivedScan *) {
 }
 
 void PlanGenerator::Visit(const PhysicalLimit *op) {
+  // Generate order by + limit plan when there's internal sort order
+  output_plan_ = std::move(children_plans_[0]);
+  if (!op->sort_exprs.empty()) {
+    vector<oid_t> column_ids;
+    PELOTON_ASSERT(children_expr_map_.size() == 1);
+    auto &child_cols_map = children_expr_map_[0];
+    for (size_t i = 0; i < output_cols_.size(); ++i) {
+      column_ids.push_back(child_cols_map[output_cols_[i]]);
+    }
+
+    PELOTON_ASSERT(op->sort_exprs.size() == op->sort_acsending.size());
+    auto sort_columns_size = op->sort_exprs.size();
+    vector<oid_t> sort_col_ids;
+    vector<bool> sort_flags;
+    for (size_t i = 0; i < sort_columns_size; ++i) {
+      sort_col_ids.push_back(child_cols_map[op->sort_exprs[i]]);
+      // planner use desc flag
+      sort_flags.push_back(!op->sort_acsending[i]);
+    }
+    unique_ptr<planner::AbstractPlan> order_by_plan(new planner::OrderByPlan(
+        sort_col_ids, sort_flags, column_ids, op->limit, op->offset));
+    order_by_plan->AddChild(std::move(output_plan_));
+    output_plan_ = std::move(order_by_plan);
+  }
+
   unique_ptr<planner::AbstractPlan> limit_plan(
       new planner::LimitPlan(op->limit, op->offset));
-  limit_plan->AddChild(move(children_plans_[0]));
-  output_plan_ = move(limit_plan);
+  limit_plan->AddChild(move(output_plan_));
+  output_plan_ = std::move(limit_plan);
 }
 
 void PlanGenerator::Visit(const PhysicalOrderBy *) {
@@ -358,7 +383,7 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   // Evaluate update expression and add to target list
   for (auto &update : *(op->updates)) {
     auto column_name = update->column;
-    auto col_id = op->target_table->GetColumnObject(column_name)->GetColumnId();
+    auto col_id = op->target_table->GetColumnCatalogEntry(column_name)->GetColumnId();
     if (update_col_ids.find(col_id) != update_col_ids.end())
       throw SyntaxException("Multiple assignments to same column " +
                             column_name);
@@ -370,7 +395,7 @@ void PlanGenerator::Visit(const PhysicalUpdate *op) {
   }
 
   // Add other columns to direct map
-  for (auto &column_id_obj_pair : op->target_table->GetColumnObjects()) {
+  for (auto &column_id_obj_pair : op->target_table->GetColumnCatalogEntries()) {
     auto &col_id = column_id_obj_pair.first;
     if (update_col_ids.find(col_id) == update_col_ids.end())
       dml.emplace_back(col_id, std::pair<oid_t, oid_t>(0, col_id));
@@ -398,12 +423,12 @@ void PlanGenerator::Visit(const PhysicalExportExternalFile *op) {
 /************************* Private Functions *******************************/
 vector<unique_ptr<expression::AbstractExpression>>
 PlanGenerator::GenerateTableTVExprs(
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   // TODO(boweic): we seems to provide all columns here, in case where there are
   // a lot of attributes and we're only visiting a few this is not efficient
   oid_t db_id = table->GetDatabaseOid();
   oid_t table_id = table->GetTableOid();
-  auto column_objects = table->GetColumnObjects();
+  auto column_objects = table->GetColumnCatalogEntries();
   vector<unique_ptr<expression::AbstractExpression>> exprs(
       column_objects.size());
   for (auto &column_id_object_pair : column_objects) {
@@ -441,7 +466,7 @@ vector<oid_t> PlanGenerator::GenerateColumnsForScan() {
 std::unique_ptr<expression::AbstractExpression>
 PlanGenerator::GeneratePredicateForScan(
     const std::shared_ptr<expression::AbstractExpression> predicate_expr,
-    const std::string &alias, shared_ptr<catalog::TableCatalogObject> table) {
+    const std::string &alias, shared_ptr<catalog::TableCatalogEntry> table) {
   if (predicate_expr == nullptr) {
     return nullptr;
   }
@@ -508,8 +533,8 @@ void PlanGenerator::BuildProjectionPlan() {
 
 void PlanGenerator::BuildAggregatePlan(
     AggregateType aggr_type,
-    const std::vector<std::shared_ptr<expression::AbstractExpression>> *
-        groupby_cols,
+    const std::vector<std::shared_ptr<expression::AbstractExpression>>
+        *groupby_cols,
     std::unique_ptr<expression::AbstractExpression> having_predicate) {
   vector<planner::AggregatePlan::AggTerm> aggr_terms;
   vector<catalog::Column> output_schema_columns;

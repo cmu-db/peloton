@@ -150,7 +150,7 @@ llvm::Value *CodeGen::CallFunc(llvm::Value *fn,
 
 llvm::Value *CodeGen::Printf(const std::string &format,
                              const std::vector<llvm::Value *> &args) {
-  auto *printf_fn = LookupBuiltin("printf");
+  auto *printf_fn = LookupBuiltin("printf").first;
   if (printf_fn == nullptr) {
 #if GCC_AT_LEAST_6
 // In newer GCC versions (i.e., GCC 6+), function attributes are part of the
@@ -183,7 +183,7 @@ llvm::Value *CodeGen::Printf(const std::string &format,
 llvm::Value *CodeGen::Memcmp(llvm::Value *ptr1, llvm::Value *ptr2,
                              llvm::Value *len) {
   static constexpr char kMemcmpFnName[] = "memcmp";
-  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName);
+  auto *memcmp_fn = LookupBuiltin(kMemcmpFnName).first;
   if (memcmp_fn == nullptr) {
 #if GCC_AT_LEAST_6
 // In newer GCC versions (i.e., GCC 6+), function attributes are part of the
@@ -311,7 +311,7 @@ llvm::Function *CodeGen::RegisterBuiltin(const std::string &fn_name,
                                          llvm::FunctionType *fn_type,
                                          void *func_impl) {
   // Check if this is already registered as a built in, quit if to
-  auto *builtin = LookupBuiltin(fn_name);
+  auto *builtin = LookupBuiltin(fn_name).first;
   if (builtin != nullptr) {
     return builtin;
   }
@@ -332,6 +332,10 @@ llvm::Type *CodeGen::LookupType(const std::string &name) const {
   return GetModule().getTypeByName(name);
 }
 
+std::pair<llvm::Function *, CodeContext::FuncPtr> CodeGen::LookupBuiltin(const std::string &name) const {
+  return code_context_.LookupBuiltin(name);
+};
+
 llvm::Value *CodeGen::GetState() const {
   auto *func_builder = code_context_.GetCurrentFunction();
   PELOTON_ASSERT(func_builder != nullptr);
@@ -344,6 +348,20 @@ llvm::Value *CodeGen::GetState() const {
 uint64_t CodeGen::SizeOf(llvm::Type *type) const {
   auto size = code_context_.GetDataLayout().getTypeSizeInBits(type) / 8;
   return size != 0 ? size : 1;
+}
+
+std::string CodeGen::Dump(const llvm::Value *value) {
+  std::string string;
+  llvm::raw_string_ostream llvm_stream(string);
+  llvm_stream << *value;
+  return llvm_stream.str();
+}
+
+std::string CodeGen::Dump(llvm::Type *type) {
+  std::string string;
+  llvm::raw_string_ostream llvm_stream(string);
+  llvm_stream << *type;
+  return llvm_stream.str();
 }
 
 uint64_t CodeGen::ElementOffset(llvm::Type *type, uint32_t element_idx) const {

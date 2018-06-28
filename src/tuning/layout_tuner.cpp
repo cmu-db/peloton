@@ -118,7 +118,7 @@ bool LayoutTuner::UpdateDefaultPartition(storage::DataTable *table) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto *txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  if (catalog->CreateDefaultLayout(database_oid, table_oid, column_map, txn) ==
+  if (catalog->CreateDefaultLayout(txn, database_oid, table_oid, column_map) ==
       nullptr) {
     txn_manager.AbortTransaction(txn);
     LOG_DEBUG("Layout Update to failed.");
@@ -127,7 +127,7 @@ bool LayoutTuner::UpdateDefaultPartition(storage::DataTable *table) {
   txn_manager.CommitTransaction(txn);
 
   UNUSED_ATTRIBUTE auto layout = table->GetDefaultLayout();
-  LOG_TRACE("Updated Layout: %s", layout.GetInfo().c_str());
+  LOG_TRACE("Updated Layout: %s", layout->GetInfo().c_str());
   return true;
 }
 

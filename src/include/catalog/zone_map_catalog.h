@@ -36,23 +36,31 @@ class ZoneMapCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumnStatistics(oid_t database_id, oid_t table_id,
-                              oid_t tile_group_id, oid_t column_id,
-                              std::string minimum, std::string maximum,
-                              std::string type, type::AbstractPool *pool,
-                              concurrency::TransactionContext *txn);
+  bool InsertColumnStatistics(concurrency::TransactionContext *txn,
+                              oid_t database_id,
+                              oid_t table_id,
+                              oid_t tile_group_id,
+                              oid_t column_id,
+                              std::string minimum,
+                              std::string maximum,
+                              std::string type,
+                              type::AbstractPool *pool);
 
-  bool DeleteColumnStatistics(oid_t database_id, oid_t table_id,
-                              oid_t tile_group_id, oid_t column_id,
-                              concurrency::TransactionContext *txn);
+  bool DeleteColumnStatistics(concurrency::TransactionContext *txn,
+                              oid_t database_id,
+                              oid_t table_id,
+                              oid_t tile_group_id,
+                              oid_t column_id);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
 
-  std::unique_ptr<std::vector<type::Value>> GetColumnStatistics(
-      oid_t database_id, oid_t table_id, oid_t tile_group_id, oid_t column_id,
-      concurrency::TransactionContext *txn);
+  std::unique_ptr<std::vector<type::Value>> GetColumnStatistics(concurrency::TransactionContext *txn,
+                                                                oid_t database_id,
+                                                                oid_t table_id,
+                                                                oid_t tile_group_id,
+                                                                oid_t column_id);
 
   enum class ColumnId {
     DATABASE_ID = 0,
@@ -64,10 +72,10 @@ class ZoneMapCatalog : public AbstractCatalog {
     TYPE = 6
   };
 
-  enum class ZoneMapOffset { 
-    MINIMUM_OFF = 0, 
-    MAXIMUM_OFF = 1, 
-    TYPE_OFF = 2 
+  enum class ZoneMapOffset {
+    MINIMUM_OFF = 0,
+    MAXIMUM_OFF = 1,
+    TYPE_OFF = 2
   };
 
  private:

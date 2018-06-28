@@ -159,8 +159,6 @@ class TransactionContext : public Printable {
                                 index_oid, DDLType::DROP));
   }
 
-  void RecordRead(const ItemPointer &);
-
   void RecordReadOwn(const ItemPointer &);
 
   void RecordUpdate(const ItemPointer &);

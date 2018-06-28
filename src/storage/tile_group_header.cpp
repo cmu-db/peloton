@@ -34,42 +34,25 @@ TileGroupHeader::TileGroupHeader(const BackendType &backend_type,
                                  const int &tuple_count)
     : backend_type(backend_type),
       tile_group(nullptr),
-      data(nullptr),
       num_tuple_slots(tuple_count),
       next_tuple_slot(0),
       tile_header_lock() {
-  header_size = num_tuple_slots * header_entry_size;
-
-  // allocate storage space for header
-  // auto &storage_manager = storage::StorageManager::GetInstance();
-  // data = reinterpret_cast<char *>(
-  // storage_manager.Allocate(backend_type, header_size));
-  data = new char[header_size];
-  PELOTON_ASSERT(data != nullptr);
-
-  // zero out the data
-  PELOTON_MEMSET(data, 0, header_size);
+  tuple_headers_.reset(new TupleHeader[tuple_count]);
 
   // Set MVCC Initial Value
   for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
        tuple_slot_id++) {
     SetTransactionId(tuple_slot_id, INVALID_TXN_ID);
+    SetLastReaderCommitId(tuple_slot_id, INVALID_CID);
     SetBeginCommitId(tuple_slot_id, MAX_CID);
     SetEndCommitId(tuple_slot_id, MAX_CID);
     SetNextItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
     SetPrevItemPointer(tuple_slot_id, INVALID_ITEMPOINTER);
+    SetIndirection(tuple_slot_id, nullptr);
   }
 
   // Initially immutabile flag to false initially.
   immutable = false;
-}
-
-TileGroupHeader::~TileGroupHeader() {
-  // reclaim the space
-  // auto &storage_manager = storage::StorageManager::GetInstance();
-  // storage_manager.Release(backend_type, data);
-  delete[] data;
-  data = nullptr;
 }
 
 //===--------------------------------------------------------------------===//
@@ -164,12 +147,6 @@ const std::string TileGroupHeader::GetInfo() const {
   }
 
   return os.str();
-}
-
-void TileGroupHeader::Sync() {
-  // Sync the tile group data
-  // auto &storage_manager = storage::StorageManager::GetInstance();
-  // storage_manager.Sync(backend_type, data, header_size);
 }
 
 void TileGroupHeader::PrintVisibility(txn_id_t txn_id, cid_t at_cid) {

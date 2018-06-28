@@ -21,9 +21,9 @@ namespace catalog {
 const std::string MultiConstraint::GetInfo() const {
   std::ostringstream os;
   os << "Constraint[" << GetName() << ", "
-     << ConstraintTypeToString(constraint_type) << " , related columns: (";
+     << ConstraintTypeToString(constraint_type_) << " , related columns: (";
   bool first = true;
-  for (auto id : column_ids) {
+  for (auto id : column_ids_) {
     if (first) {
       os << id;
       first = false;

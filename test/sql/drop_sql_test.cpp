@@ -29,7 +29,7 @@ class DropSQLTests : public PelotonTest {};
 TEST_F(DropSQLTests, DropTableTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create a table first
@@ -40,8 +40,10 @@ TEST_F(DropSQLTests, DropTableTest) {
   storage::DataTable *table;
   txn = txn_manager.BeginTransaction();
   try {
-    table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
+    table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                              DEFAULT_DB_NAME,
+                                                              DEFAULT_SCHEMA_NAME,
+                                                              "test");
   } catch (CatalogException &e) {
     table = nullptr;
   }
@@ -76,8 +78,10 @@ TEST_F(DropSQLTests, DropTableTest) {
   // Check the table does not exist
   txn = txn_manager.BeginTransaction();
   try {
-    table = catalog::Catalog::GetInstance()->GetTableWithName(
-        DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "test", txn);
+    table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                              DEFAULT_DB_NAME,
+                                                              DEFAULT_SCHEMA_NAME,
+                                                              "test");
   } catch (CatalogException &e) {
     txn_manager.CommitTransaction(txn);
     table = nullptr;
@@ -86,16 +90,17 @@ TEST_F(DropSQLTests, DropTableTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(DropSQLTests, DropIndexTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject(DEFAULT_DB_NAME, txn);
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               DEFAULT_DB_NAME);
   EXPECT_NE(nullptr, database_object);
   txn_manager.CommitTransaction(txn);
 
@@ -111,10 +116,13 @@ TEST_F(DropSQLTests, DropIndexTest) {
                       ->GetIndexCatalog();
   EXPECT_NE(nullptr, pg_index);
   // Check if the index is in catalog
-  std::shared_ptr<catalog::IndexCatalogObject> index;
+  std::shared_ptr<catalog::IndexCatalogEntry> index;
   txn = txn_manager.BeginTransaction();
   try {
-    index = pg_index->GetIndexObject("idx", DEFAULT_SCHEMA_NAME, txn);
+    index = pg_index->GetIndexCatalogEntry(txn,
+                                           database_object->GetDatabaseName(),
+                                           DEFAULT_SCHEMA_NAME,
+                                           "idx");
 
   } catch (CatalogException &e) {
     index = nullptr;
@@ -128,11 +136,14 @@ TEST_F(DropSQLTests, DropIndexTest) {
 
   // Check if index is not in catalog
   txn = txn_manager.BeginTransaction();
-  index = pg_index->GetIndexObject("idx", DEFAULT_SCHEMA_NAME, txn);
+  index = pg_index->GetIndexCatalogEntry(txn,
+                                         database_object->GetDatabaseName(),
+                                         DEFAULT_SCHEMA_NAME,
+                                         "idx");
   EXPECT_EQ(index, nullptr);
 
   //  Free the database just created
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

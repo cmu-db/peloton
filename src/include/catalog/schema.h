@@ -92,16 +92,16 @@ class Schema : public Printable {
   //===--------------------------------------------------------------------===//
 
   inline size_t GetOffset(const oid_t column_id) const {
-    return columns[column_id].GetOffset();
+    return columns_[column_id].GetOffset();
   }
 
   inline type::TypeId GetType(const oid_t column_id) const {
-    return columns[column_id].GetType();
+    return columns_[column_id].GetType();
   }
 
   // Return appropriate length based on whether column is inlined
   inline size_t GetAppropriateLength(const oid_t column_id) const {
-    auto is_inlined = columns[column_id].IsInlined();
+    auto is_inlined = columns_[column_id].IsInlined();
     size_t column_length;
 
     if (is_inlined) {
@@ -115,19 +115,19 @@ class Schema : public Printable {
 
   // Returns fixed length
   inline size_t GetLength(const oid_t column_id) const {
-    return columns[column_id].GetLength();
+    return columns_[column_id].GetLength();
   }
 
   inline size_t GetVariableLength(const oid_t column_id) const {
-    return columns[column_id].GetVariableLength();
+    return columns_[column_id].GetVariableLength();
   }
 
   inline bool IsInlined(const oid_t column_id) const {
-    return columns[column_id].IsInlined();
+    return columns_[column_id].IsInlined();
   }
 
   inline const Column &GetColumn(const oid_t column_id) const {
-    return columns[column_id];
+    return columns_[column_id];
   }
 
   /**
@@ -138,8 +138,8 @@ class Schema : public Printable {
    */
   inline oid_t GetColumnID(std::string col_name) const {
     oid_t index = INVALID_OID;
-    for (oid_t i = 0, cnt = columns.size(); i < cnt; ++i) {
-      if (columns[i].GetName() == col_name) {
+    for (oid_t i = 0, cnt = columns_.size(); i < cnt; ++i) {
+      if (columns_[i].GetName() == col_name) {
         index = i;
         break;
       }
@@ -148,23 +148,23 @@ class Schema : public Printable {
   }
 
   inline oid_t GetUninlinedColumn(const oid_t column_id) const {
-    return uninlined_columns[column_id];
+    return uninlined_columns_[column_id];
   }
 
-  inline const std::vector<Column> &GetColumns() const { return columns; }
+  inline const std::vector<Column> &GetColumns() const { return columns_; }
 
   // Return the number of columns in the schema for the tuple.
-  inline size_t GetColumnCount() const { return column_count; }
+  inline size_t GetColumnCount() const { return column_count_; }
 
   inline oid_t GetUninlinedColumnCount() const {
-    return uninlined_column_count;
+    return uninlined_column_count_;
   }
 
   // Return the number of bytes used by one tuple.
-  inline oid_t GetLength() const { return length; }
+  inline oid_t GetLength() const { return length_; }
 
   // Returns a flag indicating whether all columns are inlined
-  inline bool IsInlined() const { return tuple_is_inlined; }
+  inline bool IsInlined() const { return tuple_is_inlined_; }
 
   inline void SetIndexedColumns(const std::vector<oid_t> &indexed_columns) {
     indexed_columns_ = indexed_columns;
@@ -176,7 +176,7 @@ class Schema : public Printable {
 
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
-    for (auto constraint : columns[column_id].GetConstraints()) {
+    for (auto constraint : columns_[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::NOTNULL) return false;
     }
     return true;
@@ -184,7 +184,7 @@ class Schema : public Printable {
 
   // For single column default
   inline bool AllowDefault(const oid_t column_id) const {
-    for (auto constraint : columns[column_id].GetConstraints()) {
+    for (auto constraint : columns_[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
         return true;
       }
@@ -194,8 +194,8 @@ class Schema : public Printable {
   }
 
   // Get the default value for the column
-  inline type::Value* GetDefaultValue(const oid_t column_id) const {
-    for (auto constraint : columns[column_id].GetConstraints()) {
+  inline type::Value *GetDefaultValue(const oid_t column_id) const {
+    for (auto constraint : columns_[column_id].GetConstraints()) {
       if (constraint.GetType() == ConstraintType::DEFAULT) {
         return constraint.getDefaultValue();
       }
@@ -207,25 +207,25 @@ class Schema : public Printable {
   // Add constraint for column by id
   inline void AddConstraint(oid_t column_id,
                             const catalog::Constraint &constraint) {
-    columns[column_id].AddConstraint(constraint);
+    columns_[column_id].AddConstraint(constraint);
   }
 
   // Add constraint for column by name
   inline void AddConstraint(std::string column_name,
                             const catalog::Constraint &constraint) {
-    for (size_t column_itr = 0; column_itr < columns.size(); column_itr++) {
-      if (columns[column_itr].GetName() == column_name) {
-        columns[column_itr].AddConstraint(constraint);
+    for (size_t column_itr = 0; column_itr < columns_.size(); column_itr++) {
+      if (columns_[column_itr].GetName() == column_name) {
+        columns_[column_itr].AddConstraint(constraint);
       }
     }
   }
 
   inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {
-    multi_constraints.push_back(mc);
+    multi_constraints_.push_back(mc);
   }
 
   inline std::vector<MultiConstraint> GetMultiConstraints() {
-    return multi_constraints;
+    return multi_constraints_;
   }
 
   // Get a string representation for debugging
@@ -233,24 +233,24 @@ class Schema : public Printable {
 
  private:
   // size of fixed length columns
-  size_t length;
+  size_t length_;
 
   // all inlined and uninlined columns in the tuple
-  std::vector<Column> columns;
+  std::vector<Column> columns_;
 
   // keeps track of unlined columns
-  std::vector<oid_t> uninlined_columns;
+  std::vector<oid_t> uninlined_columns_;
 
   // keeps multi_constraints
-  std::vector<MultiConstraint> multi_constraints;
+  std::vector<MultiConstraint> multi_constraints_;
 
   // keep these in sync with the vectors above
-  oid_t column_count = INVALID_OID;
+  oid_t column_count_ = INVALID_OID;
 
-  oid_t uninlined_column_count = INVALID_OID;
+  oid_t uninlined_column_count_ = INVALID_OID;
 
   // are all columns inlined
-  bool tuple_is_inlined;
+  bool tuple_is_inlined_;
 
   // keeps track of indexed columns in original table
   std::vector<oid_t> indexed_columns_;

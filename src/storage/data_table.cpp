@@ -67,7 +67,7 @@ DataTable::DataTable(catalog::Schema *schema, const std::string &table_name,
       database_oid(database_oid),
       table_name(table_name),
       tuples_per_tilegroup_(tuples_per_tilegroup),
-      current_layout_oid_(ATOMIC_VAR_INIT(COLUMN_STORE_OID)),
+      current_layout_oid_(ATOMIC_VAR_INIT(COLUMN_STORE_LAYOUT_OID)),
       adapt_table_(adapt_table),
       trigger_list_(new trigger::TriggerList()) {
   if (is_catalog == true) {
@@ -1370,8 +1370,6 @@ void DataTable::ClearIndexSamples() {
   }
 }
 
-const Layout &DataTable::GetDefaultLayout() const { return *default_layout_; }
-
 void DataTable::AddTrigger(trigger::Trigger new_trigger) {
   trigger_list_->AddTrigger(new_trigger);
 }
@@ -1393,9 +1391,9 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 void DataTable::UpdateTriggerListFromCatalog(
     concurrency::TransactionContext *txn) {
   trigger_list_ = catalog::Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
-                      ->GetTriggerCatalog()
-                      ->GetTriggers(table_oid, txn);
+      ->GetSystemCatalogs(database_oid)
+      ->GetTriggerCatalog()
+      ->GetTriggers(txn, table_oid);
 }
 
 hash_t DataTable::Hash() const {

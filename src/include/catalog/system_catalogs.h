@@ -40,13 +40,14 @@ class SystemCatalogs {
  public:
   SystemCatalogs() = delete;
 
-  SystemCatalogs(storage::Database *database, type::AbstractPool *pool,
-                 concurrency::TransactionContext *txn);
+  SystemCatalogs(concurrency::TransactionContext *txn,
+                 storage::Database *database,
+                 type::AbstractPool *pool);
 
   ~SystemCatalogs();
 
-  void Bootstrap(const std::string &database_name,
-                 concurrency::TransactionContext *txn);
+  void Bootstrap(concurrency::TransactionContext *txn,
+                 const std::string &database_name);
 
   //===--------------------------------------------------------------------===//
   // GET FUNCTIONS

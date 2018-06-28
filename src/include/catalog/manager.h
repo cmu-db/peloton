@@ -57,9 +57,9 @@ class Manager {
 
   void DropIndirectionArray(const oid_t oid);
 
-  void ClearIndirectionArray(void);
+  void ClearIndirectionArray();
 
-  Manager(Manager const &) = delete;
+  DISALLOW_COPY(Manager)
 
  private:
 

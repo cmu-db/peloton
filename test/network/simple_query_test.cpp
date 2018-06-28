@@ -18,7 +18,7 @@
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 #include "network/postgres_protocol_handler.h"
-#include "network/connection_handle_factory.h"
+#include "network/network_io_wrapper_factory.h"
 
 #define NUM_THREADS 1
 
@@ -40,14 +40,6 @@ void *SimpleQueryTest(int port) {
     pqxx::connection C(StringUtil::Format(
         "host=127.0.0.1 port=%d user=default_database sslmode=disable application_name=psql", port));
     pqxx::work txn1(C);
-
-    peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance().ConnectionHandleAt(
-            peloton::network::PelotonServer::recent_connfd).get();
-
-    network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler*>(conn->GetProtocolHandler().get());
-    EXPECT_NE(handler, nullptr);
 
     // EXPECT_EQ(conn->state, peloton::network::READ);
     // create table and insert some data

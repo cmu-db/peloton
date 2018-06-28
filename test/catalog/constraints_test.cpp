@@ -106,7 +106,7 @@ TEST_F(ConstraintsTests, NOTNULLTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 #endif
@@ -236,9 +236,11 @@ TEST_F(ConstraintsTests, UNIQUETest) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({column1, column2}));
   std::string table_name("TEST_TABLE");
-  catalog::Catalog::GetInstance()->CreateTable(DEFAULT_DB_NAME,
-                                               DEFAULT_SCHEMA_NAME, table_name,
-                                               std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(txn, DEFAULT_DB_NAME,
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
+                                               table_name,
+                                               false);
   storage::DataTable *table = catalog::Catalog::GetInstance()->GetTableWithName(
       DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, table_name, txn);
   txn_manager.CommitTransaction(txn);

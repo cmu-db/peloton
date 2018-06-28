@@ -14,7 +14,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
-#include "network/connection_handle_factory.h"
+#include "network/network_io_wrapper_factory.h"
 #include "network/peloton_server.h"
 #include "network/postgres_protocol_handler.h"
 #include "network/protocol_handler_factory.h"
@@ -57,16 +57,6 @@ void *TestRoutine(int port) {
         port, client_key.c_str(), client_crt.c_str(), root_crt.c_str()));
 
     pqxx::work txn1(C);
-
-    peloton::network::ConnectionHandle *conn =
-        peloton::network::ConnectionHandleFactory::GetInstance()
-            .ConnectionHandleAt(peloton::network::PelotonServer::recent_connfd)
-            .get();
-
-    network::PostgresProtocolHandler *handler =
-        dynamic_cast<network::PostgresProtocolHandler *>(
-            conn->GetProtocolHandler().get());
-    EXPECT_NE(handler, nullptr);
 
     // basic test
     // create table and insert some data
