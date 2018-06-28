@@ -1075,7 +1075,7 @@ ResultType Catalog::AddForeignKeyConstraint(concurrency::TransactionContext *txn
             src_table_object->GetTableName().c_str(),
             catalog_map_[database_oid]
                 ->GetTableCatalog()
-                ->GetTableObject(sink_table_oid, txn)
+                ->GetTableCatalogEntry(sink_table_oid, txn)
                 ->GetTableName()
                 .c_str());
 
@@ -1551,7 +1551,7 @@ ResultType Catalog::DropConstraint(concurrency::TransactionContext *txn,
       ConstraintTypeToString(constraint_object->GetConstraintType()).c_str(),
       catalog_map_[database_oid]
           ->GetTableCatalog()
-          ->GetTableObject(table_oid, txn)
+          ->GetTableCatalogEntry(txn, table_oid)
           ->GetTableName()
           .c_str());
 
