@@ -45,41 +45,47 @@ class AbstractCatalog {
 
  protected:
   /* For pg_database, pg_table, pg_index, pg_column */
-  AbstractCatalog(oid_t catalog_table_oid, std::string catalog_table_name,
+  AbstractCatalog(storage::Database *pg_catalog,
                   catalog::Schema *catalog_table_schema,
-                  storage::Database *pg_catalog);
+                  oid_t catalog_table_oid,
+                  std::string catalog_table_name);
 
   /* For other catalogs */
-  AbstractCatalog(const std::string &catalog_table_ddl,
-                  concurrency::TransactionContext *txn);
+  AbstractCatalog(concurrency::TransactionContext *txn,
+                  const std::string &catalog_table_ddl);
 
   //===--------------------------------------------------------------------===//
   // Helper Functions
   //===--------------------------------------------------------------------===//
-  bool InsertTuple(std::unique_ptr<storage::Tuple> tuple,
-                   concurrency::TransactionContext *txn);
+  bool InsertTuple(concurrency::TransactionContext *txn,
+                   std::unique_ptr<storage::Tuple> tuple);
 
-  bool DeleteWithIndexScan(oid_t index_offset, std::vector<type::Value> values,
-                           concurrency::TransactionContext *txn);
-
-  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-  GetResultWithIndexScan(std::vector<oid_t> column_offsets, oid_t index_offset,
-                         std::vector<type::Value> values,
-                         concurrency::TransactionContext *txn) const;
-
-  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
-  GetResultWithSeqScan(std::vector<oid_t> column_offsets,
-                       expression::AbstractExpression *predicate,
-                       concurrency::TransactionContext *txn);
-
-  bool UpdateWithIndexScan(std::vector<oid_t> update_columns,
-                           std::vector<type::Value> update_values,
-                           std::vector<type::Value> scan_values,
+  bool DeleteWithIndexScan(concurrency::TransactionContext *txn,
                            oid_t index_offset,
-                           concurrency::TransactionContext *txn);
+                           std::vector<type::Value> values);
 
-  void AddIndex(const std::vector<oid_t> &key_attrs, oid_t index_oid,
-                const std::string &index_name,
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithIndexScan(
+      concurrency::TransactionContext *txn,
+      std::vector<oid_t> column_offsets,
+      oid_t index_offset,
+      std::vector<type::Value> values) const;
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithSeqScan(
+      concurrency::TransactionContext *txn,
+      expression::AbstractExpression *predicate,
+      std::vector<oid_t> column_offsets);
+
+  bool UpdateWithIndexScan(concurrency::TransactionContext *txn,
+                           oid_t index_offset,
+                           std::vector<type::Value> scan_values,
+                           std::vector<oid_t> update_columns,
+                           std::vector<type::Value> update_values);
+
+  void AddIndex(const std::string &index_name,
+                oid_t index_oid,
+                const std::vector<oid_t> &key_attrs,
                 IndexConstraintType index_constraint);
 
   //===--------------------------------------------------------------------===//
@@ -87,9 +93,9 @@ class AbstractCatalog {
   //===--------------------------------------------------------------------===//
 
   // Maximum column name size for catalog schemas
-  static const size_t max_name_size = 64;
+  static const size_t max_name_size_ = 64;
   // which database catalog table is stored int
-  oid_t database_oid;
+  oid_t database_oid_;
   // Local oid (without catalog type mask) starts from START_OID + OID_OFFSET
   std::atomic<oid_t> oid_ = ATOMIC_VAR_INIT(START_OID + OID_OFFSET);
 

@@ -44,7 +44,7 @@ TEST_F(CopyTests, Copying) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   const auto &db_name = "emp_db";
-  catalog->CreateDatabase(db_name, txn);
+  catalog->CreateDatabase(txn, db_name);
   txn_manager.CommitTransaction(txn);
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -158,7 +158,7 @@ TEST_F(CopyTests, Copying) {
   txn_manager.CommitTransaction(txn);
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName("emp_db", txn);
+  catalog->DropDatabaseWithName(txn, "emp_db");
   txn_manager.CommitTransaction(txn);
 }
 

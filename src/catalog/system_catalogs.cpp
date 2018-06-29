@@ -27,19 +27,19 @@ namespace catalog {
  * @param   database    the database which the catalog tables belongs to
  * @param   txn         TransactionContext
  */
-SystemCatalogs::SystemCatalogs(storage::Database *database,
-                               type::AbstractPool *pool,
-                               concurrency::TransactionContext *txn)
+SystemCatalogs::SystemCatalogs(concurrency::TransactionContext *txn,
+                               storage::Database *database,
+                               type::AbstractPool *pool)
     : pg_trigger_(nullptr),
       pg_table_metrics_(nullptr),
       pg_index_metrics_(nullptr),
       pg_query_metrics_(nullptr) {
   oid_t database_oid = database->GetOid();
-  pg_attribute_ = new ColumnCatalog(database, pool, txn);
-  pg_namespace_ = new SchemaCatalog(database, pool, txn);
-  pg_table_ = new TableCatalog(database, pool, txn);
-  pg_index_ = new IndexCatalog(database, pool, txn);
-  pg_layout_ = new LayoutCatalog(database, pool, txn);
+  pg_attribute_ = new ColumnCatalog(txn, database, pool);
+  pg_namespace_ = new SchemaCatalog(txn, database, pool);
+  pg_table_ = new TableCatalog(txn, database, pool);
+  pg_index_ = new IndexCatalog(txn, database, pool);
+  pg_layout_ = new LayoutCatalog(txn, database, pool);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert column information into pg_attribute
@@ -57,11 +57,16 @@ SystemCatalogs::SystemCatalogs(storage::Database *database,
              ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
              ->GetSchema()
              ->GetColumns()) {
-      pg_attribute_->InsertColumn(shared_tables[i].second, column.GetName(),
-                                  column_id, column.GetOffset(),
-                                  column.GetType(), column.GetLength(),
-                                  column.IsInlined(), column.GetConstraints(),
-                                  pool, txn);
+      pg_attribute_->InsertColumn(txn,
+                                  shared_tables[i].second,
+                                  column_id,
+                                  column.GetName(),
+                                  column.GetOffset(),
+                                  column.GetType(),
+                                  column.GetLength(),
+                                  column.GetConstraints(),
+                                  column.IsInlined(),
+                                  pool);
       column_id++;
     }
   }
@@ -84,12 +89,12 @@ SystemCatalogs::~SystemCatalogs() {
  * @param   database_name    the database which the namespace belongs to
  * @param   txn              TransactionContext
  */
-void SystemCatalogs::Bootstrap(const std::string &database_name,
-                               concurrency::TransactionContext *txn) {
+void SystemCatalogs::Bootstrap(concurrency::TransactionContext *txn,
+                               const std::string &database_name) {
   LOG_DEBUG("Bootstrapping database: %s", database_name.c_str());
 
   if (!pg_trigger_) {
-    pg_trigger_ = new TriggerCatalog(database_name, txn);
+    pg_trigger_ = new TriggerCatalog(txn, database_name);
   }
 
   // if (!pg_proc) {
@@ -97,15 +102,15 @@ void SystemCatalogs::Bootstrap(const std::string &database_name,
   // }
 
   if (!pg_table_metrics_) {
-    pg_table_metrics_ = new TableMetricsCatalog(database_name, txn);
+    pg_table_metrics_ = new TableMetricsCatalog(txn, database_name);
   }
 
   if (!pg_index_metrics_) {
-    pg_index_metrics_ = new IndexMetricsCatalog(database_name, txn);
+    pg_index_metrics_ = new IndexMetricsCatalog(txn, database_name);
   }
 
   if (!pg_query_metrics_) {
-    pg_query_metrics_ = new QueryMetricsCatalog(database_name, txn);
+    pg_query_metrics_ = new QueryMetricsCatalog(txn, database_name);
   }
 
   // Reset oid of each catalog to avoid collisions between catalog

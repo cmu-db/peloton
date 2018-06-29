@@ -41,8 +41,11 @@ void QueryLogger::LogQuery(std::string query_string, uint64_t timestamp) {
 
   // Log query + fingerprint
   auto &query_history_catalog = catalog::QueryHistoryCatalog::GetInstance();
-  query_history_catalog.InsertQueryHistory(
-      query_string, fingerprint.GetFingerprint(), timestamp, nullptr, txn);
+  query_history_catalog.InsertQueryHistory(txn,
+                                           query_string,
+                                           fingerprint.GetFingerprint(),
+                                           timestamp,
+                                           nullptr);
 
   // We're done
   txn_manager.CommitTransaction(txn);

@@ -54,7 +54,10 @@ class SettingsManager : public Printable {
                 concurrency::TransactionContext *txn = nullptr);
 
   // Reset a setting value to a default value
-  void ResetValue(SettingId id, concurrency::TransactionContext *txn);
+  // This can be called without txn before calling InitializeCatalog().
+  // If set_default is true, then set default_value in addition to value.
+  void ResetValue(SettingId id,
+                  concurrency::TransactionContext *txn = nullptr);
 
   // Call this method in Catalog->Bootstrap
   // to store information into pg_settings

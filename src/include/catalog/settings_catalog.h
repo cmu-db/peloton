@@ -61,15 +61,20 @@ class SettingsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertSetting(const std::string &name, const std::string &value,
-                     type::TypeId value_type, const std::string &description,
-                     const std::string &min_value, const std::string &max_value,
-                     const std::string &default_value, bool is_mutable,
-                     bool is_persistent, type::AbstractPool *pool,
-                     concurrency::TransactionContext *txn);
+  bool InsertSetting(concurrency::TransactionContext *txn,
+                     const std::string &name,
+                     const std::string &value,
+                     type::TypeId value_type,
+                     const std::string &description,
+                     const std::string &min_value,
+                     const std::string &max_value,
+                     const std::string &default_value,
+                     bool is_mutable,
+                     bool is_persistent,
+                     type::AbstractPool *pool);
 
-  bool DeleteSetting(const std::string &name,
-                     concurrency::TransactionContext *txn);
+  bool DeleteSetting(concurrency::TransactionContext *txn,
+                     const std::string &name);
 
   bool UpdateSettingValue(concurrency::TransactionContext *txn,
                           const std::string &name, const std::string &value,
@@ -78,8 +83,9 @@ class SettingsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<SettingsCatalogEntry> GetSettingsCatalogEntry(
-      const std::string &name, concurrency::TransactionContext *txn);
+  std::shared_ptr<SettingsCatalogEntry>
+  GetSettingsCatalogEntry(concurrency::TransactionContext *txn,
+                          const std::string &name);
 
   std::unordered_map<std::string, std::shared_ptr<SettingsCatalogEntry>>
   GetSettingsCatalogEntries(concurrency::TransactionContext *txn);

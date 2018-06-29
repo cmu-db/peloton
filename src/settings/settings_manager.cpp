@@ -225,7 +225,8 @@ void SettingsManager::UpdateSettingListFromCatalog(
 
   // Update each setting value from pg_settings
   for (auto param = settings_.begin(); param != settings_.end(); param++) {
-    auto setting_entry = settings_catalog.GetSettingsCatalogEntry(param->second.name, txn);
+    auto setting_entry =
+        settings_catalog.GetSettingsCatalogEntry(txn, param->second.name);
 
     if (setting_entry != nullptr) {
       // Set the setting value and the default value
@@ -307,16 +308,22 @@ bool SettingsManager::InsertCatalog(const Param &param,
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
 
   // Check a same setting is not existed
-  if (settings_catalog.GetSettingsCatalogEntry(param.name, txn) != nullptr) {
+  if (settings_catalog.GetSettingsCatalogEntry(txn, param.name) != nullptr) {
     LOG_ERROR("The setting %s is already existed", param.name.c_str());
     return false;
   }
 
-  if (!settings_catalog.InsertSetting(
-          param.name, param.value.ToString(), param.value.GetTypeId(),
-          param.desc, param.min_value.ToString(), param.max_value.ToString(),
-          param.default_value.ToString(), param.is_mutable, param.is_persistent,
-          pool_.get(), txn)) {
+  if (!settings_catalog.InsertSetting(txn,
+                                      param.name,
+                                      param.value.ToString(),
+                                      param.value.GetTypeId(),
+                                      param.desc,
+                                      param.min_value.ToString(),
+                                      param.max_value.ToString(),
+                                      param.default_value.ToString(),
+                                      param.is_mutable,
+                                      param.is_persistent,
+                                      pool_.get())) {
     return false;
   }
   return true;
@@ -333,7 +340,8 @@ bool SettingsManager::UpdateCatalog(const std::string &name,
                                     const type::Value &value, bool set_default,
                                     concurrency::TransactionContext *txn) {
   auto &settings_catalog = catalog::SettingsCatalog::GetInstance();
-  if (!settings_catalog.UpdateSettingValue(txn, name, value.ToString(),
+  if (!settings_catalog.UpdateSettingValue(txn, name,
+                                           value.ToString(),
                                            set_default)) {
     return false;
   }

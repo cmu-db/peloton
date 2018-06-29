@@ -44,7 +44,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   LOG_TRACE("Bootstrapping...");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   LOG_TRACE("Bootstrapping completed!");
@@ -170,8 +170,10 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
   traffic_cop.CommitQueryHelper();
 
   txn = txn_manager.BeginTransaction();
-  auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                         DEFAULT_DB_NAME,
+                                                                         DEFAULT_SCHEMA_NAME,
+                                                                         "department_table");
   // Expected 1 , Primary key index + created index
   EXPECT_EQ(target_table_->GetIndexCount(), 2);
   txn_manager.CommitTransaction(txn);
@@ -247,7 +249,7 @@ TEST_F(OldOptimizerTests, UpdateDelWithIndexScanTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

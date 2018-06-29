@@ -72,7 +72,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create table
@@ -84,9 +84,12 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(txn,
+                                               DEFAULT_DB_NAME,
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
+                                               "department_table",
+                                               false);
   txn_manager.CommitTransaction(txn);
 
   // DELETE FROM department_table WHERE id = $0
@@ -99,8 +102,10 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   auto *scan_expr = new expression::ComparisonExpression(
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                        DEFAULT_DB_NAME,
+                                                                        DEFAULT_SCHEMA_NAME,
+                                                                        "department_table");
 
   // Create delete plan
   std::unique_ptr<planner::DeletePlan> delete_plan(
@@ -128,7 +133,7 @@ TEST_F(PlannerTest, DeletePlanTestParameter) {
   delete_plan->SetParameterValues(&values);
 
   // free the database just created
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -136,7 +141,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create table
@@ -148,9 +153,12 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(txn,
+                                               DEFAULT_DB_NAME,
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
+                                               "department_table",
+                                               false);
   txn_manager.CommitTransaction(txn);
 
   // UPDATE department_table SET name = $0 WHERE id = $1
@@ -158,8 +166,10 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
 
   auto table_name = std::string("department_table");
   auto database_name = DEFAULT_DB_NAME;
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      database_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                        database_name,
+                                                                        DEFAULT_SCHEMA_NAME,
+                                                                        table_name);
   auto schema = target_table->GetSchema();
 
   TargetList tlist;
@@ -225,7 +235,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -233,7 +243,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create table
@@ -245,9 +255,12 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  auto ret = catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  auto ret = catalog::Catalog::GetInstance()->CreateTable(txn,
+                                                          DEFAULT_DB_NAME,
+                                                          DEFAULT_SCHEMA_NAME,
+                                                          std::move(table_schema),
+                                                          "department_table",
+                                                          false);
   if (ret != ResultType::SUCCESS) LOG_TRACE("create table failed");
   txn_manager.CommitTransaction(txn);
 
@@ -275,8 +288,10 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
   parameter_exprs.push_back(
       std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                        DEFAULT_DB_NAME,
+                                                                        DEFAULT_SCHEMA_NAME,
+                                                                        "department_table");
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(target_table, &insert_statement->columns,
@@ -299,7 +314,7 @@ TEST_F(PlannerTest, InsertPlanTestParameter) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -307,7 +322,7 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
   // Bootstrapping peloton
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   // Create table
@@ -319,9 +334,12 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(txn,
+                                               DEFAULT_DB_NAME,
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
+                                               "department_table",
+                                               false);
   txn_manager.CommitTransaction(txn);
 
   // INSERT INTO department_table VALUES (1, $1)
@@ -353,8 +371,10 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
   exprs.push_back(
       std::unique_ptr<expression::AbstractExpression>(parameter_expr_2));
 
-  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  auto target_table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                        DEFAULT_DB_NAME,
+                                                                        DEFAULT_SCHEMA_NAME,
+                                                                        "department_table");
 
   std::unique_ptr<planner::InsertPlan> insert_plan(
       new planner::InsertPlan(target_table, &insert_statement->columns,
@@ -375,7 +395,7 @@ TEST_F(PlannerTest, InsertPlanTestParameterColumns) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

@@ -20,10 +20,10 @@ namespace catalog {
 const std::string Constraint::GetInfo() const {
   std::ostringstream os;
   os << "Constraint[" << GetName() << ", "
-     << ConstraintTypeToString(constraint_type);
+     << ConstraintTypeToString(constraint_type_);
 
   if (GetType() == ConstraintType::CHECK) {
-    os << ", " << exp.first << " " << exp.second.GetInfo();
+    os << ", " << exp_.first << " " << exp_.second.GetInfo();
   }
   os << "]";
   return os.str();

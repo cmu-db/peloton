@@ -45,11 +45,11 @@ TEST_F(DropTests, DroppingDatabase) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
 
-  catalog->CreateDatabase(TEST_DB_NAME, txn);
+  catalog->CreateDatabase(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  EXPECT_TRUE(catalog->GetDatabaseObject(TEST_DB_NAME, txn).get() != NULL);
+  EXPECT_TRUE(catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME).get() != NULL);
   txn_manager.CommitTransaction(txn);
 
   parser::DropStatement drop_statement(
@@ -70,7 +70,7 @@ TEST_F(DropTests, DroppingDatabase) {
 
   // The database should be deleted now
   txn = txn_manager.BeginTransaction();
-  EXPECT_ANY_THROW(catalog->GetDatabaseObject(TEST_DB_NAME, txn););
+  EXPECT_ANY_THROW(catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME););
   txn_manager.CommitTransaction(txn);
 }
 
@@ -93,40 +93,50 @@ TEST_F(DropTests, DroppingTable) {
   std::unique_ptr<catalog::Schema> table_schema2(
       new catalog::Schema({id_column, name_column}));
 
-  catalog->CreateDatabase(TEST_DB_NAME, txn);
+  catalog->CreateDatabase(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-                       std::move(table_schema), txn);
+  catalog->CreateTable(txn,
+                       TEST_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "department_table",
+                       false);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table_2",
-                       std::move(table_schema2), txn);
+  catalog->CreateTable(txn,
+                       TEST_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema2),
+                       "department_table_2",
+                       false);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   // NOTE: everytime we create a database, there will be 9 catalog tables
   // inside. In this test case, we have created two additional tables.
   oid_t expeected_table_count = CATALOG_TABLES_COUNT + 2;
-  EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
-                ->GetTableObjects()
-                .size(),
+  EXPECT_EQ((int) catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
+      .size(),
             expeected_table_count);
 
   // Now dropping the table using the executor
-  catalog->DropTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-                     txn);
+  catalog->DropTable(txn,
+                     TEST_DB_NAME,
+                     DEFAULT_SCHEMA_NAME,
+                     "department_table");
   // Account for the dropped table.
   expeected_table_count--;
-  EXPECT_EQ((int)catalog->GetDatabaseObject(TEST_DB_NAME, txn)
-                ->GetTableObjects()
-                .size(),
+  EXPECT_EQ((int) catalog->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
+      .size(),
             expeected_table_count);
 
   // free the database just created
-  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
+  catalog->DropDatabaseWithName(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -149,12 +159,16 @@ TEST_F(DropTests, DroppingTrigger) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog->CreateDatabase(TEST_DB_NAME, txn);
+  catalog->CreateDatabase(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-                       std::move(table_schema), txn);
+  catalog->CreateTable(txn,
+                       TEST_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "department_table",
+                       false);
   txn_manager.CommitTransaction(txn);
 
   // Create a trigger
@@ -184,8 +198,10 @@ TEST_F(DropTests, DroppingTrigger) {
 
   // Check the effect of creation
   storage::DataTable *target_table =
-      catalog::Catalog::GetInstance()->GetTableWithName(
-          TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+      catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                        TEST_DB_NAME,
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "department_table");
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(1, target_table->GetTriggerNumber());
   trigger::Trigger *new_trigger = target_table->GetTriggerByIndex(0);
@@ -217,17 +233,19 @@ TEST_F(DropTests, DroppingTrigger) {
 
   // Now dropping the table using the executer
   txn = txn_manager.BeginTransaction();
-  catalog->DropTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table",
-                     txn);
-  EXPECT_EQ(CATALOG_TABLES_COUNT, (int)catalog::Catalog::GetInstance()
-                                      ->GetDatabaseObject(TEST_DB_NAME, txn)
-                                      ->GetTableObjects()
-                                      .size());
+  catalog->DropTable(txn,
+                     TEST_DB_NAME,
+                     DEFAULT_SCHEMA_NAME,
+                     "department_table");
+  EXPECT_EQ(CATALOG_TABLES_COUNT, (int) catalog::Catalog::GetInstance()
+      ->GetDatabaseCatalogEntry(txn, TEST_DB_NAME)
+      ->GetTableCatalogEntries()
+      .size());
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
+  catalog->DropDatabaseWithName(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -240,7 +258,7 @@ TEST_F(DropTests, DroppingIndexByName) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // create database
-  catalog->CreateDatabase(TEST_DB_NAME, txn);
+  catalog->CreateDatabase(txn, TEST_DB_NAME);
   // Insert a table first
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -255,60 +273,81 @@ TEST_F(DropTests, DroppingIndexByName) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog->CreateTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table_01",
-                       std::move(table_schema), txn);
+  catalog->CreateTable(txn,
+                       TEST_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "department_table_01",
+                       false);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  auto source_table = catalog->GetTableWithName(
-      TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table_01", txn);
+  auto source_table = catalog->GetTableWithName(txn,
+                                                TEST_DB_NAME,
+                                                DEFAULT_SCHEMA_NAME,
+                                                "department_table_01");
   oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
   std::string index_name1 = "Testing_Drop_Index_By_Name";
-  catalog->CreateIndex(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table_01",
-                       source_col_ids, index_name1, false, IndexType::BWTREE,
-                       txn);
+  catalog->CreateIndex(txn,
+                       TEST_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       "department_table_01",
+                       index_name1,
+                       source_col_ids,
+                       false,
+                       IndexType::BWTREE);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   // retrieve pg_index catalog table
   auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject(TEST_DB_NAME, txn);
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               TEST_DB_NAME);
   EXPECT_NE(nullptr, database_object);
 
   auto pg_index = catalog::Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_object->GetDatabaseOid())
-                      ->GetIndexCatalog();
+      ->GetSystemCatalogs(database_object->GetDatabaseOid())
+      ->GetIndexCatalog();
   auto index_object =
-      pg_index->GetIndexObject(database_object->GetDatabaseName(),
-                               index_name1, DEFAULT_SCHEMA_NAME, txn);
+      pg_index->GetIndexCatalogEntry(txn,
+                                     database_object->GetDatabaseName(),
+                                     DEFAULT_SCHEMA_NAME,
+                                     index_name1);
   EXPECT_NE(nullptr, index_object);
   // Check the effect of drop
   // Most major check in this test case
   // Now dropping the index using the DropIndex functionality
-  catalog->DropIndex(database_object->GetDatabaseOid(),
-                     index_object->GetIndexOid(), txn);
-  EXPECT_EQ(pg_index->GetIndexObject(database_object->GetDatabaseName(),
-                                     index_name1, DEFAULT_SCHEMA_NAME, txn),
+  catalog->DropIndex(txn,
+                     database_object->GetDatabaseOid(),
+                     index_object->GetIndexOid());
+  EXPECT_EQ(pg_index->GetIndexCatalogEntry(txn,
+                                           database_object->GetDatabaseName(),
+                                           DEFAULT_SCHEMA_NAME,
+                                           index_name1),
             nullptr);
   txn_manager.CommitTransaction(txn);
 
   // Drop the table just created
   txn = txn_manager.BeginTransaction();
   // Check the effect of drop index
-  EXPECT_EQ(pg_index->GetIndexObject(database_object->GetDatabaseName(),
-                                     index_name1, DEFAULT_SCHEMA_NAME, txn),
+  EXPECT_EQ(pg_index->GetIndexCatalogEntry(txn,
+                                           database_object->GetDatabaseName(),
+                                           DEFAULT_SCHEMA_NAME,
+                                           index_name1),
             nullptr);
 
   // Now dropping the table
-  catalog->DropTable(TEST_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table_01",
-                     txn);
+  catalog->DropTable(txn,
+                     TEST_DB_NAME,
+                     DEFAULT_SCHEMA_NAME,
+                     "department_table_01");
   txn_manager.CommitTransaction(txn);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName(TEST_DB_NAME, txn);
+  catalog->DropDatabaseWithName(txn, TEST_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace test
