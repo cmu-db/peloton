@@ -93,6 +93,8 @@ void VerifyAndPrintColumnStats(storage::DataTable *data_table,
 }
 
 TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
   auto data_table = InitializeTestTable();
 
   // Collect stats.
@@ -101,8 +103,6 @@ TEST_F(StatsStorageTests, InsertAndGetTableStatsTest) {
   table_stats_collector->CollectColumnStats();
 
   // Insert stats.
-  auto catalog = catalog::Catalog::GetInstance();
-  (void)catalog;
   StatsStorage *stats_storage = StatsStorage::GetInstance();
   stats_storage->InsertOrUpdateTableStats(data_table.get(),
                                           table_stats_collector.get());

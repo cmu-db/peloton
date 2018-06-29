@@ -13,6 +13,7 @@
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
+#include "catalog/column_stats_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
@@ -298,8 +299,9 @@ void Catalog::Bootstrap() {
   SettingsCatalog::GetInstance(txn);
   LanguageCatalog::GetInstance(txn);
 
-  // TODO: change pg_proc to per database
+  // TODO: change following catalogs to per database
   ProcCatalog::GetInstance(txn);
+  ColumnStatsCatalog::GetInstance(txn);
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);

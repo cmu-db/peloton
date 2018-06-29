@@ -31,22 +31,9 @@ StatsStorage *StatsStorage::GetInstance() {
 
 /**
  * StatsStorage - Constructor of StatsStorage.
- * In the construcotr, `pg_column_stats` table and `samples_db` database are
- * created.
  */
 StatsStorage::StatsStorage() {
   pool_.reset(new type::EphemeralPool());
-  CreateStatsTableInCatalog();
-}
-
-/**
- * CreateStatsCatalog - Create 'pg_column_stats' table in the catalog database.
- */
-void StatsStorage::CreateStatsTableInCatalog() {
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::ColumnStatsCatalog::GetInstance(txn);
-  txn_manager.CommitTransaction(txn);
 }
 
 /**
