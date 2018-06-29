@@ -50,7 +50,7 @@ void ChildPropertyDeriver::Visit(const PhysicalSeqScan *) {
 
 void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
   auto provided_prop = make_shared<PropertySet>();
-  std::shared_ptr<catalog::TableCatalogObject> target_table = op->table_;
+  std::shared_ptr<catalog::TableCatalogEntry> target_table = op->table_;
   for (auto prop : requirements_->Properties()) {
     if (prop->Type() == PropertyType::SORT) {
       // Walk through all indices in the table, check if any of the index could
@@ -69,7 +69,7 @@ void ChildPropertyDeriver::Visit(const PhysicalIndexScan *op) {
         }
       }
       if (!can_fulfill) break;
-      for (auto &index : target_table->GetIndexObjects()) {
+      for (auto &index : target_table->GetIndexCatalogEntries()) {
         auto key_oids = index.second->GetKeyAttrs();
         // If the sort column size is larger, then can't be fulfill by the index
         if (sort_col_size > key_oids.size()) {
@@ -136,11 +136,17 @@ void ChildPropertyDeriver::Visit(const PhysicalAggregate *) {
                 vector<shared_ptr<PropertySet>>{make_shared<PropertySet>()}));
 }
 
-void ChildPropertyDeriver::Visit(const PhysicalLimit *) {
-  // Let child fulfil all the required properties
-  vector<shared_ptr<PropertySet>> child_input_properties{requirements_};
+void ChildPropertyDeriver::Visit(const PhysicalLimit *op) {
+  // Limit fulfill the internal sort property
+  vector<shared_ptr<PropertySet>> child_input_properties{
+      std::make_shared<PropertySet>()};
+  std::shared_ptr<PropertySet> provided_prop(new PropertySet);
+  if (!op->sort_exprs.empty()) {
+    provided_prop->AddProperty(
+        std::make_shared<PropertySort>(op->sort_exprs, op->sort_acsending));
+  }
 
-  output_.push_back(make_pair(requirements_, move(child_input_properties)));
+  output_.push_back(make_pair(provided_prop, move(child_input_properties)));
 }
 
 void ChildPropertyDeriver::Visit(const PhysicalDistinct *) {

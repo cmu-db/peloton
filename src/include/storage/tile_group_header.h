@@ -29,6 +29,34 @@ namespace storage {
 class TileGroup;
 
 //===--------------------------------------------------------------------===//
+// Tuple Header
+//===--------------------------------------------------------------------===//
+
+struct TupleHeader {
+  common::synchronization::SpinLatch latch;
+  std::atomic<txn_id_t> txn_id;
+  cid_t read_ts;
+  cid_t begin_ts;
+  cid_t end_ts;
+  ItemPointer next;
+  ItemPointer prev;
+  ItemPointer *indirection;
+} __attribute__((aligned(64)));
+
+/**
+ *  FIELD DESCRIPTIONS:
+ *  ===================
+ *  latch: Tuple header latch used to acquire ownership or update read_ts
+ *  txn_id: serve as a write lock on the tuple version
+ *  read_ts: the last txn to read this tuple
+ *  begin_ts: the lower bound of the version visibility range.
+ *  end_ts: the upper bound of the version visibility range.
+ *  next: the pointer pointing to the next (older) version in the version chain.
+ *  prev: the pointer pointing to the prev (newer) version in the version chain.
+ *  indirection: the pointer pointing to the index entry that holds the address of the version chain header.
+*/
+
+//===--------------------------------------------------------------------===//
 // Tile Group Header
 //===--------------------------------------------------------------------===//
 
@@ -37,24 +65,6 @@ class TileGroup;
  * This contains information related to MVCC.
  * It is shared by all tiles in a tile group.
  *
- *  Layout :
- *
- *  -----------------------------------------------------------------------------
- *  | TxnID (8 bytes)  | BeginTimeStamp (8 bytes) | EndTimeStamp (8 bytes) |
- *  | NextItemPointer (8 bytes) | PrevItemPointer (8 bytes) |
- *  | Indirection (8 bytes) | ReservedField (16 bytes)
- *  -----------------------------------------------------------------------------
- *
- *  FIELD DESCRIPTIONS:
- *  ===================
- *  TxnID: serve as a write lock on the tuple version.
- *  BeginTimeStamp: the lower bound of the version visibility range.
- *  EndTimeStamp: the upper bound of the version visibility range.
- *  NextItemPointer: the pointer pointing to the next (older) version in the version chain.
- *  PrevItemPointer: the pointer pointing to the prev (newer) version in the version chain.
- *  Indirection: the pointer pointing to the index entry that holds the address of the version chain header.
- *  ReservedField: unused space for future usage.
- *
  *  STATUS:
  *  ===================
  *  TxnID == INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> empty version
@@ -62,8 +72,6 @@ class TileGroup;
  *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == MAX_CID --> to-be-installed new version
  *  TxnID != INITIAL_TXN_ID, BeginTS == MAX_CID, EndTS == INVALID_CID --> to-be-installed deleted version
  */
-
-#define TUPLE_HEADER_LOCATION data + (tuple_slot_id * header_entry_size)
 
 class TileGroupHeader : public Printable {
   TileGroupHeader() = delete;
@@ -75,21 +83,32 @@ class TileGroupHeader : public Printable {
     // check for self-assignment
     if (&other == this) return *this;
 
-    header_size = other.header_size;
-
-    // copy over all the data
-    PELOTON_MEMCPY(data, other.data, header_size);
-
+    backend_type = other.backend_type;
+    tile_group = other.tile_group;
     num_tuple_slots = other.num_tuple_slots;
-    oid_t val = other.next_tuple_slot;
-    next_tuple_slot = val;
+    next_tuple_slot.store(other.next_tuple_slot);
+    immutable = other.immutable;
+
+    // copy tuple header values
+    for (oid_t tuple_slot_id = START_OID; tuple_slot_id < num_tuple_slots;
+         tuple_slot_id++) {
+      SetTransactionId(tuple_slot_id, other.GetTransactionId(tuple_slot_id));
+      SetLastReaderCommitId(tuple_slot_id,
+                            other.GetLastReaderCommitId(tuple_slot_id));
+      SetBeginCommitId(tuple_slot_id, other.GetBeginCommitId(tuple_slot_id));
+      SetEndCommitId(tuple_slot_id, other.GetEndCommitId(tuple_slot_id));
+      SetNextItemPointer(tuple_slot_id,
+                         other.GetNextItemPointer(tuple_slot_id));
+      SetPrevItemPointer(tuple_slot_id,
+                         other.GetPrevItemPointer(tuple_slot_id));
+      SetIndirection(tuple_slot_id, other.GetIndirection(tuple_slot_id));
+    }
 
     return *this;
   }
 
-  ~TileGroupHeader();
+  ~TileGroupHeader() = default;
 
-  // this function is only called by DataTable::GetEmptyTupleSlot().
   oid_t GetNextEmptyTupleSlot() {
     if (next_tuple_slot >= num_tuple_slots) {
       return INVALID_OID;
@@ -145,36 +164,37 @@ class TileGroupHeader : public Printable {
     return tile_group;
   }
 
-  // it is possible that some other transactions are modifying the txn_id,
-  // but the current transaction reads the txn_id.
-  // the returned value seems to be uncertain.
+  inline common::synchronization::SpinLatch &GetSpinLatch(
+      const oid_t &tuple_slot_id) const {
+    return tuple_headers_[tuple_slot_id].latch;
+  }
+
   inline txn_id_t GetTransactionId(const oid_t &tuple_slot_id) const {
-    return *((txn_id_t *)(TUPLE_HEADER_LOCATION));
+    return tuple_headers_[tuple_slot_id].txn_id;
+  }
+
+  inline cid_t GetLastReaderCommitId(const oid_t &tuple_slot_id) const {
+    return tuple_headers_[tuple_slot_id].read_ts;
   }
 
   inline cid_t GetBeginCommitId(const oid_t &tuple_slot_id) const {
-    return *((cid_t *)(TUPLE_HEADER_LOCATION + begin_cid_offset));
+    return tuple_headers_[tuple_slot_id].begin_ts;
   }
 
   inline cid_t GetEndCommitId(const oid_t &tuple_slot_id) const {
-    return *((cid_t *)(TUPLE_HEADER_LOCATION + end_cid_offset));
+    return tuple_headers_[tuple_slot_id].end_ts;
   }
 
   inline ItemPointer GetNextItemPointer(const oid_t &tuple_slot_id) const {
-    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset));
+    return tuple_headers_[tuple_slot_id].next;
   }
 
   inline ItemPointer GetPrevItemPointer(const oid_t &tuple_slot_id) const {
-    return *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset));
+    return tuple_headers_[tuple_slot_id].prev;
   }
 
   inline ItemPointer *GetIndirection(const oid_t &tuple_slot_id) const {
-    return *(ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset);
-  }
-
-  // constraint: at most 16 bytes.
-  inline char *GetReservedFieldRef(const oid_t &tuple_slot_id) const {
-    return (char *)(TUPLE_HEADER_LOCATION + reserved_field_offset);
+    return tuple_headers_[tuple_slot_id].indirection;
   }
 
   // Setters
@@ -182,49 +202,47 @@ class TileGroupHeader : public Printable {
   inline void SetTileGroup(TileGroup *tile_group) {
     this->tile_group = tile_group;
   }
+
   inline void SetTransactionId(const oid_t &tuple_slot_id,
                                const txn_id_t &transaction_id) const {
-    *((txn_id_t *)(TUPLE_HEADER_LOCATION)) = transaction_id;
+    tuple_headers_[tuple_slot_id].txn_id = transaction_id;
+  }
+
+  inline void SetLastReaderCommitId(const oid_t &tuple_slot_id,
+                                    const cid_t &read_cid) const {
+    tuple_headers_[tuple_slot_id].read_ts = read_cid;
   }
 
   inline void SetBeginCommitId(const oid_t &tuple_slot_id,
                                const cid_t &begin_cid) {
-    *((cid_t *)(TUPLE_HEADER_LOCATION + begin_cid_offset)) = begin_cid;
+    tuple_headers_[tuple_slot_id].begin_ts = begin_cid;
   }
 
   inline void SetEndCommitId(const oid_t &tuple_slot_id,
                              const cid_t &end_cid) const {
-    *((cid_t *)(TUPLE_HEADER_LOCATION + end_cid_offset)) = end_cid;
+    tuple_headers_[tuple_slot_id].end_ts = end_cid;
   }
 
   inline void SetNextItemPointer(const oid_t &tuple_slot_id,
                                  const ItemPointer &item) const {
-    *((ItemPointer *)(TUPLE_HEADER_LOCATION + next_pointer_offset)) = item;
+    tuple_headers_[tuple_slot_id].next = item;
   }
 
   inline void SetPrevItemPointer(const oid_t &tuple_slot_id,
                                  const ItemPointer &item) const {
-    *((ItemPointer *)(TUPLE_HEADER_LOCATION + prev_pointer_offset)) = item;
+    tuple_headers_[tuple_slot_id].prev = item;
   }
 
   inline void SetIndirection(const oid_t &tuple_slot_id,
-                             const ItemPointer *indirection) const {
-    *((const ItemPointer **)(TUPLE_HEADER_LOCATION + indirection_offset)) =
-        indirection;
-  }
-
-  inline txn_id_t SetAtomicTransactionId(const oid_t &tuple_slot_id,
-                                         const txn_id_t &old_txn_id,
-                                         const txn_id_t &new_txn_id) const {
-    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    return __sync_val_compare_and_swap(txn_id_ptr, old_txn_id, new_txn_id);
+                             ItemPointer *indirection) const {
+    tuple_headers_[tuple_slot_id].indirection = indirection;
   }
 
   inline bool SetAtomicTransactionId(const oid_t &tuple_slot_id,
                                      const txn_id_t &transaction_id) const {
-    txn_id_t *txn_id_ptr = (txn_id_t *)(TUPLE_HEADER_LOCATION);
-    return __sync_bool_compare_and_swap(txn_id_ptr, INITIAL_TXN_ID,
-                                        transaction_id);
+    auto old_val = INITIAL_TXN_ID;
+    return tuple_headers_[tuple_slot_id].txn_id.compare_exchange_strong(
+        old_val, transaction_id);
   }
 
   /*
@@ -250,33 +268,12 @@ class TileGroupHeader : public Printable {
   // Getter for spin lock
   common::synchronization::SpinLatch &GetHeaderLock() { return tile_header_lock; }
 
-  // Sync the contents
-  void Sync();
-
   //===--------------------------------------------------------------------===//
   // Utilities
   //===--------------------------------------------------------------------===//
 
   // Get a string representation for debugging
   const std::string GetInfo() const;
-
-  static inline size_t GetReservedSize() { return reserved_size; }
-
-  // header entry size is the size of the layout described above
-  static const size_t reserved_size = 16;
-  static const size_t header_entry_size = sizeof(txn_id_t) + 2 * sizeof(cid_t) +
-                                          2 * sizeof(ItemPointer) +
-                                          sizeof(ItemPointer *) + reserved_size;
-  static const size_t txn_id_offset = 0;
-  static const size_t begin_cid_offset = txn_id_offset + sizeof(txn_id_t);
-  static const size_t end_cid_offset = begin_cid_offset + sizeof(cid_t);
-  static const size_t next_pointer_offset = end_cid_offset + sizeof(cid_t);
-  static const size_t prev_pointer_offset =
-      next_pointer_offset + sizeof(ItemPointer);
-  static const size_t indirection_offset =
-      prev_pointer_offset + sizeof(ItemPointer);
-  static const size_t reserved_field_offset =
-      indirection_offset + sizeof(ItemPointer);
 
  private:
   //===--------------------------------------------------------------------===//
@@ -289,10 +286,7 @@ class TileGroupHeader : public Printable {
   // Associated tile_group
   TileGroup *tile_group;
 
-  size_t header_size;
-
-  // set of fixed-length tuple slots
-  char *data;
+  std::unique_ptr<TupleHeader[]> tuple_headers_;
 
   // number of tuple slots allocated
   oid_t num_tuple_slots;

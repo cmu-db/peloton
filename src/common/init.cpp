@@ -101,9 +101,10 @@ void PelotonInit::Initialize() {
   if (recovered_default_db == false) {
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+    pg_catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
   }
+
 
   // Initialize the Statement Cache Manager
   StatementCacheManager::Init();

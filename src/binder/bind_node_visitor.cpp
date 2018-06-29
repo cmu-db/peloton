@@ -208,7 +208,7 @@ void BindNodeVisitor::Visit(parser::AnalyzeStatement *node) {
 void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
   if (!expr->GetIsBound()) {
     std::tuple<oid_t, oid_t, oid_t> col_pos_tuple;
-    std::shared_ptr<catalog::TableCatalogObject> table_obj = nullptr;
+    std::shared_ptr<catalog::TableCatalogEntry> table_obj = nullptr;
     type::TypeId value_type;
     int depth = -1;
 

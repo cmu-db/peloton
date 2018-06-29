@@ -20,21 +20,21 @@ namespace catalog {
 // Serialize this foreign key constraint
 void ForeignKey::SerializeTo(SerializeOutput &out) {
   // foreign key constraint basic information
-  out.WriteTextString(fk_name);
-  out.WriteInt((int)update_action);
-  out.WriteInt((int)delete_action);
+  out.WriteTextString(fk_name_);
+  out.WriteInt((int)update_action_);
+  out.WriteInt((int)delete_action_);
 
   // source table information
-  out.WriteInt(source_table_id);
-  out.WriteLong(source_col_ids.size());
-  for (oid_t source_col_id : source_col_ids) {
+  out.WriteInt(source_table_id_);
+  out.WriteLong(source_col_ids_.size());
+  for (oid_t source_col_id : source_col_ids_) {
     out.WriteInt(source_col_id);
   }
 
   // sink table information
-  out.WriteInt(sink_table_id);
-  out.WriteLong(sink_col_ids.size());
-  for (oid_t source_col_id : sink_col_ids) {
+  out.WriteInt(sink_table_id_);
+  out.WriteLong(sink_col_ids_.size());
+  for (oid_t source_col_id : sink_col_ids_) {
     out.WriteInt(source_col_id);
   }
 }

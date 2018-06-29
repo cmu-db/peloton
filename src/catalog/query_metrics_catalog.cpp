@@ -20,38 +20,44 @@
 namespace peloton {
 namespace catalog {
 
-QueryMetricsCatalog::QueryMetricsCatalog(const std::string &database_name,
-                                         concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." CATALOG_SCHEMA_NAME "." QUERY_METRICS_CATALOG_NAME
-                          " ("
-                          "query_name   VARCHAR NOT NULL PRIMARY KEY, "
-                          "database_oid INT NOT NULL PRIMARY KEY, "
-                          "num_params   INT NOT NULL, "
-                          "param_types    VARBINARY, "
-                          "param_formats  VARBINARY, "
-                          "param_values   VARBINARY, "
-                          "reads    INT NOT NULL, "
-                          "updates  INT NOT NULL, "
-                          "deletes  INT NOT NULL, "
-                          "inserts  INT NOT NULL, "
-                          "latency  INT NOT NULL, "
-                          "cpu_time INT NOT NULL, "
-                          "time_stamp INT NOT NULL);",
-                      txn) {
+QueryMetricsCatalog::QueryMetricsCatalog(concurrency::TransactionContext *txn,
+                                         const std::string &database_name)
+    : AbstractCatalog(txn, "CREATE TABLE " + database_name +
+    "." CATALOG_SCHEMA_NAME "." QUERY_METRICS_CATALOG_NAME
+    " ("
+    "query_name   VARCHAR NOT NULL PRIMARY KEY, "
+    "database_oid INT NOT NULL PRIMARY KEY, "
+    "num_params   INT NOT NULL, "
+    "param_types    VARBINARY, "
+    "param_formats  VARBINARY, "
+    "param_values   VARBINARY, "
+    "reads    INT NOT NULL, "
+    "updates  INT NOT NULL, "
+    "deletes  INT NOT NULL, "
+    "inserts  INT NOT NULL, "
+    "latency  INT NOT NULL, "
+    "cpu_time INT NOT NULL, "
+    "time_stamp INT NOT NULL);") {
   // Add secondary index here if necessary
 }
 
 QueryMetricsCatalog::~QueryMetricsCatalog() {}
 
-bool QueryMetricsCatalog::InsertQueryMetrics(
-    const std::string &name, oid_t database_oid, int64_t num_params,
-    const stats::QueryMetric::QueryParamBuf &type_buf,
-    const stats::QueryMetric::QueryParamBuf &format_buf,
-    const stats::QueryMetric::QueryParamBuf &value_buf, int64_t reads,
-    int64_t updates, int64_t deletes, int64_t inserts, int64_t latency,
-    int64_t cpu_time, int64_t time_stamp, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool QueryMetricsCatalog::InsertQueryMetrics(concurrency::TransactionContext *txn,
+                                             const std::string &name,
+                                             oid_t database_oid,
+                                             int64_t num_params,
+                                             const stats::QueryMetric::QueryParamBuf &type_buf,
+                                             const stats::QueryMetric::QueryParamBuf &format_buf,
+                                             const stats::QueryMetric::QueryParamBuf &value_buf,
+                                             int64_t reads,
+                                             int64_t updates,
+                                             int64_t deletes,
+                                             int64_t inserts,
+                                             int64_t latency,
+                                             int64_t cpu_time,
+                                             int64_t time_stamp,
+                                             type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -95,30 +101,33 @@ bool QueryMetricsCatalog::InsertQueryMetrics(
   tuple->SetValue(ColumnId::TIME_STAMP, val12, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool QueryMetricsCatalog::DeleteQueryMetrics(
-    const std::string &name, concurrency::TransactionContext *txn) {
+bool QueryMetricsCatalog::DeleteQueryMetrics(concurrency::TransactionContext *txn,
+                                             const std::string &name) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid_).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
-    const std::string &name, concurrency::TransactionContext *txn) {
+stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(concurrency::TransactionContext *txn,
+                                                                     const std::string &name) {
   std::vector<oid_t> column_ids({ColumnId::PARAM_TYPES});  // param_types
   oid_t index_offset = IndexId::PRIMARY_KEY;               // Primary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
-  values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
+  values.push_back(type::ValueFactory::GetIntegerValue(database_oid_).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   stats::QueryMetric::QueryParamBuf param_types;
   PELOTON_ASSERT(result_tiles->size() <= 1);  // unique
@@ -135,15 +144,18 @@ stats::QueryMetric::QueryParamBuf QueryMetricsCatalog::GetParamTypes(
   return param_types;
 }
 
-int64_t QueryMetricsCatalog::GetNumParams(
-    const std::string &name, concurrency::TransactionContext *txn) {
+int64_t QueryMetricsCatalog::GetNumParams(concurrency::TransactionContext *txn,
+                                          const std::string &name) {
   std::vector<oid_t> column_ids({ColumnId::NUM_PARAMS});  // num_params
   oid_t index_offset = IndexId::PRIMARY_KEY;              // Primary key index
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(name, nullptr).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   int64_t num_params = 0;
   PELOTON_ASSERT(result_tiles->size() <= 1);  // unique

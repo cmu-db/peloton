@@ -42,7 +42,7 @@ bool RecoverTileGroupFromFile(
   size_t table_size = logging::LoggingUtil::GetFileSize(table_file);
   if (table_size == 0) return false;
   std::unique_ptr<char[]> data(new char[table_size]);
-  if (logging::LoggingUtil::ReadNBytesFromFile(table_file, data.get(), table_size) == false) {
+  if (!logging::LoggingUtil::ReadNBytesFromFile(table_file, data.get(), table_size)) {
     LOG_ERROR("Checkpoint table file read error: table %d", table->GetOid());
     return false;
   }
@@ -58,7 +58,7 @@ bool RecoverTileGroupFromFile(
     std::shared_ptr<const storage::Layout> layout;
     if (default_layout->GetOid() != layout_oid) {
       layout = catalog::Catalog::GetInstance()
-            ->GetTableObject(table->GetDatabaseOid(), table->GetOid(), txn)
+            ->GetTableCatalogEntry(txn, table->GetDatabaseOid(), table->GetOid())
             ->GetLayout(layout_oid);
     } else {
       layout = default_layout;
@@ -219,29 +219,29 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
   EXPECT_TRUE(logging::LoggingUtil::CheckDirectoryExistence(checkpoint_dir.c_str()));
 
   // check user table file
-  auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
-  for (auto table_catalog : default_db_catalog->GetTableObjects(
-      (std::string)DEFAULT_SCHEMA_NAME)) {
-    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
-                                          table_catalog->GetTableOid());
+  auto default_db_catalog_entry = catalog->GetDatabaseCatalogEntry(txn, DEFAULT_DB_NAME);
+  for (auto table_catalog_entry :
+      default_db_catalog_entry->GetTableCatalogEntries((std::string)DEFAULT_SCHEMA_NAME)) {
+    auto table = storage->GetTableWithOid(table_catalog_entry->GetDatabaseOid(),
+                                          table_catalog_entry->GetTableOid());
     FileHandle table_file;
     std::string file = checkpoint_dir + "/" + "checkpoint_" +
-        default_db_catalog->GetDatabaseName() + "_" +
-        table_catalog->GetSchemaName() + "_" + table_catalog->GetTableName();
+        default_db_catalog_entry->GetDatabaseName() + "_" +
+        table_catalog_entry->GetSchemaName() + "_" + table_catalog_entry->GetTableName();
 
-    LOG_INFO("Check the user table %s.%s\n%s", table_catalog->GetSchemaName().c_str(),
-        table_catalog->GetTableName().c_str(), table->GetInfo().c_str());
+    LOG_INFO("Check the user table %s.%s\n%s", table_catalog_entry->GetSchemaName().c_str(),
+        table_catalog_entry->GetTableName().c_str(), table->GetInfo().c_str());
 
     // open table file
     // table 'out_of_checkpoint_test' is not targeted for the checkpoint
-    if (table_catalog->GetTableName() == "out_of_checkpoint_test") {
+    if (table_catalog_entry->GetTableName() == "out_of_checkpoint_test") {
       EXPECT_FALSE(logging::LoggingUtil::OpenFile(file.c_str(), "rb", table_file));
       continue;
     } else {
       bool open_file_result = logging::LoggingUtil::OpenFile(file.c_str(), "rb", table_file);
       EXPECT_TRUE(open_file_result);
       if(open_file_result == false) {
-        LOG_ERROR("Unexpected table is found: %s", table_catalog->GetTableName().c_str());
+        LOG_ERROR("Unexpected table is found: %s", table_catalog_entry->GetTableName().c_str());
         continue;
       }
     }
@@ -265,7 +265,7 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
         for (oid_t column_id = START_OID; column_id < column_count; column_id++) {
           type::Value value = tile_group->GetValue(tuple_id, column_id);
           // for checkpoint_table_test
-          if (table_catalog->GetTableName() == "checkpoint_table_test") {
+          if (table_catalog_entry->GetTableName() == "checkpoint_table_test") {
             switch (column_id) {
             case 0:
               EXPECT_TRUE(value.CompareEquals(type::ValueFactory::GetIntegerValue(0)) == CmpBool::CmpTrue ||
@@ -286,12 +286,12 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
                   value.CompareEquals(type::ValueFactory::GetVarcharValue(std::string("xxxx"), pool.get())) == CmpBool::CmpTrue);
               break;
             default:
-              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog->GetTableName().c_str(), column_id);
+              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog_entry->GetTableName().c_str(), column_id);
               EXPECT_TRUE(false);
             }
           }
           // for checkpoint_index_test
-          else if (table_catalog->GetTableName() == "checkpoint_index_test") {
+          else if (table_catalog_entry->GetTableName() == "checkpoint_index_test") {
             switch (column_id) {
             case 0:
               EXPECT_TRUE(value.CompareEquals(type::ValueFactory::GetIntegerValue(1)) == CmpBool::CmpTrue ||
@@ -319,12 +319,12 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
                   value.CompareEquals(type::ValueFactory::GetIntegerValue(15)) == CmpBool::CmpTrue);
               break;
             default:
-              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog->GetTableName().c_str(), column_id);
+              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog_entry->GetTableName().c_str(), column_id);
               EXPECT_TRUE(false);
             }
           }
           // for checkpoint_index_test
-          else if (table_catalog->GetTableName() == "checkpoint_constraint_test") {
+          else if (table_catalog_entry->GetTableName() == "checkpoint_constraint_test") {
             switch (column_id) {
             case 0:
               EXPECT_TRUE(value.CompareEquals(type::ValueFactory::GetIntegerValue(1)) == CmpBool::CmpTrue ||
@@ -362,12 +362,12 @@ TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
                   value.CompareEquals(type::ValueFactory::GetIntegerValue(12)) == CmpBool::CmpTrue);
               break;
             default:
-              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog->GetTableName().c_str(), column_id);
+              LOG_ERROR("Unexpected column is found in %s: %d", table_catalog_entry->GetTableName().c_str(), column_id);
               EXPECT_TRUE(false);
             }
           }
           else {
-            LOG_ERROR("Unexpected table is found: %s", table_catalog->GetTableName().c_str());
+            LOG_ERROR("Unexpected table is found: %s", table_catalog_entry->GetTableName().c_str());
             PELOTON_ASSERT(false);
           }
         }

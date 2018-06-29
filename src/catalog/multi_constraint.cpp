@@ -21,9 +21,9 @@ namespace catalog {
 const std::string MultiConstraint::GetInfo() const {
   std::ostringstream os;
   os << "Constraint[" << GetName() << ", "
-     << ConstraintTypeToString(constraint_type) << " , related columns: (";
+     << ConstraintTypeToString(constraint_type_) << " , related columns: (";
   bool first = true;
-  for (auto id : column_ids) {
+  for (auto id : column_ids_) {
     if (first) {
       os << id;
       first = false;
@@ -38,12 +38,12 @@ const std::string MultiConstraint::GetInfo() const {
 // Serialize this multi-column constraint
 void MultiConstraint::SerializeTo(SerializeOutput &out) const {
   // multi-column constraint basic information
-  out.WriteTextString(constraint_name);
-  out.WriteInt((int)constraint_type);
+  out.WriteTextString(constraint_name_);
+  out.WriteInt((int)constraint_type_);
 
   // multi-column constraint columns
-  out.WriteLong(column_ids.size());
-  for (auto column_id : column_ids) {
+  out.WriteLong(column_ids_.size());
+  for (auto column_id : column_ids_) {
     out.WriteInt(column_id);
   }
 }

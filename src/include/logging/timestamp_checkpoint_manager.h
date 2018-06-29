@@ -98,12 +98,13 @@ class TimestampCheckpointManager : public CheckpointManager {
   void PerformCheckpointing();
 
   // checkpointing for the user tables
-  void CreateCheckpoint(const cid_t begin_cid,
-                        concurrency::TransactionContext *txn);
+  void CreateCheckpoint(concurrency::TransactionContext *txn,
+                        const cid_t begin_cid);
 
   // read table data and write it down to checkpoint data file
   void CheckpointingTableData(const storage::DataTable *table,
-                              const cid_t &begin_cid, FileHandle &file_handle);
+                              const cid_t &begin_cid,
+                              FileHandle &file_handle);
 
   // read table data without tile group and write it down to checkpoint data
   // file
@@ -121,64 +122,68 @@ class TimestampCheckpointManager : public CheckpointManager {
                                                  FileHandle &file_handle);
 
   // check the value is committed before the checkpointing begins
-  bool IsVisible(const storage::TileGroupHeader *header, const oid_t &tuple_id,
+  bool IsVisible(const storage::TileGroupHeader *header,
+                 const oid_t &tuple_id,
                  const cid_t &begin_cid);
 
   // read storage objects data for user tables and write it down to a checkpoint
   // metadata file
-  void CheckpointingStorageObject(FileHandle &file_handle,
-                                  concurrency::TransactionContext *txn);
+  void CheckpointingStorageObject(concurrency::TransactionContext *txn,
+                                  FileHandle &file_handle);
 
   //===--------------------------------------------------------------------===//
   // Checkpoint Recovery Functions
   //===--------------------------------------------------------------------===//
 
   // recover catalog table checkpoints
-  bool LoadCatalogTableCheckpoint(const eid_t &epoch_id,
-                                  concurrency::TransactionContext *txn);
+  bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
+                                  const eid_t &epoch_id);
 
   // read a checkpoint catalog
-  bool LoadCatalogTableCheckpoint(const eid_t &epoch_id, const oid_t db_oid,
-                                  const oid_t table_oid,
-                                  concurrency::TransactionContext *txn);
+  bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
+                                  const eid_t &epoch_id,
+                                  const oid_t db_oid,
+                                  const oid_t table_oid);
 
   // recover user table checkpoints and these catalog objects
-  bool LoadUserTableCheckpoint(const eid_t &epoch_id,
-                               concurrency::TransactionContext *txn);
+  bool LoadUserTableCheckpoint(concurrency::TransactionContext *txn,
+                               const eid_t &epoch_id);
 
   // Read a checkpoint catalog file and recover catalog objects for user tables
-  bool RecoverStorageObject(FileHandle &file_handle,
-                            concurrency::TransactionContext *txn);
+  bool RecoverStorageObject(concurrency::TransactionContext *txn,
+                            FileHandle &file_handle);
 
   // Read a checkpoint data file and recover the table
   // This function is provided for checkpointed user table
-  void RecoverTableData(storage::DataTable *table, FileHandle &file_handle,
-                        concurrency::TransactionContext *txn);
+  void RecoverTableData(concurrency::TransactionContext *txn,
+                        storage::DataTable *table,
+                        FileHandle &file_handle);
 
   // Read a checkpoint data file without tile group and recover the table
   // This function is provided for initialized catalog table not including
   // default value
   // return: inserted tuple count into table
-  oid_t RecoverTableDataWithoutTileGroup(storage::DataTable *table,
-                                         FileHandle &file_handle,
-                                         concurrency::TransactionContext *txn);
+  oid_t RecoverTableDataWithoutTileGroup(concurrency::TransactionContext *txn,
+                                         storage::DataTable *table,
+                                         FileHandle &file_handle);
 
   // Read a checkpoint data file with duplicate check without tile group
   // This function keeps default values of catalogs
   // return: inserted tuple count into table without default value
-  oid_t RecoverTableDataWithDuplicateCheck(
-      storage::DataTable *table, FileHandle &file_handle,
-      concurrency::TransactionContext *txn);
+  oid_t RecoverTableDataWithDuplicateCheck(concurrency::TransactionContext *txn,
+                                           storage::DataTable *table,
+                                           FileHandle &file_handle);
 
   // Read a checkpoint data file without tile group.
   // If a same value is existed and its persistent flag is true,
   // then overwrite it by recovered value.
   // This function works for only settings_catalog now.
   // return: inserted/updated tuple count into table without default value
-  oid_t RecoverTableDataWithPersistentCheck(
-      storage::DataTable *table, FileHandle &file_handle,
-      std::vector<oid_t> key_colmun_ids, oid_t flag_column_id,
-      concurrency::TransactionContext *txn);
+  oid_t RecoverTableDataWithPersistentCheck(concurrency::TransactionContext *txn,
+                                            storage::DataTable *table,
+                                            FileHandle &file_handle,
+                                            std::vector<oid_t> key_colmun_ids,
+                                            oid_t flag_column_id);
 
   //===--------------------------------------------------------------------===//
   // Utility Functions for Checkpoint Directory

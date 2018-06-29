@@ -19,18 +19,18 @@ namespace catalog {
 
 // Serialize this constraint
 void Constraint::SerializeTo(SerializeOutput &out) const {
-  out.WriteTextString(constraint_name);
-  out.WriteInt((int)constraint_type);
-  out.WriteInt(fk_list_offset);
-  out.WriteInt(unique_index_list_offset);
+  out.WriteTextString(constraint_name_);
+  out.WriteInt((int)constraint_type_);
+  out.WriteInt(fk_list_offset_);
+  out.WriteInt(unique_index_list_offset_);
 
-  if (constraint_type == ConstraintType::DEFAULT) {
-    default_value->SerializeTo(out);
+  if (constraint_type_ == ConstraintType::DEFAULT) {
+    default_value_->SerializeTo(out);
   }
 
-  if (constraint_type == ConstraintType::CHECK) {
-    out.WriteInt((int)exp.first);
-    exp.second.SerializeTo(out);
+  if (constraint_type_ == ConstraintType::CHECK) {
+    out.WriteInt((int)exp_.first);
+    exp_.second.SerializeTo(out);
   }
 }
 
@@ -63,13 +63,13 @@ Constraint Constraint::DeserializeFrom(SerializeInput &in,
 const std::string Constraint::GetInfo() const {
   std::ostringstream os;
   os << "Constraint[" << GetName() << ", "
-     << ConstraintTypeToString(constraint_type);
+     << ConstraintTypeToString(constraint_type_);
 
   if (GetType() == ConstraintType::CHECK) {
-    os << ", " << exp.first << " " << exp.second.GetInfo();
+    os << ", " << exp_.first << " " << exp_.second.GetInfo();
   }
   if (GetType() == ConstraintType::DEFAULT) {
-    os << ", " << default_value->GetInfo();
+    os << ", " << default_value_->GetInfo();
   }
   os << "]";
   return os.str();

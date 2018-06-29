@@ -237,7 +237,7 @@ struct MemFn<R (*)(Args..., ...), T, F> {
       ::peloton::codegen::CodeGen &codegen) {                                 \
     static constexpr const char *kFnName = STR(NS::C::F);                     \
     /* If the function has already been defined, return it. */                \
-    if (::llvm::Function *func = codegen.LookupBuiltin(kFnName)) {            \
+    if (::llvm::Function *func = codegen.LookupBuiltin(kFnName).first) {      \
       return func;                                                            \
     }                                                                         \
                                                                               \

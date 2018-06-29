@@ -25,7 +25,7 @@ class TimestampFunctionsSQLTest : public PelotonTest {};
 TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // Create a t
@@ -72,14 +72,14 @@ TEST_F(TimestampFunctionsSQLTest, DateTruncTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
   txn_manager.CommitTransaction(txn);
@@ -142,7 +142,7 @@ TEST_F(TimestampFunctionsSQLTest, DatePartTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

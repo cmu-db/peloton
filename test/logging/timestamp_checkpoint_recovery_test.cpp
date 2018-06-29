@@ -64,53 +64,49 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
   // make sure data structures created in checkpointing test and recovered
   // above are correct.
 
-  // check an uncommitted table in checkpointing does not exist
-  EXPECT_FALSE(catalog->ExistTableByName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         "out_of_checkpoint_test", txn));
-
   // check all tables in the default database
-  auto default_db_catalog = catalog->GetDatabaseObject(DEFAULT_DB_NAME, txn);
-  for (auto &table_catalog :
-       default_db_catalog->GetTableObjects((std::string)DEFAULT_SCHEMA_NAME)) {
-    auto &table_name = table_catalog->GetTableName();
-    auto table = storage->GetTableWithOid(table_catalog->GetDatabaseOid(),
-                                          table_catalog->GetTableOid());
+  auto default_db_catalog_entry = catalog->GetDatabaseCatalogEntry(txn, DEFAULT_DB_NAME);
+  for (auto &table_catalog_entry :
+       default_db_catalog_entry->GetTableCatalogEntries((std::string)DEFAULT_SCHEMA_NAME)) {
+    auto &table_name = table_catalog_entry->GetTableName();
+    auto table = storage->GetTableWithOid(table_catalog_entry->GetDatabaseOid(),
+                                          table_catalog_entry->GetTableOid());
 
-    LOG_INFO("Check the table %d %s", table_catalog->GetTableOid(),
+    LOG_INFO("Check the table %d %s", table_catalog_entry->GetTableOid(),
              table_name.c_str());
 
     // check the basic information of columns
     if (table_name == "checkpoint_table_test") {
-      for (auto &column_pair : table_catalog->GetColumnObjects()) {
-        auto &column_catalog = column_pair.second;
-        auto &column_name = column_catalog->GetColumnName();
+      for (auto &column_pair : table_catalog_entry->GetColumnCatalogEntries()) {
+        auto &column_catalog_entry = column_pair.second;
+        auto &column_name = column_catalog_entry->GetColumnName();
         auto column =
-            table->GetSchema()->GetColumn(column_catalog->GetColumnId());
+            table->GetSchema()->GetColumn(column_catalog_entry->GetColumnId());
 
-        LOG_INFO("Check the column %d %s\n%s", column_catalog->GetColumnId(),
+        LOG_INFO("Check the column %d %s\n%s", column_catalog_entry->GetColumnId(),
             column_name.c_str(), column.GetInfo().c_str());
 
         if (column_name == "id") {
-          EXPECT_EQ(type::TypeId::INTEGER, column_catalog->GetColumnType());
-          EXPECT_EQ(0, column_catalog->GetColumnOffset());
+          EXPECT_EQ(type::TypeId::INTEGER, column_catalog_entry->GetColumnType());
+          EXPECT_EQ(0, column_catalog_entry->GetColumnOffset());
           EXPECT_EQ(4, column.GetLength());
-          EXPECT_TRUE(column_catalog->IsInlined());
-          EXPECT_FALSE(column_catalog->IsNotNull());
-          EXPECT_TRUE(column_catalog->IsPrimary());
+          EXPECT_TRUE(column_catalog_entry->IsInlined());
+          EXPECT_FALSE(column_catalog_entry->IsNotNull());
+          EXPECT_TRUE(column_catalog_entry->IsPrimary());
         } else if (column_name == "value1") {
-          EXPECT_EQ(type::TypeId::DECIMAL, column_catalog->GetColumnType());
-          EXPECT_EQ(4, column_catalog->GetColumnOffset());
+          EXPECT_EQ(type::TypeId::DECIMAL, column_catalog_entry->GetColumnType());
+          EXPECT_EQ(4, column_catalog_entry->GetColumnOffset());
           EXPECT_EQ(8, column.GetLength());
-          EXPECT_TRUE(column_catalog->IsInlined());
-          EXPECT_FALSE(column_catalog->IsNotNull());
-          EXPECT_FALSE(column_catalog->IsPrimary());
+          EXPECT_TRUE(column_catalog_entry->IsInlined());
+          EXPECT_FALSE(column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(column_catalog_entry->IsPrimary());
         } else if (column_name == "value2") {
-          EXPECT_EQ(type::TypeId::VARCHAR, column_catalog->GetColumnType());
-          EXPECT_EQ(12, column_catalog->GetColumnOffset());
+          EXPECT_EQ(type::TypeId::VARCHAR, column_catalog_entry->GetColumnType());
+          EXPECT_EQ(12, column_catalog_entry->GetColumnOffset());
           EXPECT_EQ(32, column.GetLength());
-          EXPECT_FALSE(column_catalog->IsInlined());
-          EXPECT_FALSE(column_catalog->IsNotNull());
-          EXPECT_FALSE(column_catalog->IsPrimary());
+          EXPECT_FALSE(column_catalog_entry->IsInlined());
+          EXPECT_FALSE(column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(column_catalog_entry->IsPrimary());
         } else {
           LOG_ERROR("Unexpected column is found: %s", column_name.c_str());
           EXPECT_TRUE(false);
@@ -121,69 +117,69 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
     // check the index recovery
     else if (table_name == "checkpoint_index_test") {
-      for (auto &index_pair : table_catalog->GetIndexObjects()) {
-        auto &index_catalog = index_pair.second;
-        auto &index_name = index_catalog->GetIndexName();
+      for (auto &index_pair : table_catalog_entry->GetIndexCatalogEntries()) {
+        auto &index_catalog_entry = index_pair.second;
+        auto &index_name = index_catalog_entry->GetIndexName();
 
         LOG_INFO("Check the index %s", index_name.c_str());
 
         // unique primary key for attribute "pid" (primary key)
         if (index_name == "checkpoint_index_test_pkey") {
-          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::PRIMARY_KEY,
-                    index_catalog->GetIndexConstraint());
-          EXPECT_TRUE(index_catalog->HasUniqueKeys());
-          auto &key_oids = index_catalog->GetKeyAttrs();
+                    index_catalog_entry->GetIndexConstraint());
+          EXPECT_TRUE(index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(2, key_oids.size());
-          EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("upid1", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                  ->GetColumnName());
-          EXPECT_EQ("upid2", table_catalog->GetColumnObject(key_oids.at(1))
+          EXPECT_EQ("upid2", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(1))
                                  ->GetColumnName());
         }
         // unique primary key for attribute "upid" (unique)
         else if (index_name == "checkpoint_index_test_upid1_UNIQ") {
-          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::UNIQUE,
-                    index_catalog->GetIndexConstraint());
-          EXPECT_TRUE(index_catalog->HasUniqueKeys());
-          auto &key_oids = index_catalog->GetKeyAttrs();
+                    index_catalog_entry->GetIndexConstraint());
+          EXPECT_TRUE(index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(1, key_oids.size());
-          EXPECT_EQ("upid1", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("upid1", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                  ->GetColumnName());
         }
         // ART index for attribute "value1"
         else if (index_name == "index_test1") {
-          EXPECT_EQ(IndexType::ART, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::ART, index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::DEFAULT,
-                    index_catalog->GetIndexConstraint());
-          EXPECT_FALSE(index_catalog->HasUniqueKeys());
-          auto &key_oids = index_catalog->GetKeyAttrs();
+                    index_catalog_entry->GetIndexConstraint());
+          EXPECT_FALSE(index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(1, key_oids.size());
-          EXPECT_EQ("value1", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value1", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
         }
         // SKIPLIST index for attributes "value2" and "value3"
         else if (index_name == "index_test2") {
-          EXPECT_EQ(IndexType::SKIPLIST, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::SKIPLIST, index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::DEFAULT,
-                    index_catalog->GetIndexConstraint());
-          EXPECT_FALSE(index_catalog->HasUniqueKeys());
-          auto &key_oids = index_catalog->GetKeyAttrs();
+                    index_catalog_entry->GetIndexConstraint());
+          EXPECT_FALSE(index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(2, key_oids.size());
-          EXPECT_EQ("value2", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value2", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
-          EXPECT_EQ("value3", table_catalog->GetColumnObject(key_oids.at(1))
+          EXPECT_EQ("value3", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(1))
                                   ->GetColumnName());
         }
         // unique index for attribute "value2"
         else if (index_name == "unique_index_test") {
-          EXPECT_EQ(IndexType::BWTREE, index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::UNIQUE,
-                    index_catalog->GetIndexConstraint());
-          EXPECT_TRUE(index_catalog->HasUniqueKeys());
-          auto &key_oids = index_catalog->GetKeyAttrs();
+                    index_catalog_entry->GetIndexConstraint());
+          EXPECT_TRUE(index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(1, key_oids.size());
-          EXPECT_EQ("value2", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value2", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
         } else {
           LOG_ERROR("Unexpected index is found: %s", index_name.c_str());
@@ -212,46 +208,46 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // value3 => checkpoint_table_test.pid
         if (foreign_key->GetConstraintName() ==
             "FK_checkpoint_constraint_test->checkpoint_table_test") {
-          auto sink_table_catalog = default_db_catalog->GetTableObject(
+          auto sink_table_catalog_entry = default_db_catalog_entry->GetTableCatalogEntry(
               "checkpoint_table_test", "public", txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
-          EXPECT_EQ(sink_table_catalog->GetTableOid(),
+          EXPECT_EQ(sink_table_catalog_entry->GetTableOid(),
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(1, source_columns.size());
           EXPECT_EQ("value3",
-                    table_catalog->GetColumnObject(source_columns.at(0))
+                    table_catalog_entry->GetColumnCatalogEntry(source_columns.at(0))
                         ->GetColumnName());
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(1, sink_columns.size());
           EXPECT_EQ("id",
-                    sink_table_catalog->GetColumnObject(sink_columns.at(0))
+                    sink_table_catalog_entry->GetColumnCatalogEntry(sink_columns.at(0))
                         ->GetColumnName());
         }
         // (value4, value5) => (checkpoint_index_test.upid1,
         // checkpoint_index_test.upid2)
         else if (foreign_key->GetConstraintName() ==
                  "FK_checkpoint_constraint_test->checkpoint_index_test") {
-          auto sink_table_catalog = default_db_catalog->GetTableObject(
+          auto sink_table_catalog_entry = default_db_catalog_entry->GetTableCatalogEntry(
               "checkpoint_index_test", "public", txn);
           EXPECT_EQ(INVALID_OID, foreign_key->GetSourceTableOid());
-          EXPECT_EQ(sink_table_catalog->GetTableOid(),
+          EXPECT_EQ(sink_table_catalog_entry->GetTableOid(),
                     foreign_key->GetSinkTableOid());
           auto source_columns = foreign_key->GetSourceColumnIds();
           EXPECT_EQ(2, source_columns.size());
           EXPECT_EQ("value4",
-                    table_catalog->GetColumnObject(source_columns.at(0))
+                    table_catalog_entry->GetColumnCatalogEntry(source_columns.at(0))
                         ->GetColumnName());
           EXPECT_EQ("value5",
-                    table_catalog->GetColumnObject(source_columns.at(1))
+                    table_catalog_entry->GetColumnCatalogEntry(source_columns.at(1))
                         ->GetColumnName());
           auto sink_columns = foreign_key->GetSinkColumnIds();
           EXPECT_EQ(2, sink_columns.size());
           EXPECT_EQ("upid1",
-                    sink_table_catalog->GetColumnObject(sink_columns.at(0))
+                    sink_table_catalog_entry->GetColumnCatalogEntry(sink_columns.at(0))
                         ->GetColumnName());
           EXPECT_EQ("upid2",
-                    sink_table_catalog->GetColumnObject(sink_columns.at(1))
+                    sink_table_catalog_entry->GetColumnCatalogEntry(sink_columns.at(1))
                         ->GetColumnName());
         } else {
           LOG_ERROR("Unexpected foreign key is found: %s",
@@ -261,60 +257,60 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       }  // loop end :foreign key constraint
 
       // index for constraints
-      for (auto &constraint_index_pair : table_catalog->GetIndexObjects()) {
-        auto &constraint_index_catalog = constraint_index_pair.second;
-        auto &constraint_index_name = constraint_index_catalog->GetIndexName();
+      for (auto &constraint_index_pair : table_catalog_entry->GetIndexCatalogEntries()) {
+        auto &constraint_index_catalog_entry = constraint_index_pair.second;
+        auto &constraint_index_name = constraint_index_catalog_entry->GetIndexName();
 
         LOG_INFO("check index for constraints: %s", constraint_index_name.c_str());
 
         // primary key for attributes "pid1" and "pid2"
         if (constraint_index_name == "checkpoint_constraint_test_pkey") {
-          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::PRIMARY_KEY,
-                    constraint_index_catalog->GetIndexConstraint());
-          EXPECT_TRUE(constraint_index_catalog->HasUniqueKeys());
-          auto &key_oids = constraint_index_catalog->GetKeyAttrs();
+                    constraint_index_catalog_entry->GetIndexConstraint());
+          EXPECT_TRUE(constraint_index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = constraint_index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(2, key_oids.size());
-          EXPECT_EQ("pid1", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("pid1", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                 ->GetColumnName());
-          EXPECT_EQ("pid2", table_catalog->GetColumnObject(key_oids.at(1))
+          EXPECT_EQ("pid2", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(1))
                                 ->GetColumnName());
         }
         // UNIQUE constraint index for an attribute "value1"
         else if (constraint_index_name == "checkpoint_constraint_test_value1_UNIQ") {
-          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::UNIQUE,
-                    constraint_index_catalog->GetIndexConstraint());
-          EXPECT_TRUE(constraint_index_catalog->HasUniqueKeys());
-          auto &key_oids = constraint_index_catalog->GetKeyAttrs();
+                    constraint_index_catalog_entry->GetIndexConstraint());
+          EXPECT_TRUE(constraint_index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = constraint_index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(1, key_oids.size());
-          EXPECT_EQ("value1", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value1", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
         }
         // foreign key index for an attribute "value3"
         else if (constraint_index_name ==
                  "checkpoint_constraint_test_FK_checkpoint_table_test_1") {
-          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::DEFAULT,
-                    constraint_index_catalog->GetIndexConstraint());
-          EXPECT_FALSE(constraint_index_catalog->HasUniqueKeys());
-          auto &key_oids = constraint_index_catalog->GetKeyAttrs();
+                    constraint_index_catalog_entry->GetIndexConstraint());
+          EXPECT_FALSE(constraint_index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = constraint_index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(1, key_oids.size());
-          EXPECT_EQ("value3", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value3", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
         }
         // foreign key index for an attributes "value4" and "value5"
         else if (constraint_index_name ==
                  "checkpoint_constraint_test_FK_checkpoint_index_test_2") {
-          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog->GetIndexType());
+          EXPECT_EQ(IndexType::BWTREE, constraint_index_catalog_entry->GetIndexType());
           EXPECT_EQ(IndexConstraintType::DEFAULT,
-                    constraint_index_catalog->GetIndexConstraint());
-          EXPECT_FALSE(constraint_index_catalog->HasUniqueKeys());
-          auto &key_oids = constraint_index_catalog->GetKeyAttrs();
+                    constraint_index_catalog_entry->GetIndexConstraint());
+          EXPECT_FALSE(constraint_index_catalog_entry->HasUniqueKeys());
+          auto &key_oids = constraint_index_catalog_entry->GetKeyAttrs();
           EXPECT_EQ(2, key_oids.size());
-          EXPECT_EQ("value4", table_catalog->GetColumnObject(key_oids.at(0))
+          EXPECT_EQ("value4", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(0))
                                   ->GetColumnName());
-          EXPECT_EQ("value5", table_catalog->GetColumnObject(key_oids.at(1))
+          EXPECT_EQ("value5", table_catalog_entry->GetColumnCatalogEntry(key_oids.at(1))
                                   ->GetColumnName());
         } else {
           LOG_ERROR("Unexpected index is found: %s", constraint_index_name.c_str());
@@ -323,20 +319,20 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
       }  // loop end: index for constraints
 
       // single attribute constraint
-      for (auto &constraint_column_pair : table_catalog->GetColumnObjects()) {
-        auto &constraint_column_catalog = constraint_column_pair.second;
-        auto &constraint_column_name = constraint_column_catalog->GetColumnName();
+      for (auto &constraint_column_pair : table_catalog_entry->GetColumnCatalogEntries()) {
+        auto &constraint_column_catalog_entry = constraint_column_pair.second;
+        auto &constraint_column_name = constraint_column_catalog_entry->GetColumnName();
         auto constraint_column =
-            table->GetSchema()->GetColumn(constraint_column_catalog->GetColumnId());
+            table->GetSchema()->GetColumn(constraint_column_catalog_entry->GetColumnId());
         LOG_INFO("Check constraints of the column %d %s\n%s",
-                 constraint_column_catalog->GetColumnId(), constraint_column_name.c_str(),
+                 constraint_column_catalog_entry->GetColumnId(), constraint_column_name.c_str(),
                  constraint_column.GetInfo().c_str());
 
         // set primary key of attributes 'pid1' and 'pid2'
         if (constraint_column_name == "pid1" ||
             constraint_column_name == "pid2") {
-          EXPECT_FALSE(constraint_column_catalog->IsNotNull());
-          EXPECT_TRUE(constraint_column_catalog->IsPrimary());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsNotNull());
+          EXPECT_TRUE(constraint_column_catalog_entry->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
           for (auto constraint : constraint_column.GetConstraints()) {
             if (constraint.GetName() == "con_primary") {
@@ -351,8 +347,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         }
         // unique and default value in attribute 'value1'
         else if (constraint_column_name == "value1") {
-          EXPECT_FALSE(constraint_column_catalog->IsNotNull());
-          EXPECT_FALSE(constraint_column_catalog->IsPrimary());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsPrimary());
           EXPECT_EQ(2, constraint_column.GetConstraints().size());
           for (auto constraint : constraint_column.GetConstraints()) {
             if (constraint.GetName() == "con_default") {
@@ -372,8 +368,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         }
         // not null and check constraint in attribute 'value2'
         else if (constraint_column_name == "value2") {
-          EXPECT_TRUE(constraint_column_catalog->IsNotNull());
-          EXPECT_FALSE(constraint_column_catalog->IsPrimary());
+          EXPECT_TRUE(constraint_column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsPrimary());
           EXPECT_EQ(2, constraint_column.GetConstraints().size());
           for (auto constraint : constraint_column.GetConstraints()) {
             if (constraint.GetName() == "con_not_null") {
@@ -396,8 +392,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // foreign key in attribute 'value3' to attribute 'id' in table
         // 'checkpoint_table_test'
         else if (constraint_column_name == "value3") {
-          EXPECT_FALSE(constraint_column_catalog->IsNotNull());
-          EXPECT_FALSE(constraint_column_catalog->IsPrimary());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
           for (auto constraint : constraint_column.GetConstraints()) {
             if (constraint.GetName() ==
@@ -415,8 +411,8 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
         // 'upid1'&'upid2' in table 'checkpoint_index_test'
         else if (constraint_column_name == "value4" ||
             constraint_column_name == "value5") {
-          EXPECT_FALSE(constraint_column_catalog->IsNotNull());
-          EXPECT_FALSE(constraint_column_catalog->IsPrimary());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsNotNull());
+          EXPECT_FALSE(constraint_column_catalog_entry->IsPrimary());
           EXPECT_EQ(1, constraint_column.GetConstraints().size());
           for (auto constraint : constraint_column.GetConstraints()) {
             if (constraint.GetName() ==

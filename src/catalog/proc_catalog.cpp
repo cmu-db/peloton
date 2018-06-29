@@ -23,8 +23,8 @@ namespace catalog {
 
 #define PROC_CATALOG_NAME "pg_proc"
 
-ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
-                                     concurrency::TransactionContext *txn)
+ProcCatalogEntry::ProcCatalogEntry(concurrency::TransactionContext *txn,
+                                     executor::LogicalTile *tile)
     : oid_(tile->GetValue(0, 0).GetAs<oid_t>()),
       name_(tile->GetValue(0, 1).GetAs<const char *>()),
       ret_type_(tile->GetValue(0, 2).GetAs<type::TypeId>()),
@@ -33,8 +33,8 @@ ProcCatalogObject::ProcCatalogObject(executor::LogicalTile *tile,
       src_(tile->GetValue(0, 5).GetAs<const char *>()),
       txn_(txn) {}
 
-std::unique_ptr<LanguageCatalogObject> ProcCatalogObject::GetLanguage() const {
-  return LanguageCatalog::GetInstance().GetLanguageByOid(GetLangOid(), txn_);
+std::unique_ptr<LanguageCatalogEntry> ProcCatalogEntry::GetLanguage() const {
+  return LanguageCatalog::GetInstance().GetLanguageByOid(txn_, GetLangOid());
 }
 
 ProcCatalog &ProcCatalog::GetInstance(concurrency::TransactionContext *txn) {
@@ -45,27 +45,32 @@ ProcCatalog &ProcCatalog::GetInstance(concurrency::TransactionContext *txn) {
 ProcCatalog::~ProcCatalog(){};
 
 ProcCatalog::ProcCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." PROC_CATALOG_NAME
-                      " ("
-                      "proc_oid      INT NOT NULL PRIMARY KEY, "
-                      "proname       VARCHAR NOT NULL, "
-                      "prorettype    INT NOT NULL, "
-                      "proargtypes   VARCHAR NOT NULL, "
-                      "prolang       INT NOT NULL, "
-                      "prosrc        VARCHAR NOT NULL);",
-                      txn) {
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, PROC_CATALOG_NAME, {1, 3},
-      PROC_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
+    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+                           "." CATALOG_SCHEMA_NAME "." PROC_CATALOG_NAME
+                           " ("
+                           "proc_oid      INT NOT NULL PRIMARY KEY, "
+                           "proname       VARCHAR NOT NULL, "
+                           "prorettype    INT NOT NULL, "
+                           "proargtypes   VARCHAR NOT NULL, "
+                           "prolang       INT NOT NULL, "
+                           "prosrc        VARCHAR NOT NULL);") {
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      CATALOG_DATABASE_NAME,
+                                      CATALOG_SCHEMA_NAME,
+                                      PROC_CATALOG_NAME,
+                                      PROC_CATALOG_NAME "_skey0",
+                                      {1, 3},
+                                      false,
+                                      IndexType::BWTREE);
 }
 
-bool ProcCatalog::InsertProc(const std::string &proname,
+bool ProcCatalog::InsertProc(concurrency::TransactionContext *txn,
+                             const std::string &proname,
                              type::TypeId prorettype,
                              const std::vector<type::TypeId> &proargtypes,
-                             oid_t prolang, const std::string &prosrc,
-                             type::AbstractPool *pool,
-                             concurrency::TransactionContext *txn) {
+                             oid_t prolang,
+                             const std::string &prosrc,
+                             type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -86,34 +91,36 @@ bool ProcCatalog::InsertProc(const std::string &proname,
   tuple->SetValue(ColumnId::PROSRC, val5, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByOid(
-    oid_t proc_oid, concurrency::TransactionContext *txn) const {
-  std::vector<oid_t> column_ids(all_column_ids);
+std::unique_ptr<ProcCatalogEntry> ProcCatalog::GetProcByOid(concurrency::TransactionContext *txn,
+                                                             oid_t proc_oid) const {
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::PRIMARY_KEY;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(proc_oid).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
   PELOTON_ASSERT(result_tiles->size() <= 1);
 
-  std::unique_ptr<ProcCatalogObject> ret;
+  std::unique_ptr<ProcCatalogEntry> ret;
   if (result_tiles->size() == 1) {
     PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
+    ret.reset(new ProcCatalogEntry(txn, (*result_tiles)[0].get()));
   }
 
   return ret;
 }
 
-std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
-    const std::string &proc_name,
-    const std::vector<type::TypeId> &proc_arg_types,
-    concurrency::TransactionContext *txn) const {
-  std::vector<oid_t> column_ids(all_column_ids);
+std::unique_ptr<ProcCatalogEntry> ProcCatalog::GetProcByName(concurrency::TransactionContext *txn,
+                                                              const std::string &proc_name,
+                                                              const std::vector<type::TypeId> &proc_arg_types) const {
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::SECONDARY_KEY_0;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(proc_name).Copy());
@@ -122,13 +129,16 @@ std::unique_ptr<ProcCatalogObject> ProcCatalog::GetProcByName(
           .Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
   PELOTON_ASSERT(result_tiles->size() <= 1);
 
-  std::unique_ptr<ProcCatalogObject> ret;
+  std::unique_ptr<ProcCatalogEntry> ret;
   if (result_tiles->size() == 1) {
     PELOTON_ASSERT((*result_tiles)[0]->GetTupleCount() <= 1);
-    ret.reset(new ProcCatalogObject((*result_tiles)[0].get(), txn));
+    ret.reset(new ProcCatalogEntry(txn, (*result_tiles)[0].get()));
   }
 
   return ret;
