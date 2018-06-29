@@ -32,7 +32,7 @@ class DecimalSQLTestsBase : public PelotonTest {
     // Create database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
   }
 
@@ -50,7 +50,7 @@ class DecimalSQLTestsBase : public PelotonTest {
     // Destroy test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
@@ -63,7 +63,7 @@ class DecimalFunctionsSQLTest : public PelotonTest {};
 TEST_F(DecimalFunctionsSQLTest, FloorTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
 
@@ -107,7 +107,7 @@ TEST_F(DecimalFunctionsSQLTest, FloorTest) {
   }
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -297,7 +297,7 @@ TEST_F(DecimalSQLTestsBase, DecimalAbsTest) {
 TEST_F(DecimalFunctionsSQLTest, CeilTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   // NOTE: Catalog::GetInstance()->Bootstrap() has been called in previous tests
   // you can only call it once!
   // catalog::Catalog::GetInstance()->Bootstrap();
@@ -360,7 +360,7 @@ TEST_F(DecimalFunctionsSQLTest, CeilTest) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

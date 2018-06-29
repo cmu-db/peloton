@@ -38,41 +38,42 @@
 namespace peloton {
 namespace catalog {
 
-class ColumnCatalogObject {
+class ColumnCatalogEntry {
  public:
-  ColumnCatalogObject(executor::LogicalTile *tile, int tupleId = 0);
+  ColumnCatalogEntry(executor::LogicalTile *tile, int tupleId = 0);
 
-  inline oid_t GetTableOid() { return table_oid; }
-  inline const std::string &GetColumnName() { return column_name; }
-  inline oid_t GetColumnId() { return column_id; }
-  inline oid_t GetColumnOffset() { return column_offset; }
-  inline type::TypeId GetColumnType() { return column_type; }
-  inline size_t GetColumnLength() { return column_length; }
-  inline bool IsInlined() { return is_inlined; }
-  inline bool IsPrimary() { return is_primary; }
-  inline bool IsNotNull() { return is_not_null; }
+  inline oid_t GetTableOid() { return table_oid_; }
+  inline const std::string &GetColumnName() { return column_name_; }
+  inline oid_t GetColumnId() { return column_id_; }
+  inline oid_t GetColumnOffset() { return column_offset_; }
+  inline type::TypeId GetColumnType() { return column_type_; }
+  inline size_t GetColumnLength() { return column_length_; }
+  inline bool IsInlined() { return is_inlined_; }
+  inline bool IsPrimary() { return is_primary_; }
+  inline bool IsNotNull() { return is_not_null_; }
 
  private:
   // member variables
-  oid_t table_oid;
-  std::string column_name;
-  oid_t column_id;
-  oid_t column_offset;
-  type::TypeId column_type;
-  size_t column_length;
-  bool is_inlined;
-  bool is_primary;
-  bool is_not_null;
+  oid_t table_oid_;
+  std::string column_name_;
+  oid_t column_id_;
+  oid_t column_offset_;
+  type::TypeId column_type_;
+  size_t column_length_;
+  bool is_inlined_;
+  bool is_primary_;
+  bool is_not_null_;
 };
 
 class ColumnCatalog : public AbstractCatalog {
-  friend class ColumnCatalogObject;
-  friend class TableCatalogObject;
+  friend class ColumnCatalogEntry;
+  friend class TableCatalogEntry;
   friend class Catalog;
 
  public:
-  ColumnCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
+  ColumnCatalog(concurrency::TransactionContext *txn,
+                storage::Database *pg_catalog,
+                type::AbstractPool *pool);
 
   ~ColumnCatalog();
 
@@ -84,22 +85,30 @@ class ColumnCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumn(oid_t table_oid, const std::string &column_name,
-                    oid_t column_id, oid_t column_offset,
-                    type::TypeId column_type, size_t column_length,
-                    bool is_inlined, const std::vector<Constraint> &constraints,
-                    type::AbstractPool *pool,
-                    concurrency::TransactionContext *txn);
-  bool DeleteColumn(oid_t table_oid, const std::string &column_name,
-                    concurrency::TransactionContext *txn);
-  bool DeleteColumns(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool InsertColumn(concurrency::TransactionContext *txn,
+                    oid_t table_oid,
+                    oid_t column_id,
+                    const std::string &column_name,
+                    oid_t column_offset,
+                    type::TypeId column_type,
+                    size_t column_length,
+                    const std::vector<Constraint> &constraints,
+                    bool is_inlined,
+                    type::AbstractPool *pool);
+
+  bool DeleteColumn(concurrency::TransactionContext *txn,
+                    oid_t table_oid,
+                    const std::string &column_name);
+
+  bool DeleteColumns(concurrency::TransactionContext *txn, oid_t table_oid);
 
  private:
   //===--------------------------------------------------------------------===//
   // Read Related API(only called within table catalog object)
   //===--------------------------------------------------------------------===//
-  const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-  GetColumnObjects(oid_t table_oid, concurrency::TransactionContext *txn);
+  const std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogEntry>>
+    GetColumnCatalogEntries(concurrency::TransactionContext *txn,
+                            oid_t table_oid);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
@@ -115,7 +124,7 @@ class ColumnCatalog : public AbstractCatalog {
     IS_NOT_NULL = 8,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
   enum IndexId {
     PRIMARY_KEY = 0,

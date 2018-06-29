@@ -32,7 +32,7 @@ of the second column.
 TEST_F(StringFunctionTest, LengthTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   catalog::Catalog::GetInstance()->Bootstrap();
   txn_manager.CommitTransaction(txn);
   // Create a t
@@ -69,7 +69,7 @@ TEST_F(StringFunctionTest, LengthTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

@@ -25,49 +25,48 @@ class PlanUtil;
 
 namespace catalog {
 
-class DatabaseCatalogObject;
-class TableCatalogObject;
-class IndexCatalogObject;
+class DatabaseCatalogEntry;
+class TableCatalogEntry;
+class IndexCatalogEntry;
 
 class CatalogCache {
   friend class Transaction;
   friend class DatabaseCatalog;
   friend class TableCatalog;
   friend class IndexCatalog;
-  friend class DatabaseCatalogObject;
-  friend class TableCatalogObject;
-  friend class IndexCatalogObject;
+  friend class DatabaseCatalogEntry;
+  friend class TableCatalogEntry;
+  friend class IndexCatalogEntry;
   friend class planner::PlanUtil;
 
  public:
   CatalogCache() {}
-  CatalogCache(CatalogCache const &) = delete;
-  CatalogCache &operator=(CatalogCache const &) = delete;
+  DISALLOW_COPY(CatalogCache)
 
  private:
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(oid_t database_oid);
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseObject(oid_t database_oid);
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseObject(
       const std::string &name);
 
-  std::shared_ptr<TableCatalogObject> GetCachedTableObject(oid_t database_oid,
-      oid_t table_oid);
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(oid_t database_oid,
-      oid_t index_oid);
-  std::shared_ptr<IndexCatalogObject> GetCachedIndexObject(
-      const std::string &database_name, const std::string &index_name,
-      const std::string &schema_name);
+  std::shared_ptr<TableCatalogEntry> GetCachedTableObject(oid_t database_oid,
+                                                           oid_t table_oid);
+  std::shared_ptr<IndexCatalogEntry> GetCachedIndexObject(oid_t database_oid,
+                                                           oid_t index_oid);
+  std::shared_ptr<IndexCatalogEntry> GetCachedIndexObject(const std::string &database_name,
+                                                           const std::string &schema_name,
+                                                           const std::string &index_name);
 
   // database catalog cache interface
   bool InsertDatabaseObject(
-      std::shared_ptr<DatabaseCatalogObject> database_object);
+      std::shared_ptr<DatabaseCatalogEntry> database_object);
   bool EvictDatabaseObject(oid_t database_oid);
   bool EvictDatabaseObject(const std::string &database_name);
 
   // cache for database catalog object
-  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogObject>>
-      database_objects_cache;
-  std::unordered_map<std::string, std::shared_ptr<DatabaseCatalogObject>>
-      database_name_cache;
+  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogEntry>>
+      database_objects_cache_;
+  std::unordered_map<std::string, std::shared_ptr<DatabaseCatalogEntry>>
+      database_name_cache_;
 };
 
 }  // namespace catalog

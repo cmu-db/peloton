@@ -57,8 +57,8 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
         schema_name = delete_stmt.GetSchemaName();
       }
       auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
-                             ->GetTableObject(table_name, schema_name)
-                             ->GetIndexObjects();
+          ->GetTableCatalogEntry(table_name, schema_name)
+          ->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
         index_oids.insert(index.first);
       }
@@ -70,18 +70,19 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       table_name = update_stmt.table->GetTableName();
       schema_name = update_stmt.table->GetSchemaName();
       auto table_object = catalog_cache.GetDatabaseObject(db_name)
-                              ->GetTableObject(table_name, schema_name);
+          ->GetTableCatalogEntry(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
       for (const auto &update_clause : update_clauses) {
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
-        auto col_object = table_object->GetColumnObject(update_clause->column);
+        auto col_object =
+            table_object->GetColumnCatalogEntry(update_clause->column);
         update_oids.insert(col_object->GetColumnId());
       }
 
-      auto indexes_map = table_object->GetIndexObjects();
+      auto indexes_map = table_object->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
         LOG_TRACE("Checking if UPDATE query affects index: %s",
                   index.second->GetIndexName().c_str());

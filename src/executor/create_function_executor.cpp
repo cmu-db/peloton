@@ -40,7 +40,7 @@ bool CreateFunctionExecutor::DExecute() {
 
   auto proname = node.GetFunctionName();
   oid_t prolang = catalog::LanguageCatalog::GetInstance()
-                      .GetLanguageByName("plpgsql", current_txn)
+      .GetLanguageByName(current_txn, "plpgsql")
                       ->GetOid();
   auto prorettype = node.GetReturnType();
   auto proargtypes = node.GetFunctionParameterTypes();
@@ -63,9 +63,13 @@ bool CreateFunctionExecutor::DExecute() {
   auto func_ptr = code_context->GetUDF();
   if (func_ptr != nullptr) {
     // Insert into catalog
-    catalog::Catalog::GetInstance()->AddPlpgsqlFunction(
-        proname, proargtypes, prorettype, prolang, prosrc, code_context,
-        current_txn);
+    catalog::Catalog::GetInstance()->AddProcedure(current_txn,
+                                                  proname,
+                                                  prorettype,
+                                                  proargtypes,
+                                                  prolang,
+                                                  code_context,
+                                                  prosrc);
     result = ResultType::SUCCESS;
   } else {
     result = ResultType::FAILURE;

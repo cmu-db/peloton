@@ -25,45 +25,45 @@
 namespace peloton {
 namespace catalog {
 
-DatabaseCatalogObject::DatabaseCatalogObject(
-    executor::LogicalTile *tile, concurrency::TransactionContext *txn)
-    : database_oid(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
+DatabaseCatalogEntry::DatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                                           executor::LogicalTile *tile)
+    : database_oid_(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
                        .GetAs<oid_t>()),
-      database_name(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
+      database_name_(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
                         .ToString()),
-      table_objects_cache(),
-      table_name_cache(),
-      valid_table_objects(false),
-      txn(txn) {}
+      table_catalog_entries_cache_(),
+      table_catalog_entries_cache_by_name(),
+      valid_table_catalog_entries(false),
+      txn_(txn) {}
 
 /* @brief   insert table catalog object into cache
  * @param   table_object
  * @return  false if table_name already exists in cache
  */
-bool DatabaseCatalogObject::InsertTableObject(
-    std::shared_ptr<TableCatalogObject> table_object) {
-  if (!table_object || table_object->GetTableOid() == INVALID_OID) {
+bool DatabaseCatalogEntry::InsertTableCatalogEntry(
+    std::shared_ptr<TableCatalogEntry> table_catalog_entry) {
+  if (!table_catalog_entry || table_catalog_entry->GetTableOid() == INVALID_OID) {
     return false;  // invalid object
   }
 
   // check if already in cache
-  if (table_objects_cache.find(table_object->GetTableOid()) !=
-      table_objects_cache.end()) {
-    LOG_DEBUG("Table %u already exists in cache!", table_object->GetTableOid());
+  if (table_catalog_entries_cache_.find(table_catalog_entry->GetTableOid()) !=
+      table_catalog_entries_cache_.end()) {
+    LOG_DEBUG("Table %u already exists in cache!", table_catalog_entry->GetTableOid());
     return false;
   }
 
   std::string key =
-      table_object->GetSchemaName() + "." + table_object->GetTableName();
-  if (table_name_cache.find(key) != table_name_cache.end()) {
+      table_catalog_entry->GetSchemaName() + "." + table_catalog_entry->GetTableName();
+  if (table_catalog_entries_cache_by_name.find(key) != table_catalog_entries_cache_by_name.end()) {
     LOG_DEBUG("Table %s already exists in cache!",
-              table_object->GetTableName().c_str());
+              table_catalog_entry->GetTableName().c_str());
     return false;
   }
 
-  table_objects_cache.insert(
-      std::make_pair(table_object->GetTableOid(), table_object));
-  table_name_cache.insert(std::make_pair(key, table_object));
+  table_catalog_entries_cache_.insert(
+      std::make_pair(table_catalog_entry->GetTableOid(), table_catalog_entry));
+  table_catalog_entries_cache_by_name.insert(std::make_pair(key, table_catalog_entry));
   return true;
 }
 
@@ -71,20 +71,20 @@ bool DatabaseCatalogObject::InsertTableObject(
  * @param   table_oid
  * @return  true if table_oid is found and evicted; false if not found
  */
-bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
+bool DatabaseCatalogEntry::EvictTableCatalogEntry(oid_t table_oid) {
   // find table name from table name cache
-  auto it = table_objects_cache.find(table_oid);
-  if (it == table_objects_cache.end()) {
+  auto it = table_catalog_entries_cache_.find(table_oid);
+  if (it == table_catalog_entries_cache_.end()) {
     return false;  // table oid not found in cache
   }
 
   auto table_object = it->second;
   PELOTON_ASSERT(table_object);
-  table_objects_cache.erase(it);
+  table_catalog_entries_cache_.erase(it);
   // erase from table name cache
   std::string key =
       table_object->GetSchemaName() + "." + table_object->GetTableName();
-  table_name_cache.erase(key);
+  table_catalog_entries_cache_by_name.erase(key);
   return true;
 }
 
@@ -92,27 +92,27 @@ bool DatabaseCatalogObject::EvictTableObject(oid_t table_oid) {
  * @param   table_name
  * @return  true if table_name is found and evicted; false if not found
  */
-bool DatabaseCatalogObject::EvictTableObject(const std::string &table_name,
-                                             const std::string &schema_name) {
+bool DatabaseCatalogEntry::EvictTableCatalogEntry(const std::string &table_name,
+                                                  const std::string &schema_name) {
   std::string key = schema_name + "." + table_name;
   // find table name from table name cache
-  auto it = table_name_cache.find(key);
-  if (it == table_name_cache.end()) {
+  auto it = table_catalog_entries_cache_by_name.find(key);
+  if (it == table_catalog_entries_cache_by_name.end()) {
     return false;  // table name not found in cache
   }
 
   auto table_object = it->second;
   PELOTON_ASSERT(table_object);
-  table_name_cache.erase(it);
-  table_objects_cache.erase(table_object->GetTableOid());
+  table_catalog_entries_cache_by_name.erase(it);
+  table_catalog_entries_cache_.erase(table_object->GetTableOid());
   return true;
 }
 
 /*@brief   evict all table catalog objects in this database from cache
  */
-void DatabaseCatalogObject::EvictAllTableObjects() {
-  table_objects_cache.clear();
-  table_name_cache.clear();
+void DatabaseCatalogEntry::EvictAllTableCatalogEntries() {
+  table_catalog_entries_cache_.clear();
+  table_catalog_entries_cache_by_name.clear();
 }
 
 /* @brief   Get table catalog object from cache or all the way from storage
@@ -120,10 +120,10 @@ void DatabaseCatalogObject::EvictAllTableObjects() {
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */
-std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
+std::shared_ptr<TableCatalogEntry> DatabaseCatalogEntry::GetTableCatalogEntry(
     oid_t table_oid, bool cached_only) {
-  auto it = table_objects_cache.find(table_oid);
-  if (it != table_objects_cache.end()) return it->second;
+  auto it = table_catalog_entries_cache_.find(table_oid);
+  if (it != table_catalog_entries_cache_.end()) return it->second;
 
   if (cached_only) {
     // cache miss return empty object
@@ -131,9 +131,9 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   } else {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
+                        ->GetSystemCatalogs(database_oid_)
                         ->GetTableCatalog();
-    return pg_table->GetTableObject(table_oid, txn);
+    return pg_table->GetTableCatalogEntry(txn_, table_oid);
   }
 }
 
@@ -144,12 +144,12 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */
-std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
+std::shared_ptr<TableCatalogEntry> DatabaseCatalogEntry::GetTableCatalogEntry(
     const std::string &table_name, const std::string &schema_name,
     bool cached_only) {
   std::string key = schema_name + "." + table_name;
-  auto it = table_name_cache.find(key);
-  if (it != table_name_cache.end()) {
+  auto it = table_catalog_entries_cache_by_name.find(key);
+  if (it != table_catalog_entries_cache_by_name.end()) {
     return it->second;
   }
 
@@ -159,9 +159,9 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
   } else {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
+                        ->GetSystemCatalogs(database_oid_)
                         ->GetTableCatalog();
-    return pg_table->GetTableObject(table_name, schema_name, txn);
+    return pg_table->GetTableCatalogEntry(txn_, schema_name, table_name);
   }
 }
 
@@ -170,20 +170,20 @@ std::shared_ptr<TableCatalogObject> DatabaseCatalogObject::GetTableObject(
  * @param   schema_name
  * @return  table catalog objects
  */
-std::vector<std::shared_ptr<TableCatalogObject>>
-DatabaseCatalogObject::GetTableObjects(const std::string &schema_name) {
+std::vector<std::shared_ptr<TableCatalogEntry>>
+DatabaseCatalogEntry::GetTableCatalogEntries(const std::string &schema_name) {
   // read directly from pg_table
-  if (!valid_table_objects) {
+  if (!valid_table_catalog_entries) {
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
+                        ->GetSystemCatalogs(database_oid_)
                         ->GetTableCatalog();
     // insert every table object into cache
-    pg_table->GetTableObjects(txn);
+    pg_table->GetTableCatalogEntries(txn_);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PELOTON_ASSERT(valid_table_objects);
-  std::vector<std::shared_ptr<TableCatalogObject>> result;
-  for (auto it : table_objects_cache) {
+  PELOTON_ASSERT(valid_table_catalog_entries);
+  std::vector<std::shared_ptr<TableCatalogEntry>> result;
+  for (auto it : table_catalog_entries_cache_) {
     if (it.second->GetSchemaName() == schema_name) {
       result.push_back(it.second);
     }
@@ -197,30 +197,30 @@ DatabaseCatalogObject::GetTableObjects(const std::string &schema_name) {
  * @param   cached_only   if cached only, return nullptr on a cache miss
  * @return  Shared pointer to the requested table catalog object
  */
-std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
-DatabaseCatalogObject::GetTableObjects(bool cached_only) {
-  if (!cached_only && !valid_table_objects) {
+std::unordered_map<oid_t, std::shared_ptr<TableCatalogEntry>>
+DatabaseCatalogEntry::GetTableCatalogEntries(bool cached_only) {
+  if (!cached_only && !valid_table_catalog_entries) {
     // cache miss get from pg_table
     auto pg_table = Catalog::GetInstance()
-                        ->GetSystemCatalogs(database_oid)
+                        ->GetSystemCatalogs(database_oid_)
                         ->GetTableCatalog();
-    return pg_table->GetTableObjects(txn);
+    return pg_table->GetTableCatalogEntries(txn_);
   }
   // make sure to check IsValidTableObjects() before getting table objects
-  PELOTON_ASSERT(valid_table_objects);
-  return table_objects_cache;
+  PELOTON_ASSERT(valid_table_catalog_entries);
+  return table_catalog_entries_cache_;
 }
 
 /*@brief   search index catalog object from all cached database objects
  * @param   index_oid
  * @return  index catalog object; if not found return null
  */
-std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
+std::shared_ptr<IndexCatalogEntry> DatabaseCatalogEntry::GetCachedIndexCatalogEntry(
     oid_t index_oid) {
-  for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
+  for (auto it = table_catalog_entries_cache_.begin(); it != table_catalog_entries_cache_.end();
        ++it) {
     auto table_object = it->second;
-    auto index_object = table_object->GetIndexObject(index_oid, true);
+    auto index_object = table_object->GetIndexCatalogEntries(index_oid, true);
     if (index_object) return index_object;
   }
   return nullptr;
@@ -230,37 +230,44 @@ std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
  * @param   index_name
  * @return  index catalog object; if not found return null
  */
-std::shared_ptr<IndexCatalogObject> DatabaseCatalogObject::GetCachedIndexObject(
+std::shared_ptr<IndexCatalogEntry> DatabaseCatalogEntry::GetCachedIndexCatalogEntry(
     const std::string &index_name, const std::string &schema_name) {
-  for (auto it = table_objects_cache.begin(); it != table_objects_cache.end();
+  for (auto it = table_catalog_entries_cache_.begin(); it != table_catalog_entries_cache_.end();
        ++it) {
     auto table_object = it->second;
     if (table_object != nullptr &&
         table_object->GetSchemaName() == schema_name) {
-      auto index_object = table_object->GetIndexObject(index_name, true);
+      auto index_object = table_object->GetIndexCatalogEntry(index_name, true);
       if (index_object) return index_object;
     }
   }
   return nullptr;
 }
 
-DatabaseCatalog *DatabaseCatalog::GetInstance(
-    storage::Database *pg_catalog, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
-  static DatabaseCatalog database_catalog{pg_catalog, pool, txn};
+DatabaseCatalog *DatabaseCatalog::GetInstance(concurrency::TransactionContext *txn,
+                                             storage::Database *pg_catalog,
+                                             type::AbstractPool *pool) {
+  static DatabaseCatalog
+      database_catalog{txn, pg_catalog, pool};
   return &database_catalog;
 }
 
-DatabaseCatalog::DatabaseCatalog(
-    storage::Database *pg_catalog, UNUSED_ATTRIBUTE type::AbstractPool *pool,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
-    : AbstractCatalog(DATABASE_CATALOG_OID, DATABASE_CATALOG_NAME,
-                      InitializeSchema().release(), pg_catalog) {
+DatabaseCatalog::DatabaseCatalog(concurrency::TransactionContext *,
+                                 storage::Database *pg_catalog,
+                                 type::AbstractPool *)
+    : AbstractCatalog(pg_catalog,
+                      InitializeSchema().release(),
+                      DATABASE_CATALOG_OID,
+                      DATABASE_CATALOG_NAME) {
   // Add indexes for pg_database
-  AddIndex({ColumnId::DATABASE_OID}, DATABASE_CATALOG_PKEY_OID,
-           DATABASE_CATALOG_NAME "_pkey", IndexConstraintType::PRIMARY_KEY);
-  AddIndex({ColumnId::DATABASE_NAME}, DATABASE_CATALOG_SKEY0_OID,
-           DATABASE_CATALOG_NAME "_skey0", IndexConstraintType::UNIQUE);
+  AddIndex(DATABASE_CATALOG_NAME "_pkey",
+           DATABASE_CATALOG_PKEY_OID,
+           {ColumnId::DATABASE_OID},
+           IndexConstraintType::PRIMARY_KEY);
+  AddIndex(DATABASE_CATALOG_NAME "_skey0",
+           DATABASE_CATALOG_SKEY0_OID,
+           {ColumnId::DATABASE_NAME},
+           IndexConstraintType::UNIQUE);
 }
 
 DatabaseCatalog::~DatabaseCatalog() {}
@@ -281,7 +288,7 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
-      type::TypeId::VARCHAR, max_name_size, "database_name", false);
+      type::TypeId::VARCHAR, max_name_size_, "database_name", false);
   database_name_column.AddConstraint(
       catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
@@ -290,10 +297,10 @@ std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
   return database_catalog_schema;
 }
 
-bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
+bool DatabaseCatalog::InsertDatabase(concurrency::TransactionContext *txn,
+                                     oid_t database_oid,
                                      const std::string &database_name,
-                                     type::AbstractPool *pool,
-                                     concurrency::TransactionContext *txn) {
+                                     type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -304,11 +311,10 @@ bool DatabaseCatalog::InsertDatabase(oid_t database_oid,
   tuple->SetValue(ColumnId::DATABASE_NAME, val1, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
-                                     concurrency::TransactionContext *txn) {
+bool DatabaseCatalog::DeleteDatabase(concurrency::TransactionContext *txn, oid_t database_oid) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
@@ -316,11 +322,12 @@ bool DatabaseCatalog::DeleteDatabase(oid_t database_oid,
   // evict cache
   txn->catalog_cache.EvictDatabaseObject(database_oid);
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
-    oid_t database_oid, concurrency::TransactionContext *txn) {
+std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    oid_t database_oid) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -329,17 +336,20 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Index of database_oid
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<DatabaseCatalogEntry>(txn, (*result_tiles)[0].get());
     // insert into cache
     bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
     PELOTON_ASSERT(success == true);
@@ -358,8 +368,9 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
  *          construct database object from pg_database, and insert into the
  *          cache.
  */
-std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
-    const std::string &database_name, concurrency::TransactionContext *txn) {
+std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &database_name) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
@@ -368,18 +379,21 @@ std::shared_ptr<DatabaseCatalogObject> DatabaseCatalog::GetDatabaseObject(
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::SKEY_DATABASE_NAME;  // Index of database_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(database_name, nullptr).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto database_object =
-        std::make_shared<DatabaseCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<DatabaseCatalogEntry>(txn, (*result_tiles)[0].get());
     if (database_object) {
       // insert into cache
       bool success = txn->catalog_cache.InsertDatabaseObject(database_object);

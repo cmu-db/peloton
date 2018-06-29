@@ -46,7 +46,7 @@ TEST_F(TupleSamplesStorageTests, SamplesDBTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   storage::Database *samples_db =
-      catalog->GetDatabaseWithName(SAMPLES_DB_NAME, txn);
+      catalog->GetDatabaseWithName(txn, SAMPLES_DB_NAME);
   txn_manager.CommitTransaction(txn);
   EXPECT_TRUE(samples_db != nullptr);
   EXPECT_EQ(samples_db->GetDBName(), SAMPLES_DB_NAME);
@@ -84,8 +84,10 @@ TEST_F(TupleSamplesStorageTests, AddSamplesTableTest) {
       tuple_samples_storage->GenerateSamplesTableName(
           data_table->GetDatabaseOid(), data_table->GetOid());
   txn = txn_manager.BeginTransaction();
-  storage::DataTable *samples_table = catalog->GetTableWithName(
-      SAMPLES_DB_NAME, DEFAULT_SCHEMA_NAME, samples_table_name, txn);
+  storage::DataTable *samples_table = catalog->GetTableWithName(txn,
+                                                                SAMPLES_DB_NAME,
+                                                                DEFAULT_SCHEMA_NAME,
+                                                                samples_table_name);
   txn_manager.CommitTransaction(txn);
 
   EXPECT_TRUE(samples_table != nullptr);

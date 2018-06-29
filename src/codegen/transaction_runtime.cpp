@@ -22,10 +22,7 @@
 namespace peloton {
 namespace codegen {
 
-// Perform a read operation for all tuples in the tile group in the given range
-// TODO: Right now, we split this check into two loops: a visibility check and
-//       the actual reading. Can this be merged?
-uint32_t TransactionRuntime::PerformVectorizedRead(
+uint32_t TransactionRuntime::PerformVisibilityCheck(
     concurrency::TransactionContext &txn, storage::TileGroup &tile_group,
     uint32_t tid_start, uint32_t tid_end, uint32_t *selection_vector) {
   // Get the transaction manager
@@ -45,24 +42,34 @@ uint32_t TransactionRuntime::PerformVectorizedRead(
     selection_vector[out_idx] = i;
     out_idx += (visibility == VisibilityType::OK);
   }
+  return out_idx;
+}
+
+uint32_t TransactionRuntime::PerformVectorizedRead(
+    concurrency::TransactionContext &txn, storage::TileGroup &tile_group,
+    uint32_t *selection_vector, uint32_t end_idx, bool is_for_update) {
+  // Get the transaction manager
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+
+  // Get the tile group header
+  auto tile_group_header = tile_group.GetHeader();
 
   uint32_t tile_group_idx = tile_group.GetTileGroupId();
 
   // Perform a read operation for every visible tuple we found
-  uint32_t end_idx = out_idx;
-  out_idx = 0;
+  uint32_t out_idx = 0;
   for (uint32_t idx = 0; idx < end_idx; idx++) {
     // Construct the item location
     ItemPointer location{tile_group_idx, selection_vector[idx]};
 
     // Perform the read
-    bool can_read = txn_manager.PerformRead(&txn, location, tile_group_header, false);
+    bool can_read = txn_manager.PerformRead(&txn, location, tile_group_header,
+                                            is_for_update);
 
     // Update the selection vector and output position
     selection_vector[out_idx] = selection_vector[idx];
     out_idx += static_cast<uint32_t>(can_read);
   }
-
   return out_idx;
 }
 

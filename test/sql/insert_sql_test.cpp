@@ -113,7 +113,7 @@ void CreateAndLoadTable8() {
 TEST_F(InsertSQLTests, InsertOneValue) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -149,14 +149,14 @@ TEST_F(InsertSQLTests, InsertOneValue) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertMultipleValues) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -201,14 +201,14 @@ TEST_F(InsertSQLTests, InsertMultipleValues) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertSpecifyColumns) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable8();
@@ -245,14 +245,14 @@ TEST_F(InsertSQLTests, InsertSpecifyColumns) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable3();
@@ -288,14 +288,14 @@ TEST_F(InsertSQLTests, InsertTooLargeVarchar) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -363,14 +363,14 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimple) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable4();
@@ -451,14 +451,14 @@ TEST_F(InsertSQLTests, InsertIntoSelectSimpleAllType) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable6();
@@ -526,14 +526,14 @@ TEST_F(InsertSQLTests, InsertIntoSelectColumn) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, UniqueColumn) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   std::string create_table(
@@ -571,14 +571,14 @@ TEST_F(InsertSQLTests, UniqueColumn) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, BadTypes) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   std::string error_message;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -610,14 +610,14 @@ TEST_F(InsertSQLTests, BadTypes) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, NonExistentTable) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   std::string error_message;
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -631,14 +631,14 @@ TEST_F(InsertSQLTests, NonExistentTable) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(InsertSQLTests, BadInserts) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable8();
@@ -707,7 +707,7 @@ TEST_F(InsertSQLTests, BadInserts) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

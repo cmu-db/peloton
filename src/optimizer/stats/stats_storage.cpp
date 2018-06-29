@@ -117,12 +117,20 @@ void StatsStorage::InsertOrUpdateColumnStats(
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  column_stats_catalog->DeleteColumnStats(database_id, table_id, column_id,
-                                          txn);
-  column_stats_catalog->InsertColumnStats(
-      database_id, table_id, column_id, num_rows, cardinality, frac_null,
-      most_common_vals, most_common_freqs, histogram_bounds, column_name,
-      has_index, pool_.get(), txn);
+  column_stats_catalog->DeleteColumnStats(txn, database_id, table_id, column_id);
+  column_stats_catalog->InsertColumnStats(txn,
+                                          database_id,
+                                          table_id,
+                                          column_id,
+                                          column_name,
+                                          num_rows,
+                                          frac_null,
+                                          most_common_vals,
+                                          most_common_freqs,
+                                          histogram_bounds,
+                                          cardinality,
+                                          has_index,
+                                          pool_.get());
 
   if (single_statement_txn) {
     txn_manager.CommitTransaction(txn);
@@ -140,8 +148,10 @@ std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // std::unique_ptr<std::vector<type::Value>> column_stats_vector
-  auto column_stats_vector = column_stats_catalog->GetColumnStats(
-      database_id, table_id, column_id, txn);
+  auto column_stats_vector = column_stats_catalog->GetColumnStats(txn,
+                                                                  database_id,
+                                                                  table_id,
+                                                                  column_id);
   txn_manager.CommitTransaction(txn);
 
   return ConvertVectorToColumnStats(database_id, table_id, column_id,
@@ -220,7 +230,9 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
-  column_stats_catalog->GetTableStats(database_id, table_id, txn,
+  column_stats_catalog->GetTableStats(txn,
+                                      database_id,
+                                      table_id,
                                       column_stats_map);
 
   std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;
@@ -244,7 +256,9 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     concurrency::TransactionContext *txn) {
   auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
-  column_stats_catalog->GetTableStats(database_id, table_id, txn,
+  column_stats_catalog->GetTableStats(txn,
+                                      database_id,
+                                      table_id,
                                       column_stats_map);
 
   std::vector<std::shared_ptr<ColumnStats>> column_stats_ptrs;

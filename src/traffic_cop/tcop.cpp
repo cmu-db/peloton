@@ -334,8 +334,10 @@ void Tcop::GetTableColumns(ClientProcessState &state,
     if (from_table->join == nullptr) {
       auto columns =
           catalog::Catalog::GetInstance()->GetTableWithName(
-              from_table->GetDatabaseName(), from_table->GetSchemaName(),
-              from_table->GetTableName(), state.GetCurrentTxnState().first)
+              state.GetCurrentTxnState().first,
+              from_table->GetDatabaseName(),
+              from_table->GetSchemaName(),
+              from_table->GetTableName())
               ->GetSchema()
               ->GetColumns();
       target_columns.insert(target_columns.end(), columns.begin(),

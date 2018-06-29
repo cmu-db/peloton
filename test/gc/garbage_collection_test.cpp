@@ -200,7 +200,8 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   TestingExecutorUtil::DeleteDatabase("update_db");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                                        db_id),
                CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -299,7 +300,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn, "DATABASE0"),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));

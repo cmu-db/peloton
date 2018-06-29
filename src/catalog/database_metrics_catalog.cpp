@@ -27,23 +27,24 @@ DatabaseMetricsCatalog *DatabaseMetricsCatalog::GetInstance(
 
 DatabaseMetricsCatalog::DatabaseMetricsCatalog(
     concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." DATABASE_METRICS_CATALOG_NAME
-                      " ("
-                      "database_oid  INT NOT NULL, "
-                      "txn_committed INT NOT NULL, "
-                      "txn_aborted   INT NOT NULL, "
-                      "time_stamp    INT NOT NULL);",
-                      txn) {
+    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+                           "." CATALOG_SCHEMA_NAME "." DATABASE_METRICS_CATALOG_NAME
+                           " ("
+                           "database_oid  INT NOT NULL, "
+                           "txn_committed INT NOT NULL, "
+                           "txn_aborted   INT NOT NULL, "
+                           "time_stamp    INT NOT NULL);") {
   // Add secondary index here if necessary
 }
 
 DatabaseMetricsCatalog::~DatabaseMetricsCatalog() {}
 
-bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
-    oid_t database_oid, oid_t txn_committed, oid_t txn_aborted,
-    oid_t time_stamp, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool DatabaseMetricsCatalog::InsertDatabaseMetrics(concurrency::TransactionContext *txn,
+                                                   oid_t database_oid,
+                                                   oid_t txn_committed,
+                                                   oid_t txn_aborted,
+                                                   oid_t time_stamp,
+                                                   type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -58,17 +59,17 @@ bool DatabaseMetricsCatalog::InsertDatabaseMetrics(
   tuple->SetValue(ColumnId::TIME_STAMP, val3, pool);
 
   // Insert the tuple into catalog table
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(
-    oid_t database_oid, concurrency::TransactionContext *txn) {
+bool DatabaseMetricsCatalog::DeleteDatabaseMetrics(concurrency::TransactionContext *txn,
+                                                   oid_t database_oid) {
   oid_t index_offset = IndexId::PRIMARY_KEY;  // Primary key index
 
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
 }  // namespace catalog

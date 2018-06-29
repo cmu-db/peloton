@@ -158,7 +158,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   LOG_INFO("Bootstrapping completed!");
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
@@ -195,8 +195,10 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   LOG_INFO("Table created!");
 
-  storage::DataTable *table = catalog->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "department_table", txn);
+  storage::DataTable *table = catalog->GetTableWithName(txn,
+                                                        DEFAULT_DB_NAME,
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "department_table");
   txn_manager.CommitTransaction(txn);
 
   // Inserting a tuple end-to-end
@@ -439,7 +441,7 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 }  // namespace

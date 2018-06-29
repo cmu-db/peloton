@@ -61,7 +61,7 @@ class OptimizerTests : public PelotonTest {
     // Destroy test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function
@@ -75,7 +75,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping...");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
   LOG_INFO("Bootstrapping completed!");
 
@@ -127,7 +127,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   oid_t expected_table_count = CATALOG_TABLES_COUNT + 1;
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
+                ->GetDatabaseWithName(txn, DEFAULT_DB_NAME)
                 ->GetTableCount(),
             expected_table_count);
 
@@ -170,7 +170,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   expected_table_count++;
   txn = txn_manager.BeginTransaction();
   EXPECT_EQ(catalog::Catalog::GetInstance()
-                ->GetDatabaseWithName(DEFAULT_DB_NAME, txn)
+                ->GetDatabaseWithName(txn, DEFAULT_DB_NAME)
                 ->GetTableCount(),
             expected_table_count);
 
@@ -284,7 +284,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
 TEST_F(OptimizerTests, PredicatePushDownTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -338,7 +338,7 @@ TEST_F(OptimizerTests, PredicatePushDownTest) {
 TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -420,7 +420,7 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -502,7 +502,7 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
   // Currently need database for test teardown
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   const auto num_tasks = 2;

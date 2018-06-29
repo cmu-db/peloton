@@ -1391,9 +1391,9 @@ trigger::TriggerList *DataTable::GetTriggerList() {
 void DataTable::UpdateTriggerListFromCatalog(
     concurrency::TransactionContext *txn) {
   trigger_list_ = catalog::Catalog::GetInstance()
-                      ->GetSystemCatalogs(database_oid)
-                      ->GetTriggerCatalog()
-                      ->GetTriggers(table_oid, txn);
+      ->GetSystemCatalogs(database_oid)
+      ->GetTriggerCatalog()
+      ->GetTriggers(txn, table_oid);
 }
 
 hash_t DataTable::Hash() const {
