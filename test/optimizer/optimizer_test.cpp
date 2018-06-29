@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <memory>
 #include "common/harness.h"
 
 #include "binder/bind_node_visitor.h"
@@ -36,7 +37,6 @@
 #include "planner/seq_scan_plan.h"
 #include "planner/update_plan.h"
 #include "sql/testing_sql_util.h"
-#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
@@ -80,18 +80,17 @@ TEST_F(OptimizerTests, HashJoinTest) {
   LOG_INFO("Bootstrapping completed!");
 
   optimizer::Optimizer optimizer;
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
-                              &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::Tcop::GetInstance();
+  tcop::ClientProcessState state;
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
+
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
-  std::unique_ptr<Statement> statement;
-  statement.reset(new Statement(
-      "CREATE", "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);"));
+  auto statement = std::make_shared<Statement>(
+      "CREATE", "CREATE TABLE table_a(aid INT PRIMARY KEY,value INT);");
 
   auto &peloton_parser = parser::PostgresParser::GetInstance();
 
@@ -103,22 +102,25 @@ TEST_F(OptimizerTests, HashJoinTest) {
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
   std::vector<type::Value> params;
-  std::vector<ResultValue> result;
-  std::vector<int> result_format;
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  std::vector<PostgresDataFormat> result_format(statement->GetTupleDescriptor().size(),
+                                                PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
-      statement->GetPlanTree(), params, result, result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_.reset(statement.get());
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(state, [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  });
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // NOTE: everytime we create a database, there will be 9 catalog tables inside
   // Additionally, we also created a table for the test.
@@ -129,7 +131,8 @@ TEST_F(OptimizerTests, HashJoinTest) {
                 ->GetTableCount(),
             expected_table_count);
 
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Creating table");
   LOG_INFO("Query: CREATE TABLE table_b(bid INT PRIMARY KEY,value INT);");
   statement.reset(new Statement(
@@ -143,20 +146,25 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(create_stmt, txn));
 
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                   PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  });
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // Account for table created.
   expected_table_count++;
@@ -166,8 +174,9 @@ TEST_F(OptimizerTests, HashJoinTest) {
                 ->GetTableCount(),
             expected_table_count);
 
+  state.Reset();
   // Inserting a tuple to table_a
-  traffic_cop.SetTcopTxnState(txn);
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO table_a(aid, value) VALUES (1,1);");
   statement.reset(new Statement(
@@ -181,24 +190,30 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  });
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_a!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // Inserting a tuple to table_b
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO("Query: INSERT INTO table_b(bid, value) VALUES (1,2);");
   statement.reset(new Statement(
@@ -211,23 +226,29 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(insert_stmt, txn));
 
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  });
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted to table_b!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Join ...");
   LOG_INFO("Query: SELECT * FROM table_a INNER JOIN table_b ON aid = bid;");
   statement.reset(new Statement(
@@ -240,20 +261,22 @@ TEST_F(OptimizerTests, HashJoinTest) {
 
   statement->SetPlanTree(optimizer.BuildPelotonPlanTree(select_stmt, txn));
 
-  result_format = std::vector<int>(4, 0);
+  result_format = std::vector<PostgresDataFormat>(4,
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  status = traffic_cop.ExecuteHelper(state, [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  });
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Join completed!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   LOG_INFO("After Join...");
 }

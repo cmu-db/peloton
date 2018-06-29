@@ -12,7 +12,6 @@
 
 #include <cstdio>
 #include "sql/testing_sql_util.h"
-#include "traffic_cop/traffic_cop.h"
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
@@ -32,7 +31,6 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "planner/update_plan.h"
-#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 
@@ -56,18 +54,20 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer;
   optimizer.reset(new optimizer::Optimizer);
 
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
-                              &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::Tcop::GetInstance();
+  auto callback = [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  };
 
   // Create a table first
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  tcop::ClientProcessState state;
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Creating table");
   LOG_INFO(
       "Query: CREATE TABLE department_table(dept_id INT PRIMARY KEY,student_id "
       "INT, dept_name TEXT);");
-  std::unique_ptr<Statement> statement;
+  std::shared_ptr<Statement> statement;
   statement.reset(new Statement("CREATE",
                                 "CREATE TABLE department_table(dept_id INT "
                                 "PRIMARY KEY, student_id INT, dept_name "
@@ -95,28 +95,31 @@ TEST_F(CreateIndexTests, CreatingIndex) {
   std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  std::vector<int> result_format;
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  std::vector<PostgresDataFormat> result_format(statement->GetTupleDescriptor().size(),
+                                                PostgresDataFormat::TEXT);
 
   TestingSQLUtil::counter_.store(1);
-  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
-      statement->GetPlanTree(), params, result, result_format);
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(state, callback);
 
-  if (traffic_cop.GetQueuing()) {
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
 
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Table Created");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   txn = txn_manager.BeginTransaction();
   // Inserting a tuple end-to-end
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,student_id ,dept_name) "
@@ -144,26 +147,28 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Creating and Index");
   LOG_INFO("Query: CREATE INDEX saif ON department_table (student_id);");
   statement.reset(new Statement(
@@ -186,22 +191,23 @@ TEST_F(CreateIndexTests, CreatingIndex) {
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
   LOG_INFO("Executing plan...");
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
-
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("INDEX CREATED!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   txn = txn_manager.BeginTransaction();
   auto target_table_ = catalog::Catalog::GetInstance()->GetTableWithName(

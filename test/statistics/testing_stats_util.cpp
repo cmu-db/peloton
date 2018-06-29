@@ -27,84 +27,87 @@
 #include "planner/insert_plan.h"
 #include "planner/plan_util.h"
 #include "storage/tile.h"
-#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
 
-void TestingStatsUtil::ShowTable(std::string database_name,
-                                 std::string table_name) {
-  std::unique_ptr<Statement> statement;
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-
-  std::vector<type::Value> params;
-  std::vector<ResultValue> result;
-  std::string sql = "SELECT * FROM " + database_name + "." + table_name;
-  statement.reset(new Statement("SELECT", sql));
-  // using transaction to optimize
-  auto txn = txn_manager.BeginTransaction();
-  auto select_stmt = peloton_parser.BuildParseTree(sql);
-  statement->SetPlanTree(
-      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
-  LOG_DEBUG("%s",
-            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-  traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                            result_format);
-  txn_manager.CommitTransaction(txn);
-}
-
-storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
-                                               int first_col_val,
-                                               int second_col_val,
-                                               int third_col_val,
-                                               int fourth_col_val) {
-  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
-  storage::Tuple tuple(schema, true);
-  tuple.SetValue(0, type::ValueFactory::GetIntegerValue(first_col_val),
-                 testing_pool);
-
-  tuple.SetValue(1, type::ValueFactory::GetIntegerValue(second_col_val),
-                 testing_pool);
-
-  tuple.SetValue(2, type::ValueFactory::GetDecimalValue(third_col_val),
-                 testing_pool);
-
-  type::Value string_value =
-      type::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
-  tuple.SetValue(3, string_value, testing_pool);
-  return tuple;
-}
-
-std::shared_ptr<stats::QueryMetric::QueryParams>
-TestingStatsUtil::GetQueryParams(std::shared_ptr<uchar> &type_buf,
-                                 std::shared_ptr<uchar> &format_buf,
-                                 std::shared_ptr<uchar> &val_buf) {
-  // Type
-  uchar *type_buf_data = new uchar[1];
-  type_buf_data[0] = 'x';
-  type_buf.reset(type_buf_data);
-  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
-
-  // Format
-  uchar *format_buf_data = new uchar[1];
-  format_buf_data[0] = 'y';
-  format_buf.reset(format_buf_data);
-  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
-
-  // Value
-  uchar *val_buf_data = new uchar[1];
-  val_buf_data[0] = 'z';
-  val_buf.reset(val_buf_data);
-  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
-
-  // Construct a query param object
-  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
-      new stats::QueryMetric::QueryParams(format, type, val, 1));
-  return query_params;
-}
+// TODO(Tianyu): These functions are not actually called anywhere, and the way
+// they are wriiten is deeply broken (ignoring async callbacks, meaning the caller
+// will have to dream up a number in the test to sleep for). We should rewrite all
+// this testing code.
+//void TestingStatsUtil::ShowTable(std::string database_name,
+//                                 std::string table_name) {
+//  std::unique_ptr<Statement> statement;
+//  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+//  auto &peloton_parser = parser::PostgresParser::GetInstance();
+//  auto &traffic_cop = tcop::TrafficCop::GetInstance();
+//
+//  std::vector<type::Value> params;
+//  std::vector<ResultValue> result;
+//  std::string sql = "SELECT * FROM " + database_name + "." + table_name;
+//  statement.reset(new Statement("SELECT", sql));
+//  // using transaction to optimize
+//  auto txn = txn_manager.BeginTransaction();
+//  auto select_stmt = peloton_parser.BuildParseTree(sql);
+//  statement->SetPlanTree(
+//      optimizer::Optimizer().BuildPelotonPlanTree(select_stmt, txn));
+//  LOG_DEBUG("%s",
+//            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
+//  std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
+//  traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
+//                            result_format);
+//  txn_manager.CommitTransaction(txn);
+//}
+//
+//storage::Tuple TestingStatsUtil::PopulateTuple(const catalog::Schema *schema,
+//                                               int first_col_val,
+//                                               int second_col_val,
+//                                               int third_col_val,
+//                                               int fourth_col_val) {
+//  auto testing_pool = TestingHarness::GetInstance().GetTestingPool();
+//  storage::Tuple tuple(schema, true);
+//  tuple.SetValue(0, type::ValueFactory::GetIntegerValue(first_col_val),
+//                 testing_pool);
+//
+//  tuple.SetValue(1, type::ValueFactory::GetIntegerValue(second_col_val),
+//                 testing_pool);
+//
+//  tuple.SetValue(2, type::ValueFactory::GetDecimalValue(third_col_val),
+//                 testing_pool);
+//
+//  type::Value string_value =
+//      type::ValueFactory::GetVarcharValue(std::to_string(fourth_col_val));
+//  tuple.SetValue(3, string_value, testing_pool);
+//  return tuple;
+//}
+//
+//std::shared_ptr<stats::QueryMetric::QueryParams>
+//TestingStatsUtil::GetQueryParams(std::shared_ptr<uchar> &type_buf,
+//                                 std::shared_ptr<uchar> &format_buf,
+//                                 std::shared_ptr<uchar> &val_buf) {
+//  // Type
+//  uchar *type_buf_data = new uchar[1];
+//  type_buf_data[0] = 'x';
+//  type_buf.reset(type_buf_data);
+//  stats::QueryMetric::QueryParamBuf type(type_buf_data, 1);
+//
+//  // Format
+//  uchar *format_buf_data = new uchar[1];
+//  format_buf_data[0] = 'y';
+//  format_buf.reset(format_buf_data);
+//  stats::QueryMetric::QueryParamBuf format(format_buf_data, 1);
+//
+//  // Value
+//  uchar *val_buf_data = new uchar[1];
+//  val_buf_data[0] = 'z';
+//  val_buf.reset(val_buf_data);
+//  stats::QueryMetric::QueryParamBuf val(val_buf_data, 1);
+//
+//  // Construct a query param object
+//  std::shared_ptr<stats::QueryMetric::QueryParams> query_params(
+//      new stats::QueryMetric::QueryParams(format, type, val, 1));
+//  return query_params;
+//}
 
 void TestingStatsUtil::CreateTable(bool has_primary_key) {
   LOG_INFO("Creating a table...");

@@ -22,11 +22,11 @@
 #include "expression/tuple_value_expression.h"
 #include "optimizer/optimizer.h"
 #include "parser/postgresparser.h"
-#include "traffic_cop/traffic_cop.h"
 
 #include "executor/testing_executor_util.h"
 #include "sql/testing_sql_util.h"
 #include "type/value_factory.h"
+#include "traffic_cop/tcop.h"
 
 using std::make_shared;
 using std::make_tuple;
@@ -60,10 +60,12 @@ void SetupTables(std::string database_name) {
   LOG_INFO("database %s created!", database_name.c_str());
 
   auto &parser = parser::PostgresParser::GetInstance();
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetDefaultDatabaseName(database_name);
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
-                              &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::Tcop::GetInstance();
+  tcop::ClientProcessState state;
+  state.db_name_ = database_name;
+  auto callback = [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  };
 
   optimizer::Optimizer optimizer;
 
@@ -72,7 +74,7 @@ void SetupTables(std::string database_name) {
   for (auto &sql : createTableSQLs) {
     LOG_INFO("%s", sql.c_str());
     txn = txn_manager.BeginTransaction();
-    traffic_cop.SetTcopTxnState(txn);
+    state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
     vector<type::Value> params;
     vector<ResultValue> result;
@@ -86,18 +88,18 @@ void SetupTables(std::string database_name) {
 
     statement->SetPlanTree(
         optimizer.BuildPelotonPlanTree(parse_tree_list, txn));
+    state.statement_ = std::move(statement);
     TestingSQLUtil::counter_.store(1);
-    auto status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params,
-                                            result, result_format);
-    if (traffic_cop.GetQueuing()) {
+    auto status = traffic_cop.ExecuteHelper(state, callback);
+    if (state.is_queuing_) {
       TestingSQLUtil::ContinueAfterComplete();
-      traffic_cop.ExecuteStatementPlanGetResult();
-      status = traffic_cop.p_status_;
-      traffic_cop.SetQueuing(false);
+      traffic_cop.ExecuteStatementPlanGetResult(state);
+      status = state.p_status_;
+      state.is_queuing_ = false;
     }
     LOG_INFO("Table create result: %s",
              ResultTypeToString(status.m_result).c_str());
-    traffic_cop.CommitQueryHelper();
+    traffic_cop.CommitQueryHelper(state);
   }
 }
 

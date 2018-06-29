@@ -18,6 +18,7 @@
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "common/statement_cache.h"
+#include "optimizer/optimizer.h"
 namespace peloton {
 namespace tcop {
 
@@ -35,7 +36,7 @@ struct ClientProcessState {
   // This save currnet statement in the traffic cop
   std::shared_ptr<Statement> statement_;
   // The optimizer used for this connection
-  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_{new optimizer::Optimizer()};
   // flag of single statement txn
   bool single_statement_txn_ = false;
   std::vector<PostgresDataFormat> result_format_;
@@ -47,7 +48,7 @@ struct ClientProcessState {
   std::string skipped_query_string_;
   QueryType skipped_query_type_ = QueryType::QUERY_INVALID;
   StatementCache statement_cache_;
-  int rows_affected_;
+  int rows_affected_ = 0;
   executor::ExecutionResult p_status_;
 
   // TODO(Tianyu): This is vile, get rid of this
@@ -58,6 +59,28 @@ struct ClientProcessState {
       return default_state;
     }
     return tcop_txn_state_.top();
+  }
+
+  // TODO(Tianyu): This is also vile, get rid of this. This is only used for testing
+  void Reset() {
+    thread_id_ = 0;
+    is_queuing_ = false;
+    error_message_ = "";
+    db_name_ = DEFAULT_DB_NAME;
+    param_values_.clear();
+    statement_.reset();
+    optimizer_.reset(new optimizer::Optimizer());
+    single_statement_txn_ = false;
+    result_format_.clear();
+    result_.clear();
+    tcop_txn_state_ = std::stack<TcopTxnState>();
+    txn_state_ = NetworkTransactionStateType::INVALID;
+    skipped_stmt_ = false;
+    skipped_query_string_ = "";
+    skipped_query_type_ = QueryType::QUERY_INVALID;
+    statement_cache_.Clear();
+    rows_affected_ = 0;
+    p_status_ = executor::ExecutionResult();
   }
 };
 
@@ -114,7 +137,6 @@ class Tcop {
 
   void ProcessInvalidStatement(ClientProcessState &state);
 
- private:
   ResultType CommitQueryHelper(ClientProcessState &state);
   ResultType BeginQueryHelper(ClientProcessState &state);
   ResultType AbortQueryHelper(ClientProcessState &state);

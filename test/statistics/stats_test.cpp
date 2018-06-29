@@ -24,7 +24,6 @@
 #include "executor/insert_executor.h"
 #include "statistics/backend_stats_context.h"
 #include "statistics/stats_aggregator.h"
-#include "traffic_cop/traffic_cop.h"
 
 #define NUM_ITERATION 50
 #define NUM_TABLE_INSERT 1
