@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
+#include "planner/plan_util.h"
 #include "network/postgres_protocol_interpreter.h"
 
 #define MAKE_COMMAND(type)                                 \
@@ -101,5 +101,158 @@ std::shared_ptr<PostgresNetworkCommand> PostgresProtocolInterpreter::PacketToCom
   }
 }
 
+void PostgresProtocolInterpreter::CompleteCommand(PostgresPacketWriter &out,
+                                                  const QueryType &query_type,
+                                                  int rows) {
+
+  std::string tag = QueryTypeToString(query_type);
+  switch (query_type) {
+    /* After Begin, we enter a txn block */
+    case QueryType::QUERY_BEGIN:
+      state_.txn_state_ = NetworkTransactionStateType::BLOCK;
+      break;
+      /* After commit, we end the txn block */
+    case QueryType::QUERY_COMMIT:
+      /* After rollback, the txn block is ended */
+    case QueryType::QUERY_ROLLBACK:
+      state_.txn_state_ = NetworkTransactionStateType::IDLE;
+      break;
+    case QueryType::QUERY_INSERT:
+      tag += " 0 " + std::to_string(rows);
+      break;
+    case QueryType::QUERY_CREATE_TABLE:
+    case QueryType::QUERY_CREATE_DB:
+    case QueryType::QUERY_CREATE_INDEX:
+    case QueryType::QUERY_CREATE_TRIGGER:
+    case QueryType::QUERY_PREPARE:
+      break;
+    default:
+      tag += " " + std::to_string(rows);
+  }
+  out.BeginPacket(NetworkMessageType::COMMAND_COMPLETE)
+      .AppendString(tag);
+}
+
+void PostgresProtocolInterpreter::ExecQueryMessageGetResult(PostgresPacketWriter &out,
+                                                            ResultType status) {
+  std::vector<FieldInfo> tuple_descriptor;
+  if (status == ResultType::SUCCESS) {
+    tuple_descriptor = state_.statement_->GetTupleDescriptor();
+  } else if (status == ResultType::FAILURE) {  // check status
+    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                             state_.error_message_}});
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
+  } else if (status == ResultType::TO_ABORT) {
+    std::string error_message =
+        "current transaction is aborted, commands ignored until end of "
+        "transaction block";
+    out.WriteErrorResponse(
+        {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+    out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+    return;
+  }
+
+  // send the attribute names
+  out.WriteTupleDescriptor(tuple_descriptor);
+  out.WriteDataRows(state_.result_, tuple_descriptor.size());
+  // TODO(Tianyu): WTF?
+  state_.rows_affected_ = state_.result_.size() / tuple_descriptor.size();
+
+  CompleteCommand(out,
+                  state_.statement_->GetQueryType(),
+                  state_.rows_affected_);
+
+  out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+}
+
+void PostgresProtocolInterpreter::ExecExecuteMessageGetResult(PostgresPacketWriter &out, peloton::ResultType status) {
+  const auto &query_type = state_.statement_->GetQueryType();
+  switch (status) {
+    case ResultType::FAILURE:
+      LOG_ERROR("Failed to execute: %s",
+              state_.error_message_.c_str());
+      out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                               state_.error_message_}});
+      return;
+    case ResultType::ABORTED: {
+      // It's not an ABORT query but Peloton aborts the transaction
+      if (query_type != QueryType::QUERY_ROLLBACK) {
+        LOG_DEBUG("Failed to execute: Conflicting txn aborted");
+        // Send an error response if the abort is not due to ROLLBACK query
+        out.WriteErrorResponse({{NetworkMessageType::SQLSTATE_CODE_ERROR,
+                            SqlStateErrorCodeToString(
+                                SqlStateErrorCode::SERIALIZATION_ERROR)}});
+      }
+      return;
+    }
+    case ResultType::TO_ABORT: {
+      // User keeps issuing queries in a transaction that should be aborted
+      std::string error_message =
+          "current transaction is aborted, commands ignored until end of "
+          "transaction block";
+      out.WriteErrorResponse(
+          {{NetworkMessageType::HUMAN_READABLE_ERROR, error_message}});
+      out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
+      return;
+    }
+    default: {
+      auto tuple_descriptor =
+          state_.statement_->GetTupleDescriptor();
+      out.WriteDataRows(state_.result_, tuple_descriptor.size());
+      state_.rows_affected_ = state_.result_.size() / tuple_descriptor.size();
+      CompleteCommand(out, query_type, state_.rows_affected_);
+      return;
+    }
+  }
+}
+
+ResultType PostgresProtocolInterpreter::ExecQueryExplain(const std::string &query,
+                                                         peloton::parser::ExplainStatement &explain_stmt) {
+  std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
+      new parser::SQLStatementList());
+  unnamed_sql_stmt_list->PassInStatement(std::move(explain_stmt.real_sql_stmt));
+  auto stmt = tcop::Tcop::GetInstance().PrepareStatement(state_, "explain", query,
+                                                         std::move(unnamed_sql_stmt_list));
+  ResultType status;
+  if (stmt != nullptr) {
+    state_.statement_ = stmt;
+    std::vector<std::string> plan_info = StringUtil::Split(
+        planner::PlanUtil::GetInfo(stmt->GetPlanTree().get()), '\n');
+    const std::vector<FieldInfo> tuple_descriptor = {
+        tcop::Tcop::GetInstance().GetColumnFieldForValueType("Query plan",
+                                                 type::TypeId::VARCHAR)};
+    stmt->SetTupleDescriptor(tuple_descriptor);
+    state_.result_ = plan_info;
+    status = ResultType::SUCCESS;
+  } else {
+    status = ResultType::FAILURE;
+  }
+  return status;
+}
+
+bool PostgresProtocolInterpreter::HardcodedExecuteFilter(peloton::QueryType query_type) {
+  switch (query_type) {
+    // Skip SET
+    case QueryType::QUERY_SET:
+    case QueryType::QUERY_SHOW:
+      return false;
+      // Skip duplicate BEGIN
+    case QueryType::QUERY_BEGIN:
+      if (state_.txn_state_ == NetworkTransactionStateType::BLOCK) {
+        return false;
+      }
+      break;
+      // Skip duplicate Commits and Rollbacks
+    case QueryType::QUERY_COMMIT:
+    case QueryType::QUERY_ROLLBACK:
+      if (state_.txn_state_ == NetworkTransactionStateType::IDLE) {
+        return false;
+      }
+    default:
+      break;
+  }
+  return true;
+}
 } // namespace network
 } // namespace peloton

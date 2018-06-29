@@ -16,7 +16,6 @@
 #include "common/logger.h"
 #include "common/macros.h"
 #include "network/network_types.h"
-#include "traffic_cop/traffic_cop.h"
 #include "network/marshal.h"
 #include "network/postgres_protocol_utils.h"
 

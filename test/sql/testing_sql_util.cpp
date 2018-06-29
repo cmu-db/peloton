@@ -23,7 +23,7 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/plan_util.h"
-#include "traffic_cop/traffic_cop.h"
+#include "traffic_cop/tcop.h"
 
 namespace peloton {
 

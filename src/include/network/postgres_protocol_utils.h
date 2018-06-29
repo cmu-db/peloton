@@ -12,7 +12,9 @@
 
 #pragma once
 #include "network/network_io_utils.h"
+#include "common/statement.h"
 
+#define NULL_CONTENT_SIZE (-1)
 namespace peloton {
 namespace network {
 
@@ -144,11 +146,12 @@ class PostgresPacketWriter {
                       || sizeof(T) == 2
                       || sizeof(T) == 4
                       || sizeof(T) == 8, "Invalid size for integer");
+
     switch (sizeof(T)) {
-      case 1: return AppendRawValue<T>(val);
-      case 2: return AppendRawValue<T>(ntohs(val));
-      case 4: return AppendRawValue<T>(ntohl(val));
-      case 8: return AppendRawValue<T>(ntohll(val));
+      case 1: return AppendRawValue(val);
+      case 2: return AppendRawValue(_CAST(T, ntohs(_CAST(uint16_t, val))));
+      case 4: return AppendRawValue(_CAST(T, ntohl(_CAST(uint32_t, val))));
+      case 8: return AppendRawValue(_CAST(T, ntohll(_CAST(uint64_t, val))));
         // Will never be here due to compiler optimization
       default: throw NetworkProcessException("");
     }
@@ -203,10 +206,42 @@ class PostgresPacketWriter {
 
   inline void WriteTupleDescriptor(const std::vector<FieldInfo> &tuple_descriptor) {
     if (tuple_descriptor.empty()) return;
-    BeginPacket(NetworkMessageType::ROW_DESCRIPTION)
-        .AppendValue<uint16_t>(tuple_descriptor.size());
+    BeginPacket(NetworkMessageType::ROW_DESCRIPTION);
+    AppendValue<uint16_t>(tuple_descriptor.size());
     for (auto &col : tuple_descriptor) {
-      AppendString(std::get<0>(col))()
+      AppendString(std::get<0>(col));
+      // TODO: Table Oid (int32)
+      AppendValue<int32_t>(0);
+      // TODO: Attr id of column (int16)
+      AppendValue<int16_t>(0);
+      // Field data type (int32)
+      AppendValue<int32_t>(std::get<1>(col));
+      // Data type size (int16)
+      AppendValue<int16_t>(std::get<2>(col));
+      // Type modifier (int32)
+      AppendValue<int32_t>(-1);
+      AppendValue<int16_t >(0);
+    }
+    EndPacket();
+  }
+
+  inline void WriteDataRows(const std::vector<ResultValue> &results,
+                            size_t num_columns) {
+    if (results.empty() || num_columns == 0) return;
+    size_t num_rows = results.size() / num_columns;
+    for (size_t i = 0; i < num_rows; i++) {
+      BeginPacket(NetworkMessageType::DATA_ROW)
+          .AppendValue<uint16_t>(num_columns);
+      for (size_t j = 0; j < num_columns; j++) {
+        auto content = results[i * num_columns + j];
+        if (content.empty())
+          AppendValue<uint32_t>(NULL_CONTENT_SIZE);
+        else
+          AppendValue<uint32_t>(content.size())
+              .AppendString(content);
+
+      }
+      EndPacket();
     }
   }
 

@@ -12,12 +12,12 @@
 #pragma once
 
 #include <stack>
+#include "catalog/column.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
 #include "parser/postgresparser.h"
 #include "parser/sql_statement.h"
 #include "common/statement_cache.h"
-#include "client_transaction_handle.h"
 namespace peloton {
 namespace tcop {
 
@@ -48,54 +48,80 @@ struct ClientProcessState {
   QueryType skipped_query_type_ = QueryType::QUERY_INVALID;
   StatementCache statement_cache_;
   int rows_affected_;
+  executor::ExecutionResult p_status_;
+
+  // TODO(Tianyu): This is vile, get rid of this
+  TcopTxnState &GetCurrentTxnState() {
+    if (tcop_txn_state_.empty()) {
+      static TcopTxnState
+          default_state = std::make_pair(nullptr, ResultType::INVALID);
+      return default_state;
+    }
+    return tcop_txn_state_.top();
+  }
 };
 
-inline std::unique_ptr<parser::SQLStatementList> ParseQuery(const std::string &query_string) {
-  auto &peloton_parser = parser::PostgresParser::GetInstance();
-  auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
-  // When the query is empty(such as ";" or ";;", still valid),
-  // the parse tree is empty, parser will return nullptr.
-  if (sql_stmt_list != nullptr && !sql_stmt_list->is_valid)
-    throw ParserException("Error Parsing SQL statement");
-  return sql_stmt_list;
-}
+// TODO(Tianyu): We use an instance here in expectation that instance variables
+// such as parser or others will be here when we refactor singletons, but Tcop
+// should not have any Client specific states.
+class Tcop {
+ public:
+  // TODO(Tianyu): Remove later
+  inline static Tcop &GetInstance() {
+    static Tcop tcop;
+    return tcop;
+  }
 
-std::shared_ptr<Statement> PrepareStatement(ClientProcessState &state,
-                                            const std::string &statement_name,
-                                            const std::string &query_string,
-                                            std::unique_ptr<parser::SQLStatementList> &&sql_stmt_list);
+  inline std::unique_ptr<parser::SQLStatementList> ParseQuery(const std::string &query_string) {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    auto sql_stmt_list = peloton_parser.BuildParseTree(query_string);
+    // When the query is empty(such as ";" or ";;", still valid),
+    // the parse tree is empty, parser will return nullptr.
+    if (sql_stmt_list != nullptr && !sql_stmt_list->is_valid)
+      throw ParserException("Error Parsing SQL statement");
+    return sql_stmt_list;
+  }
 
-ResultType ExecuteStatement(
-    ClientProcessState &state,
-    CallbackFunc callback);
+  std::shared_ptr<Statement> PrepareStatement(ClientProcessState &state,
+                                              const std::string &statement_name,
+                                              const std::string &query_string,
+                                              std::unique_ptr<parser::SQLStatementList> &&sql_stmt_list);
 
-void ExecuteHelper(
-    ClientProcessState &state,
-    std::vector<ResultValue> &result,
-    concurrency::TransactionContext *txn,
-    CallbackFunc callback);
+  ResultType ExecuteStatement(
+      ClientProcessState &state,
+      CallbackFunc callback);
 
-bool BindParamsForCachePlan(
-    ClientProcessState &state,
-    const std::vector<std::unique_ptr<expression::AbstractExpression>> &);
+  bool BindParamsForCachePlan(
+      ClientProcessState &state,
+      const std::vector<std::unique_ptr<expression::AbstractExpression>> &);
 
-std::vector<FieldInfo> GenerateTupleDescriptor(
-    parser::SQLStatement *select_stmt);
+  std::vector<FieldInfo> GenerateTupleDescriptor(ClientProcessState &state,
+                                                 parser::SQLStatement *select_stmt);
 
-FieldInfo GetColumnFieldForValueType(std::string column_name,
-                                     type::TypeId column_type);
+  static FieldInfo GetColumnFieldForValueType(std::string column_name,
+                                              type::TypeId column_type);
 
-void ExecuteStatementPlanGetResult();
+  // Get all data tables from a TableRef.
+  // For multi-way join
+  // TODO(Bowei) still a HACK
+  void GetTableColumns(ClientProcessState &state,
+                       parser::TableRef *from_table,
+                       std::vector<catalog::Column> &target_columns);
 
-ResultType ExecuteStatementGetResult();
+  void ExecuteStatementPlanGetResult(ClientProcessState &state);
 
-void ProcessInvalidStatement(ClientProcessState &state);
+  ResultType ExecuteStatementGetResult(ClientProcessState &state);
 
-// Get all data tables from a TableRef.
-// For multi-way join
-// still a HACK
-void GetTableColumns(parser::TableRef *from_table,
-                     std::vector<catalog::Column> &target_tables);
+  void ProcessInvalidStatement(ClientProcessState &state);
+
+ private:
+  ResultType CommitQueryHelper(ClientProcessState &state);
+  ResultType BeginQueryHelper(ClientProcessState &state);
+  ResultType AbortQueryHelper(ClientProcessState &state);
+  executor::ExecutionResult ExecuteHelper(ClientProcessState &state,
+                                          CallbackFunc callback);
+
+};
 
 } // namespace tcop
 } // namespace peloton

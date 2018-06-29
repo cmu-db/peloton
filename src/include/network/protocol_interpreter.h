@@ -20,16 +20,12 @@ namespace network {
 
 class ProtocolInterpreter {
  public:
-  ProtocolInterpreter(size_t thread_id) : thread_id_(thread_id) {}
-
   virtual Transition Process(std::shared_ptr<ReadBuffer> in,
                              std::shared_ptr<WriteQueue> out,
                              CallbackFunc callback) = 0;
 
   // TODO(Tianyu): Do we really need this crap?
   virtual void GetResult() = 0;
- protected:
-  size_t thread_id_;
 };
 
 } // namespace network

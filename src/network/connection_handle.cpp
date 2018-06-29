@@ -17,8 +17,6 @@
 #include "network/connection_handle.h"
 #include "network/network_io_wrapper_factory.h"
 #include "network/peloton_server.h"
-#include "network/postgres_protocol_handler.h"
-#include "network/protocol_handler_factory.h"
 
 #include "common/utility.h"
 #include "settings/settings_manager.h"

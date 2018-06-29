@@ -20,6 +20,7 @@
 
 namespace peloton {
 namespace network {
+#define _CAST(type, val) ((type)(val))
 /**
  * A plain old buffer with a movable cursor, the meaning of which is dependent
  * on the use case.
@@ -172,11 +173,15 @@ class ReadBuffer : public Buffer {
                       || sizeof(T) == 2
                       || sizeof(T) == 4
                       || sizeof(T) == 8, "Invalid size for integer");
+    auto val = ReadRawValue<T>();
     switch (sizeof(T)) {
-      case 1: return ReadRawValue<T>();
-      case 2: return ntohs(ReadRawValue<T>());
-      case 4: return ntohl(ReadRawValue<T>());
-      case 8: return ntohll(ReadRawValue<T>());
+      case 1: return val;
+      case 2:
+        return _CAST(T, ntohs(_CAST(uint16_t, val)));
+      case 4:
+        return _CAST(T, ntohl(_CAST(uint32_t, val)));
+      case 8:
+        return _CAST(T, ntohll(_CAST(uint64_t, val)));
       // Will never be here due to compiler optimization
       default: throw NetworkProcessException("");
     }
@@ -395,6 +400,7 @@ class WriteQueue {
  private:
   friend class PostgresPacketWriter;
   std::vector<std::shared_ptr<WriteBuffer>> buffers_;
+  size_t offset_ = 0;
   bool flush_ = false;
 };
 

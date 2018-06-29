@@ -15,6 +15,7 @@
 #include "network/postgres_network_commands.h"
 #include "traffic_cop/tcop.h"
 #include "settings/settings_manager.h"
+#include "planner/abstract_plan.h"
 
 #define SSL_MESSAGE_VERNO 80877103
 #define PROTO_MAJOR_VERSION(x) ((x) >> 16)
@@ -71,8 +72,7 @@ void PostgresNetworkCommand::ReadParamValues(std::vector<BindParameter> &bind_pa
                                   param_types[i],
                                   param_len);
           break;
-        default:
-          throw NetworkProcessException("Unexpected format code");
+        default:throw NetworkProcessException("Unexpected format code");
       }
   }
 }
@@ -218,9 +218,9 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
   LOG_TRACE("Execute query: %s", query.c_str());
   std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
-    sql_stmt_list = tcop::ParseQuery(query);
+    sql_stmt_list = tcop::Tcop::GetInstance().ParseQuery(query);
   } catch (Exception &e) {
-    tcop::ProcessInvalidStatement(state);
+    tcop::Tcop::GetInstance().ProcessInvalidStatement(state);
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                              e.what()}});
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
@@ -232,7 +232,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
     return Transition::PROCEED;
   }
-  
+
   // TODO(Yuchen): Hack. We only process the first statement in the packet now.
   // We should store the rest of statements that will not be processed right
   // away. For the hack, in most cases, it works. Because for example in psql,
@@ -243,17 +243,16 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
   QueryType query_type =
       StatementTypeToQueryType(sql_stmt->GetType(), sql_stmt.get());
-  interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
-  
+
   switch (query_type) {
     case QueryType::QUERY_PREPARE: {
       std::shared_ptr<Statement> statement(nullptr);
       auto prep_stmt = dynamic_cast<parser::PrepareStatement *>(sql_stmt.get());
       std::string stmt_name = prep_stmt->name;
-      statement = tcop::PrepareStatement(state,
-                                         stmt_name,
-                                         query,
-                                         std::move(prep_stmt->query));
+      statement = tcop::Tcop::GetInstance().PrepareStatement(state,
+                                                             stmt_name,
+                                                             query,
+                                                             std::move(prep_stmt->query));
       if (statement == nullptr) {
         out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                                  state.error_message_}});
@@ -292,23 +291,24 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
           std::vector<PostgresDataFormat>(state.statement_->GetTupleDescriptor().size(),
                                           PostgresDataFormat::TEXT);
 
-      if (!tcop::BindParamsForCachePlan(state, exec_stmt->parameters)) {
-        tcop::ProcessInvalidStatement(state);
+      if (!tcop::Tcop::GetInstance().BindParamsForCachePlan(state,
+                                                            exec_stmt->parameters)) {
+        tcop::Tcop::GetInstance().ProcessInvalidStatement(state);
         out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                                  state.error_message_}});
         out.WriteReadyForQuery(NetworkTransactionStateType::IDLE);
         return Transition::PROCEED;
       }
 
-      auto status = tcop::ExecuteStatement(state, callback);
+      auto status = tcop::Tcop::GetInstance().ExecuteStatement(state, callback);
       if (state.is_queuing_) return Transition::NEED_RESULT;
-      interpreter.ExecQueryMessageGetResult(status);
+      interpreter.ExecQueryMessageGetResult(out, status);
       return Transition::PROCEED;
     };
     case QueryType::QUERY_EXPLAIN: {
       auto status = interpreter.ExecQueryExplain(query,
                                                  dynamic_cast<parser::ExplainStatement &>(*sql_stmt));
-      interpreter.ExecQueryMessageGetResult(status);
+      interpreter.ExecQueryMessageGetResult(out, status);
       return Transition::PROCEED;
     }
     default: {
@@ -316,10 +316,11 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
       std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
           new parser::SQLStatementList());
       unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
-      state.statement_ = tcop::PrepareStatement(state,
-                                                stmt_name,
-                                                query,
-                                                std::move(unnamed_sql_stmt_list));
+      state.statement_ = tcop::Tcop::GetInstance().PrepareStatement(state,
+                                                                    stmt_name,
+                                                                    query,
+                                                                    std::move(
+                                                                        unnamed_sql_stmt_list));
       if (state.statement_ == nullptr) {
         out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                                  state.error_message_}});
@@ -331,10 +332,10 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
           std::vector<PostgresDataFormat>(state.statement_->GetTupleDescriptor().size(),
                                           PostgresDataFormat::TEXT);
       auto status =
-          tcop::ExecuteStatement(state, callback);
+          tcop::Tcop::GetInstance().ExecuteStatement(state, callback);
       if (state.is_queuing_)
         return Transition::NEED_RESULT;
-      interpreter.ExecQueryMessageGetResult(status);
+      interpreter.ExecQueryMessageGetResult(out, status);
       return Transition::PROCEED;
     }
   }
@@ -352,9 +353,9 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
   std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
   QueryType query_type = QueryType::QUERY_OTHER;
   try {
-    sql_stmt_list = tcop::ParseQuery(query);
+    sql_stmt_list = tcop::Tcop::GetInstance().ParseQuery(query);
   } catch (Exception &e) {
-    tcop::ProcessInvalidStatement(state);
+    tcop::Tcop::GetInstance().ProcessInvalidStatement(state);
     state.skipped_stmt_ = true;
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                              e.what()}});
@@ -380,12 +381,13 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
     return Transition::PROCEED;
   }
 
-  auto statement = tcop::PrepareStatement(state,
-                                          statement_name,
-                                          query,
-                                          std::move(sql_stmt_list));
+  auto statement = tcop::Tcop::GetInstance().PrepareStatement(state,
+                                                              statement_name,
+                                                              query,
+                                                              std::move(
+                                                                  sql_stmt_list));
   if (statement == nullptr) {
-    tcop::ProcessInvalidStatement(state);
+    tcop::Tcop::GetInstance().ProcessInvalidStatement(state);
     state.skipped_stmt_ = true;
     out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
                              state.error_message_}});
@@ -415,7 +417,7 @@ Transition BindCommand::Exec(PostgresProtocolInterpreter &interpreter,
     return Transition::PROCEED;
   }
 
-  std::vector<int16_t> formats = ReadParamFormats();
+  std::vector<PostgresDataFormat> formats = ReadParamFormats();
 
   // Get statement info generated in PARSE message
   std::shared_ptr<Statement>
@@ -455,7 +457,7 @@ Transition BindCommand::Exec(PostgresProtocolInterpreter &interpreter,
   // Group the parameter types and the parameters in this vector
   std::vector<std::pair<type::TypeId, std::string>> bind_parameters;
   std::vector<type::Value> param_values;
-  
+
   auto param_types = statement->GetParamTypes();
   ReadParamValues(bind_parameters, param_values, param_types, formats);
   state.result_format_ =
@@ -483,12 +485,12 @@ Transition DescribeCommand::Exec(PostgresProtocolInterpreter &interpreter,
     out.WriteSingleTypePacket(NetworkMessageType::NO_DATA_RESPONSE);
     return Transition::PROCEED;
   }
-  
+
   auto mode = in_->ReadValue<PostgresNetworkObjectType>();
   std::string portal_name = in_->ReadString();
   switch (mode) {
-    case PostgresNetworkObjectType::PORTAL:LOG_TRACE("Describe a portal");
-
+    case PostgresNetworkObjectType::PORTAL: {
+      LOG_TRACE("Describe a portal");
       auto portal_itr = interpreter.portals_.find(portal_name);
       // TODO: error handling here
       // Ahmed: This is causing the continuously running thread
@@ -501,11 +503,13 @@ Transition DescribeCommand::Exec(PostgresProtocolInterpreter &interpreter,
       } else
         out.WriteTupleDescriptor(portal_itr->second->GetStatement()->GetTupleDescriptor());
       break;
+    }
     case PostgresNetworkObjectType::STATEMENT:
       // TODO(Tianyu): Do we not support this or something?
       LOG_TRACE("Describe a prepared statement");
       break;
-    default:throw NetworkProcessException("Unexpected Describe type");
+    default:
+      throw NetworkProcessException("Unexpected Describe type");
   }
   return Transition::PROCEED;
 }
@@ -514,7 +518,6 @@ Transition ExecuteCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 PostgresPacketWriter &out,
                                 CallbackFunc callback) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   std::string portal_name = in_->ReadString();
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
@@ -536,16 +539,15 @@ Transition ExecuteCommand::Exec(PostgresProtocolInterpreter &interpreter,
 
   std::shared_ptr<Portal> portal = portal_itr->second;
   state.statement_ = portal->GetStatement();
-  auto param_stat = portal->GetParamStat();
 
   if (state.statement_ == nullptr)
     throw NetworkProcessException(
         "Did not find statement in portal: " + portal_name);
 
   state.param_values_ = portal->GetParameters();
-  auto status = tcop::ExecuteStatement(state, callback);
+  auto status = tcop::Tcop::GetInstance().ExecuteStatement(state, callback);
   if (state.is_queuing_) return Transition::NEED_RESULT;
-  interpreter.ExecExecuteMessageGetResult(status);
+  interpreter.ExecExecuteMessageGetResult(out, status);
   return Transition::PROCEED;
 }
 
@@ -569,13 +571,12 @@ Transition CloseCommand::Exec(PostgresProtocolInterpreter &interpreter,
       state.statement_cache_.DeleteStatement(name);
       break;
     }
-    case 'P': {
+    case PostgresNetworkObjectType::PORTAL: {
       LOG_TRACE("Deleting portal %s from cache", name.c_str());
       auto portal_itr = interpreter.portals_.find(name);
-      if (portal_itr != interpreter.portals_.end()) {
+      if (portal_itr != interpreter.portals_.end())
         // delete portal if it exists
         interpreter.portals_.erase(portal_itr);
-      }
       break;
     }
     default:
@@ -584,11 +585,12 @@ Transition CloseCommand::Exec(PostgresProtocolInterpreter &interpreter,
   }
   // Send close complete response
   out.WriteSingleTypePacket(NetworkMessageType::CLOSE_COMPLETE);
+  return Transition::PROCEED;
 }
 
-Transition TerminateCommand(PostgresProtocolInterpreter &,
-                            PostgresPacketWriter &,
-                            CallbackFunc) {
+Transition TerminateCommand::Exec(PostgresProtocolInterpreter &,
+                                  PostgresPacketWriter &,
+                                  CallbackFunc) {
   return Transition::TERMINATE;
 }
 } // namespace network

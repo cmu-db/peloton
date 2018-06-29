@@ -92,6 +92,7 @@ class ConnectionHandle {
   inline Transition TryWrite() {
     if (io_wrapper_->ShouldFlush())
       return io_wrapper_->FlushAllWrites();
+    return Transition::PROCEED;
   }
 
   inline Transition Process() {
