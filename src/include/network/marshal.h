@@ -163,157 +163,18 @@ extern void GetStringToken(InputPacket *pkt, std::string &result);
 
 // TODO(Tianyu): These dumb things are here because copy_executor somehow calls
 // our network layer. This should NOT be the case. Will remove.
-size_t OldReadParamType(
-    InputPacket *pkt, int num_params, std::vector<int32_t> &param_types) {
-  auto begin = pkt->ptr;
-  // get the type of each parameter
-  for (int i = 0; i < num_params; i++) {
-    int param_type = PacketGetInt(pkt, 4);
-    param_types[i] = param_type;
-  }
-  auto end = pkt->ptr;
-  return end - begin;
-}
+extern size_t OldReadParamType(
+    InputPacket *pkt, int num_params, std::vector<int32_t> &param_types);
 
 size_t OldReadParamFormat(InputPacket *pkt,
                           int num_params_format,
-                          std::vector<int16_t> &formats) {
-  auto begin = pkt->ptr;
-  // get the format of each parameter
-  for (int i = 0; i < num_params_format; i++) {
-    formats[i] = PacketGetInt(pkt, 2);
-  }
-  auto end = pkt->ptr;
-  return end - begin;
-}
+                          std::vector<int16_t> &formats);
 
 // For consistency, this function assumes the input vectors has the correct size
 size_t OldReadParamValue(
     InputPacket *pkt, int num_params, std::vector<int32_t> &param_types,
     std::vector<std::pair<type::TypeId, std::string>> &bind_parameters,
-    std::vector<type::Value> &param_values, std::vector<int16_t> &formats) {
-  auto begin = pkt->ptr;
-  ByteBuf param;
-  for (int param_idx = 0; param_idx < num_params; param_idx++) {
-    int param_len = PacketGetInt(pkt, 4);
-    // BIND packet NULL parameter case
-    if (param_len == -1) {
-      // NULL mode
-      auto peloton_type = PostgresValueTypeToPelotonValueType(
-          static_cast<PostgresValueType>(param_types[param_idx]));
-      bind_parameters[param_idx] =
-          std::make_pair(peloton_type, std::string(""));
-      param_values[param_idx] =
-          type::ValueFactory::GetNullValueByType(peloton_type);
-    } else {
-      PacketGetBytes(pkt, param_len, param);
-
-      if (formats[param_idx] == 0) {
-        // TEXT mode
-        std::string param_str = std::string(std::begin(param), std::end(param));
-        bind_parameters[param_idx] =
-            std::make_pair(type::TypeId::VARCHAR, param_str);
-        if ((unsigned int)param_idx >= param_types.size() ||
-            PostgresValueTypeToPelotonValueType(
-                (PostgresValueType)param_types[param_idx]) ==
-                type::TypeId::VARCHAR) {
-          param_values[param_idx] =
-              type::ValueFactory::GetVarcharValue(param_str);
-        } else {
-          param_values[param_idx] =
-              (type::ValueFactory::GetVarcharValue(param_str))
-                  .CastAs(PostgresValueTypeToPelotonValueType(
-                      (PostgresValueType)param_types[param_idx]));
-        }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
-            type::TypeId::INVALID);
-      } else {
-        // BINARY mode
-        PostgresValueType pg_value_type =
-            static_cast<PostgresValueType>(param_types[param_idx]);
-        LOG_TRACE("Postgres Protocol Conversion [param_idx=%d]", param_idx);
-        switch (pg_value_type) {
-          case PostgresValueType::TINYINT: {
-            int8_t int_val = 0;
-            for (size_t i = 0; i < sizeof(int8_t); ++i) {
-              int_val = (int_val << 8) | param[i];
-            }
-            bind_parameters[param_idx] =
-                std::make_pair(type::TypeId::TINYINT, std::to_string(int_val));
-            param_values[param_idx] =
-                type::ValueFactory::GetTinyIntValue(int_val).Copy();
-            break;
-          }
-          case PostgresValueType::SMALLINT: {
-            int16_t int_val = 0;
-            for (size_t i = 0; i < sizeof(int16_t); ++i) {
-              int_val = (int_val << 8) | param[i];
-            }
-            bind_parameters[param_idx] =
-                std::make_pair(type::TypeId::SMALLINT, std::to_string(int_val));
-            param_values[param_idx] =
-                type::ValueFactory::GetSmallIntValue(int_val).Copy();
-            break;
-          }
-          case PostgresValueType::INTEGER: {
-            int32_t int_val = 0;
-            for (size_t i = 0; i < sizeof(int32_t); ++i) {
-              int_val = (int_val << 8) | param[i];
-            }
-            bind_parameters[param_idx] =
-                std::make_pair(type::TypeId::INTEGER, std::to_string(int_val));
-            param_values[param_idx] =
-                type::ValueFactory::GetIntegerValue(int_val).Copy();
-            break;
-          }
-          case PostgresValueType::BIGINT: {
-            int64_t int_val = 0;
-            for (size_t i = 0; i < sizeof(int64_t); ++i) {
-              int_val = (int_val << 8) | param[i];
-            }
-            bind_parameters[param_idx] =
-                std::make_pair(type::TypeId::BIGINT, std::to_string(int_val));
-            param_values[param_idx] =
-                type::ValueFactory::GetBigIntValue(int_val).Copy();
-            break;
-          }
-          case PostgresValueType::DOUBLE: {
-            double float_val = 0;
-            unsigned long buf = 0;
-            for (size_t i = 0; i < sizeof(double); ++i) {
-              buf = (buf << 8) | param[i];
-            }
-            PELOTON_MEMCPY(&float_val, &buf, sizeof(double));
-            bind_parameters[param_idx] = std::make_pair(
-                type::TypeId::DECIMAL, std::to_string(float_val));
-            param_values[param_idx] =
-                type::ValueFactory::GetDecimalValue(float_val).Copy();
-            break;
-          }
-          case PostgresValueType::VARBINARY: {
-            bind_parameters[param_idx] = std::make_pair(
-                type::TypeId::VARBINARY,
-                std::string(reinterpret_cast<char *>(&param[0]), param_len));
-            param_values[param_idx] = type::ValueFactory::GetVarbinaryValue(
-                &param[0], param_len, true);
-            break;
-          }
-          default: {
-            LOG_ERROR(
-                "Binary Postgres protocol does not support data type '%s' [%d]",
-                PostgresValueTypeToString(pg_value_type).c_str(),
-                param_types[param_idx]);
-            break;
-          }
-        }
-        PELOTON_ASSERT(param_values[param_idx].GetTypeId() !=
-            type::TypeId::INVALID);
-      }
-    }
-  }
-  auto end = pkt->ptr;
-  return end - begin;
-}
+    std::vector<type::Value> &param_values, std::vector<int16_t> &formats);
 
 }  // namespace network
 }  // namespace peloton
