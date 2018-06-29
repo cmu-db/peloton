@@ -76,8 +76,8 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
 
       //manually update snapshot epoch number, so later snapshot read must get a larger epoch than table creating txn
       //or it may read nothing
-      //wait one epoch. so that global epoch is guaranteed to increase
-      std::this_thread::sleep_for(std::chrono::milliseconds(EPOCH_LENGTH));
+      //wait two epochs. so that global epoch is guaranteed to increase
+      std::this_thread::sleep_for(std::chrono::milliseconds(2 * EPOCH_LENGTH));
       concurrency::EpochManagerFactory::GetInstance().GetExpiredEpochId();
 
       TransactionScheduler scheduler(1, table, &txn_manager, {0});
@@ -85,6 +85,8 @@ TEST_F(SerializableTransactionTests, ReadOnlyTransactionTest) {
       scheduler.Txn(0).Commit();
 
       scheduler.Run();
+
+      EXPECT_EQ(ResultType::SUCCESS, scheduler.schedules[0].txn_result);
 
       //it should read all the 10 tuples
       EXPECT_EQ(10, scheduler.schedules[0].results.size());
