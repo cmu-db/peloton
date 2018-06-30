@@ -184,8 +184,7 @@ void TableScanTranslator::ProduceSerial() const {
         AbstractExpressionProxy::GetType(codegen)->getPointerTo());
     size_t num_preds = 0;
 
-    auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
-    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+    if (predicate != nullptr) {
       if (predicate->IsZoneMappable()) {
         num_preds = predicate->GetNumberofParsedPredicates();
       }
@@ -241,8 +240,7 @@ void TableScanTranslator::ProduceParallel() const {
         AbstractExpressionProxy::GetType(codegen)->getPointerTo());
     size_t num_preds = 0;
 
-    auto *zone_map_manager = storage::ZoneMapManager::GetInstance();
-    if (predicate != nullptr && zone_map_manager->ZoneMapTableExists()) {
+    if (predicate != nullptr) {
       if (predicate->IsZoneMappable()) {
         num_preds = predicate->GetNumberofParsedPredicates();
       }

@@ -52,11 +52,8 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
       tile_group_header->SetImmutability();
     }
     // Create Zone Maps.
-    auto catalog = catalog::Catalog::GetInstance();
-    (void)catalog;
     storage::ZoneMapManager *zone_map_manager =
         storage::ZoneMapManager::GetInstance();
-    zone_map_manager->CreateZoneMapTableInCatalog();
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
     zone_map_manager->CreateZoneMapsForTable(&table, txn);
@@ -68,6 +65,9 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
 };
 
 TEST_F(ZoneMapScanTest, ScanNoPredicates) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+
   // SELECT a, b, c FROM table;
   // 1) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};

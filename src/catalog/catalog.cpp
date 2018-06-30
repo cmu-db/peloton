@@ -28,6 +28,7 @@
 #include "catalog/table_catalog.h"
 #include "catalog/table_metrics_catalog.h"
 #include "catalog/trigger_catalog.h"
+#include "catalog/zone_map_catalog.h"
 #include "codegen/code_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "function/date_functions.h"
@@ -302,6 +303,7 @@ void Catalog::Bootstrap() {
   // TODO: change following catalogs to per database
   ProcCatalog::GetInstance(txn);
   ColumnStatsCatalog::GetInstance(txn);
+  ZoneMapCatalog::GetInstance(txn);
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);

@@ -33,20 +33,7 @@ ZoneMapManager *ZoneMapManager::GetInstance() {
 }
 
 ZoneMapManager::ZoneMapManager() {
-  zone_map_table_exists = false;
   pool_.reset(new type::EphemeralPool());
-}
-
-/**
- * @brief The function creates the zone map table in catalog
- */
-void ZoneMapManager::CreateZoneMapTableInCatalog() {
-  LOG_DEBUG("Create the Zone Map table");
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::ZoneMapCatalog::GetInstance(txn);
-  txn_manager.CommitTransaction(txn);
-  zone_map_table_exists = true;
 }
 
 /**
@@ -277,13 +264,6 @@ bool ZoneMapManager::ShouldScanTileGroup(
   }
   return true;
 }
-
-/**
- * Checks whether a zone map table in catalog was created.
- *
- * @return  True if the zone map table in catalog exists and vice versa
- */
-bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }
 
 }  // namespace storage
 }  // namespace peloton

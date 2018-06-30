@@ -120,11 +120,8 @@ storage::DataTable *CreateTestTable() {
     auto tile_group_header = tile_group_ptr->GetHeader();
     tile_group_header->SetImmutability();
   }
-  auto catalog = catalog::Catalog::GetInstance();
-  (void)catalog;
   storage::ZoneMapManager *zone_map_manager =
       storage::ZoneMapManager::GetInstance();
-  zone_map_manager->CreateZoneMapTableInCatalog();
   txn = txn_manager.BeginTransaction();
   zone_map_manager->CreateZoneMapsForTable((data_table.get()), txn);
   txn_manager.CommitTransaction(txn);
@@ -155,6 +152,9 @@ expression::AbstractExpression *CreateConjunctionPredicate(
 }
 
 TEST_F(ZoneMapTests, ZoneMapContentsTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+
   std::unique_ptr<storage::DataTable> data_table(CreateTestTable());
   oid_t database_id = (data_table.get())->GetDatabaseOid();
   oid_t table_id = (data_table.get())->GetOid();
