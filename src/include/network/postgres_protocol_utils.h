@@ -189,6 +189,7 @@ class PostgresPacketWriter {
 
   inline void WriteStartupResponse() {
     BeginPacket(NetworkMessageType::AUTHENTICATION_REQUEST)
+        .AppendValue<int32_t>(0)
         .EndPacket();
 
     for (auto &entry : parameter_status_map)
@@ -238,7 +239,7 @@ class PostgresPacketWriter {
           AppendValue<uint32_t>(NULL_CONTENT_SIZE);
         else
           AppendValue<uint32_t>(content.size())
-              .AppendString(content);
+              .AppendString(content, false);
 
       }
       EndPacket();

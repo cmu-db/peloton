@@ -32,7 +32,22 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
                      std::shared_ptr<WriteQueue> out,
                      CallbackFunc callback) override;
 
-  inline void GetResult() override {
+  inline void GetResult(std::shared_ptr<WriteQueue> out) override {
+
+    auto tcop = tcop::Tcop::GetInstance();
+    // TODO(Tianyu): The difference between these two methods are unclear to me
+    tcop.ExecuteStatementPlanGetResult(state_);
+    auto status = tcop.ExecuteStatementGetResult(state_);
+    PostgresPacketWriter writer(*out);
+    switch (protocol_type_) {
+      case NetworkProtocolType::POSTGRES_JDBC:
+        LOG_TRACE("JDBC result");
+        ExecExecuteMessageGetResult(writer, status);
+        break;
+      case NetworkProtocolType::POSTGRES_PSQL:
+        LOG_TRACE("PSQL result");
+        ExecQueryMessageGetResult(writer, status);
+    }
 
   }
 
@@ -52,7 +67,7 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
   void ExecExecuteMessageGetResult(PostgresPacketWriter &out, ResultType status);
   ResultType ExecQueryExplain(const std::string &query, parser::ExplainStatement &explain_stmt);
 
-
+  NetworkProtocolType protocol_type_;
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
  private:
   bool startup_ = true;

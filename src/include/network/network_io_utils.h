@@ -45,6 +45,8 @@ class Buffer {
     offset_ = 0;
   }
 
+  inline void Skip(size_t bytes) { offset_ += bytes; }
+
   /**
    * @param bytes The amount of bytes to check between the cursor and the end
    *              of the buffer (defaults to any)

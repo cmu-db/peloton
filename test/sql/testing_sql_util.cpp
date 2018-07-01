@@ -144,8 +144,8 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     QueryType query_type = StatementTypeToQueryType(parsed_stmt->GetStatement(0)->GetType(),
                                                     parsed_stmt->GetStatement(0));
     state.statement_ = std::make_shared<Statement>("unnamed", query_type, query, std::move(parsed_stmt));
+    state.statement_->SetPlanTree(plan);
     state.param_values_ = params;
-    state.result_ = result;
     state.result_format_ = result_format;
     auto status =
         traffic_cop.ExecuteHelper(state, [] {
@@ -158,6 +158,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
       state.is_queuing_ = false;
     }
     rows_changed = status.m_processed;
+    result = state.result_;
     LOG_TRACE("Statement executed. Result: %s",
               ResultTypeToString(status.m_result).c_str());
     return status.m_result;
@@ -212,7 +213,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
                     PostgresDataFormat::TEXT);
   // SetTrafficCopCounter();
   counter_.store(1);
-  state.statement_.reset(statement.get());
+  statement.swap(state.statement_);
   state.param_values_ = param_values;
   state.result_format_ = result_format;
   state.result_ = result;
@@ -226,7 +227,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query,
     state.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
-    tuple_descriptor = statement->GetTupleDescriptor();
+    tuple_descriptor = state.statement_->GetTupleDescriptor();
   }
   // TODO(Tianyu) Same as above.
   result = state.result_;

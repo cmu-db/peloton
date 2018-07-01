@@ -25,7 +25,7 @@ class ProtocolInterpreter {
                              CallbackFunc callback) = 0;
 
   // TODO(Tianyu): Do we really need this crap?
-  virtual void GetResult() = 0;
+  virtual void GetResult(std::shared_ptr<WriteQueue> out) = 0;
 };
 
 } // namespace network

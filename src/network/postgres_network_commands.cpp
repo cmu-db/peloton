@@ -72,7 +72,8 @@ void PostgresNetworkCommand::ReadParamValues(std::vector<BindParameter> &bind_pa
                                   param_types[i],
                                   param_len);
           break;
-        default:throw NetworkProcessException("Unexpected format code");
+        default:
+          throw NetworkProcessException("Unexpected format code");
       }
   }
 }
@@ -195,7 +196,9 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
     return Transition::TERMINATE;
   }
 
-  while (in_->HasMore()) {
+  // The last bit of the packet will be nul. This is not a valid field. When there
+  // is less than 2 bytes of data remaining we can already exit early.
+  while (in_->HasMore(2)) {
     // TODO(Tianyu): We don't seem to really handle the other flags?
     std::string key = in_->ReadString(), value = in_->ReadString();
     LOG_TRACE("Option key %s, value %s", key.c_str(), value.c_str());
@@ -203,7 +206,8 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
       state.db_name_ = value;
     interpreter.AddCmdlineOption(key, std::move(value));
   }
-
+  // skip the last nul byte
+  in_->Skip(1);
   // TODO(Tianyu): Implement authentication. For now we always send AuthOK
   out.WriteStartupResponse();
   interpreter.FinishStartup();
@@ -213,6 +217,7 @@ Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
 Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                     PostgresPacketWriter &out,
                                     CallbackFunc callback) {
+  interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string query = in_->ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
@@ -312,7 +317,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
       return Transition::PROCEED;
     }
     default: {
-      std::string stmt_name = "unamed";
+      std::string stmt_name = "unnamed";
       std::unique_ptr<parser::SQLStatementList> unnamed_sql_stmt_list(
           new parser::SQLStatementList());
       unnamed_sql_stmt_list->PassInStatement(std::move(sql_stmt));
@@ -517,6 +522,7 @@ Transition DescribeCommand::Exec(PostgresProtocolInterpreter &interpreter,
 Transition ExecuteCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 PostgresPacketWriter &out,
                                 CallbackFunc callback) {
+  interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
   std::string portal_name = in_->ReadString();
 

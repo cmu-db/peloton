@@ -130,7 +130,8 @@ void PostgresProtocolInterpreter::CompleteCommand(PostgresPacketWriter &out,
       tag += " " + std::to_string(rows);
   }
   out.BeginPacket(NetworkMessageType::COMMAND_COMPLETE)
-      .AppendString(tag);
+      .AppendString(tag)
+      .EndPacket();
 }
 
 void PostgresProtocolInterpreter::ExecQueryMessageGetResult(PostgresPacketWriter &out,
@@ -157,7 +158,8 @@ void PostgresProtocolInterpreter::ExecQueryMessageGetResult(PostgresPacketWriter
   out.WriteTupleDescriptor(tuple_descriptor);
   out.WriteDataRows(state_.result_, tuple_descriptor.size());
   // TODO(Tianyu): WTF?
-  state_.rows_affected_ = state_.result_.size() / tuple_descriptor.size();
+  if (!tuple_descriptor.empty())
+    state_.rows_affected_ = state_.result_.size() / tuple_descriptor.size();
 
   CompleteCommand(out,
                   state_.statement_->GetQueryType(),
