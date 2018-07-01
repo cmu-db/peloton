@@ -32,7 +32,9 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
                      std::shared_ptr<WriteQueue> out,
                      CallbackFunc callback) override;
 
-  inline void GetResult() override {}
+  inline void GetResult() override {
+
+  }
 
   inline void AddCmdlineOption(const std::string &key, std::string value) {
     cmdline_options_[key] = std::move(value);
@@ -49,6 +51,7 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
   void ExecQueryMessageGetResult(PostgresPacketWriter &out, ResultType status);
   void ExecExecuteMessageGetResult(PostgresPacketWriter &out, ResultType status);
   ResultType ExecQueryExplain(const std::string &query, parser::ExplainStatement &explain_stmt);
+
 
   std::unordered_map<std::string, std::shared_ptr<Portal>> portals_;
  private:

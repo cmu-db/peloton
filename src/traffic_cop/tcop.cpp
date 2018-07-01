@@ -499,7 +499,7 @@ executor::ExecutionResult Tcop::ExecuteHelper(ClientProcessState &state,
     formats.push_back((int) format);
 
   auto &pool = threadpool::MonoQueuePool::GetInstance();
-  pool.SubmitTask([on_complete, &state, &txn, &formats] {
+  pool.SubmitTask([on_complete, txn, formats, &state] {
     executor::PlanExecutor::ExecutePlan(state.statement_->GetPlanTree(),
                                         txn,
                                         state.param_values_,

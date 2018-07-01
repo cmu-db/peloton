@@ -88,7 +88,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
                     PostgresDataFormat::TEXT);
   // SetTrafficCopCounter();
   counter_.store(1);
-  state.statement_.reset(statement.get());
+  statement.swap(state.statement_);
   state.param_values_ = param_values;
   state.result_format_ = result_format;
   state.result_ = result;
@@ -102,7 +102,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
     state.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
-    tuple_descriptor = statement->GetTupleDescriptor();
+    tuple_descriptor = state.statement_->GetTupleDescriptor();
   }
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status).c_str());
@@ -263,7 +263,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
                                                  PostgresDataFormat::TEXT);
   // SetTrafficCopCounter();
   counter_.store(1);
-  state.statement_.reset(statement.get());
+  statement.swap(state.statement_);
   state.param_values_ = param_values;
   state.result_format_ = result_format;
   state.result_ = result;
@@ -277,7 +277,7 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(const std::string query) {
     state.is_queuing_ = false;
   }
   if (status == ResultType::SUCCESS) {
-    tuple_descriptor = statement->GetTupleDescriptor();
+    tuple_descriptor = state.statement_->GetTupleDescriptor();
   }
   LOG_TRACE("Statement executed. Result: %s",
             ResultTypeToString(status).c_str());
