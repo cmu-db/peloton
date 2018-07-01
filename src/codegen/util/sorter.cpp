@@ -131,7 +131,7 @@ void Sorter::Sort() {
 
   timer.Stop();
 
-#ifndef NDEBUG
+#ifdef LOG_DEBUG_ENABLED
   auto rate = tuples_.size() / timer.GetDuration();
   LOG_DEBUG("Sorted %zu tuples in %.2f ms (%.2lf tuples/sec)", tuples_.size(),
             timer.GetDuration(), rate);
