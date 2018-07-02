@@ -149,9 +149,9 @@ class PostgresPacketWriter {
 
     switch (sizeof(T)) {
       case 1: return AppendRawValue(val);
-      case 2: return AppendRawValue(_CAST(T, ntohs(_CAST(uint16_t, val))));
-      case 4: return AppendRawValue(_CAST(T, ntohl(_CAST(uint32_t, val))));
-      case 8: return AppendRawValue(_CAST(T, be64toh(_CAST(uint64_t, val))));
+      case 2: return AppendRawValue(_CAST(T, htobe16(_CAST(uint16_t, val))));
+      case 4: return AppendRawValue(_CAST(T, htobe32(_CAST(uint32_t, val))));
+      case 8: return AppendRawValue(_CAST(T, htobe64(_CAST(uint64_t, val))));
         // Will never be here due to compiler optimization
       default: throw NetworkProcessException("");
     }

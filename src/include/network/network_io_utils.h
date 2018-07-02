@@ -16,6 +16,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <arpa/inet.h>
+#include "util/portable_endian.h"
 #include "common/internal_types.h"
 #include "common/exception.h"
 
@@ -180,9 +181,9 @@ class ReadBuffer : public Buffer {
     switch (sizeof(T)) {
       case 1: return val;
       case 2:
-        return _CAST(T, ntohs(_CAST(uint16_t, val)));
+        return _CAST(T, be16toh(_CAST(uint16_t, val)));
       case 4:
-        return _CAST(T, ntohl(_CAST(uint32_t, val)));
+        return _CAST(T, be32toh(_CAST(uint32_t, val)));
       case 8:
         return _CAST(T, be64toh(_CAST(uint64_t, val)));
       // Will never be here due to compiler optimization
