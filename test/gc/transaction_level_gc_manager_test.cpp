@@ -1301,7 +1301,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   // ReturnFreeSlot() should not return a tuple slot from the immutable tile
   // group
   // should be from where ever the tombstone was inserted
-  auto location = gc_manager.GetRecycledTupleSlot(table.get());
+  auto location = gc_manager.GetRecycledTupleSlot(table.get()->GetOid());
   EXPECT_NE(tile_group->GetTileGroupId(), location.block);
 
   // Deleting a tuple from the 2nd tilegroup which is mutable.
@@ -1313,7 +1313,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
 
   // ReturnFreeSlot() should not return null because deleted tuple was from
   // mutable tilegroup
-  location = gc_manager.GetRecycledTupleSlot(table.get());
+  location = gc_manager.GetRecycledTupleSlot(table.get()->GetOid());
   EXPECT_EQ(location.IsNull(), false);
 
   gc_manager.StopGC();
