@@ -38,7 +38,7 @@ struct ClientProcessState {
   // The optimizer used for this connection
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer_{new optimizer::Optimizer()};
   // flag of single statement txn
-  bool single_statement_txn_ = false;
+  bool single_statement_txn_ = true;
   std::vector<PostgresDataFormat> result_format_;
   // flag of single statement txn
   std::vector<ResultValue> result_;
