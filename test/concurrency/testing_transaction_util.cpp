@@ -39,6 +39,8 @@ class ProjectInfo;
 }
 namespace test {
 
+#define RANDOM_SEED 15721
+
 storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -500,11 +502,11 @@ bool TestingTransactionUtil::ExecuteScan(
 
 ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table,
                                                const int key) {
-  srand(15721);
+  srand(RANDOM_SEED);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Update(key, rand() % 15721);
+  scheduler.Txn(0).Update(key, rand() % RANDOM_SEED);
   scheduler.Txn(0).Commit();
   scheduler.Run();
 
@@ -513,11 +515,11 @@ ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table,
 
 ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table,
                                                const int key) {
-  srand(15721);
+  srand(RANDOM_SEED);
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   TransactionScheduler scheduler(1, table, &txn_manager);
-  scheduler.Txn(0).Insert(key, rand() % 15721);
+  scheduler.Txn(0).Insert(key, rand() % RANDOM_SEED);
   scheduler.Txn(0).Commit();
   scheduler.Run();
 

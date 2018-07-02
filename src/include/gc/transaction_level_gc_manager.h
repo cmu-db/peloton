@@ -106,7 +106,7 @@ class TransactionLevelGCManager : public GCManager {
    * @return ItemPointer to a recycled tuple slot on success,
    * INVALID_ITEMPOINTER otherwise
    */
-  virtual ItemPointer GetRecycledTupleSlot(storage::DataTable *table) override;
+  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
 
   /**
    * @brief Recycle the provided tuple slot

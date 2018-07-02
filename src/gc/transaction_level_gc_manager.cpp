@@ -104,6 +104,7 @@ void TransactionLevelGCManager::StartGC() {
 
 void TransactionLevelGCManager::RegisterTable(const oid_t &table_id) {
   // if table already registered, ignore it
+  LOG_TRACE("registered table %u for GC", table_id);
   if (recycle_queues_->Contains(table_id)) {
     return;
   }
@@ -113,6 +114,7 @@ void TransactionLevelGCManager::RegisterTable(const oid_t &table_id) {
 }
 
 void TransactionLevelGCManager::DeregisterTable(const oid_t &table_id) {
+  LOG_TRACE("deregistered table %u for GC", table_id);
   recycle_queues_->Erase(table_id);
 }
 
@@ -393,8 +395,8 @@ void TransactionLevelGCManager::RemoveObjectLevelGarbage(
 // looks for a free tuple slot that can now be reused
 // called by data_table, which passes in a pointer to itself
 ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
-    storage::DataTable *table) {
-  auto recycle_queue = GetTableRecycleQueue(table->GetOid());
+    const oid_t &table_id) {
+  auto recycle_queue = GetTableRecycleQueue(table_id);
 
   if (recycle_queue == nullptr) {
     return INVALID_ITEMPOINTER;
@@ -403,7 +405,7 @@ ItemPointer TransactionLevelGCManager::GetRecycledTupleSlot(
   ItemPointer location;
   if (recycle_queue->Dequeue(location) == true) {
     LOG_TRACE("Reuse tuple(%u, %u) in table %u", location.block,
-              location.offset, table->GetOid());
+              location.offset, table_id);
     return location;
   }
   return INVALID_ITEMPOINTER;
