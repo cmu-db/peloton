@@ -111,14 +111,17 @@ void QueryToOperatorTransformer::Visit(parser::SelectStatement *op) {
   }
 
   if (op->limit != nullptr) {
-    const auto &order_info = op->order;
     std::vector<expression::AbstractExpression *> sort_exprs;
     std::vector<bool> sort_ascending;
-    for (auto &expr : order_info->exprs) {
-      sort_exprs.push_back(expr.get());
-    }
-    for (auto &type : order_info->types) {
-      sort_ascending.push_back(type == parser::kOrderAsc);
+
+    if (op->order != nullptr) {
+      const auto &order_info = op->order;
+      for (auto &expr : order_info->exprs) {
+        sort_exprs.push_back(expr.get());
+      }
+      for (auto &type : order_info->types) {
+        sort_ascending.push_back(type == parser::kOrderAsc);
+      }
     }
     auto limit_expr = std::make_shared<OperatorExpression>(
         LogicalLimit::make(op->limit->offset, op->limit->limit,
@@ -224,10 +227,9 @@ void QueryToOperatorTransformer::Visit(parser::TableRef *node) {
   else {
     if (node->list.size() == 1) node = node->list.at(0).get();
     std::shared_ptr<catalog::TableCatalogEntry> target_table =
-        catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
-                                                              node->GetDatabaseName(),
-                                                              node->GetSchemaName(),
-                                                              node->GetTableName());
+        catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+            txn_, node->GetDatabaseName(), node->GetSchemaName(),
+            node->GetTableName());
     std::string table_alias =
         StringUtil::Lower(std::string(node->GetTableAlias()));
     output_expr_ = std::make_shared<OperatorExpression>(LogicalGet::make(
@@ -244,10 +246,8 @@ void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::CreateStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
   std::shared_ptr<catalog::TableCatalogEntry> target_table =
-      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
-                                                            op->GetDatabaseName(),
-                                                            op->GetSchemaName(),
-                                                            op->GetTableName());
+      catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+          txn_, op->GetDatabaseName(), op->GetSchemaName(), op->GetTableName());
 
   if (op->type == InsertType::SELECT) {
     auto insert_expr = std::make_shared<OperatorExpression>(
@@ -323,11 +323,8 @@ void QueryToOperatorTransformer::Visit(parser::InsertStatement *op) {
 }
 
 void QueryToOperatorTransformer::Visit(parser::DeleteStatement *op) {
-  auto target_table =
-      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
-                                                            op->GetDatabaseName(),
-                                                            op->GetSchemaName(),
-                                                            op->GetTableName());
+  auto target_table = catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+      txn_, op->GetDatabaseName(), op->GetSchemaName(), op->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
   if (op->expr != nullptr) {
     std::vector<AnnotatedExpression> predicates =
@@ -352,11 +349,9 @@ void QueryToOperatorTransformer::Visit(
 void QueryToOperatorTransformer::Visit(
     UNUSED_ATTRIBUTE parser::TransactionStatement *op) {}
 void QueryToOperatorTransformer::Visit(parser::UpdateStatement *op) {
-  auto target_table =
-      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn_,
-                                                            op->table->GetDatabaseName(),
-                                                            op->table->GetSchemaName(),
-                                                            op->table->GetTableName());
+  auto target_table = catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+      txn_, op->table->GetDatabaseName(), op->table->GetSchemaName(),
+      op->table->GetTableName());
   std::shared_ptr<OperatorExpression> table_scan;
 
   auto update_expr = std::make_shared<OperatorExpression>(
