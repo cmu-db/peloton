@@ -141,8 +141,7 @@ TEST_F(InsertPerformanceTests, LoadingTest) {
         storage::DataTable::GetDefaultActiveTileGroupCount();
 
     if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
-      expected_tile_group_count =
-          filled_tile_group_count +
+      expected_tile_group_count = filled_tile_group_count +
           storage::DataTable::GetDefaultActiveTileGroupCount();
     } else {
       expected_tile_group_count =

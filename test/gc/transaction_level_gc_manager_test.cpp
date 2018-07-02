@@ -33,6 +33,8 @@ namespace test {
 
 class TransactionLevelGCManagerTests : public PelotonTest {};
 
+#define INDEX_OID 1234
+
 int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   //  auto table_id = table->GetOid();
@@ -124,7 +126,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -176,7 +178,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertPrimaryKeyTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -235,7 +237,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
 
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
@@ -295,7 +297,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
 
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
@@ -355,7 +357,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
 
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
@@ -415,7 +417,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitInsertUpdateTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -474,7 +476,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortInsertUpdateTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -527,7 +529,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -581,7 +583,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -634,7 +636,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitInsertDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -685,7 +687,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortInsertDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -741,7 +743,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_CommitUpdateDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -800,7 +802,7 @@ TEST_F(TransactionLevelGCManagerTests, DISABLED_AbortUpdateDeleteTest) {
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      0, test_name + "table", db_id, INVALID_OID, 1234, true));
+      0, test_name + "table", db_id, INVALID_OID, INDEX_OID, true));
   TestingTransactionUtil::AddSecondaryIndex(table.get());
 
   EXPECT_EQ(0, GetNumRecycledTuples(table.get()));
@@ -989,7 +991,7 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "updatedeletetable", db_id, 12345, 1234, true));
+      num_key, "updatedeletetable", db_id, 12345, INDEX_OID, true));
 
   EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
 
@@ -1114,7 +1116,7 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "reinserttable", db_id, 12346, 1234, true));
+      num_key, "reinserttable", db_id, 12346, INDEX_OID, true));
 
   EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
 
@@ -1278,7 +1280,7 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   const int num_key = 25;
   const size_t tuples_per_tilegroup = 5;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "immutabilitytable", db_id, 12347, 1234, true,
+      num_key, "immutabilitytable", db_id, 12347, INDEX_OID, true,
       tuples_per_tilegroup));
 
   EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
