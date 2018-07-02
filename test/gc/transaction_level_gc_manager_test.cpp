@@ -39,7 +39,7 @@ int GetNumRecycledTuples(storage::DataTable *table) {
   int count = 0;
   //  auto table_id = table->GetOid();
   while (
-      !gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table).IsNull())
+      !gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table->GetOid()).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
