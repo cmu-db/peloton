@@ -105,7 +105,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   std::vector<PostgresDataFormat> result_format(statement->GetTupleDescriptor().size(),
                                                 PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  state.statement_.reset(statement.get());
+  state.statement_.swap(statement);
   state.param_values_ = params;
   state.result_format_ = result_format;
   executor::ExecutionResult status = traffic_cop.ExecuteHelper(state, [] {
@@ -149,7 +149,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
                                                    PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  state.statement_ = statement;
+  state.statement_.swap(statement);
   state.param_values_ = params;
   state.result_format_ = result_format;
   status = traffic_cop.ExecuteHelper(state, [] {
@@ -193,7 +193,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
                                                   PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  state.statement_ = statement;
+  state.statement_.swap(statement);
   state.param_values_ = params;
   state.result_format_ = result_format;
   status = traffic_cop.ExecuteHelper(state, [] {
@@ -229,7 +229,7 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
                                                   PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  state.statement_ = statement;
+  state.statement_.swap(statement);
   state.param_values_ = params;
   state.result_format_ = result_format;
   status = traffic_cop.ExecuteHelper(state, [] {
@@ -264,6 +264,9 @@ TEST_F(OptimizerTests, HashJoinTest) {
   result_format = std::vector<PostgresDataFormat>(4,
                                                   PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
+  state.statement_.swap(statement);
+  state.param_values_ = params;
+  state.result_format_ = result_format;
   status = traffic_cop.ExecuteHelper(state, [] {
     TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
   });
