@@ -15,6 +15,7 @@
 #include <vector>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <arpa/inet.h>
 #include "common/internal_types.h"
 #include "common/exception.h"
 
@@ -183,7 +184,7 @@ class ReadBuffer : public Buffer {
       case 4:
         return _CAST(T, ntohl(_CAST(uint32_t, val)));
       case 8:
-        return _CAST(T, ntohll(_CAST(uint64_t, val)));
+        return _CAST(T, be64toh(_CAST(uint64_t, val)));
       // Will never be here due to compiler optimization
       default: throw NetworkProcessException("");
     }
