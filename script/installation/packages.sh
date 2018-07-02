@@ -81,11 +81,17 @@ function install_tf() {
     TFCApiFile=$1
     TF_VERSION=$2
     LinkerConfigCmd=$3
+    DISTRO=$4
     TARGET_DIRECTORY="/usr/local"
     # Install Tensorflow Python Binary
-    sudo -E pip3 install --upgrade pip
-    # Related issue: https://github.com/pypa/pip/issues/3165
-    sudo -E pip3 install tensorflow==${TF_VERSION} --upgrade --ignore-installed six
+    if [ "$DISTRO" == "DARWIN" ]; then
+        # Temporary fix for https://github.com/cmu-db/peloton/issues/1448
+        sudo -E pip3 install --upgrade https://storage.googleapis.com/tensorflow/mac/${TF_TYPE}/tensorflow-${TF_VERSION}-py3-none-any.whl
+    else
+        sudo -E pip3 install --upgrade pip
+        # Related issue: https://github.com/pypa/pip/issues/3165
+        sudo -E pip3 install tensorflow==${TF_VERSION} --upgrade --ignore-installed six
+    fi
 
     # Install C-API
     TFCApiURL="https://storage.googleapis.com/tensorflow/libtensorflow/${TFCApiFile}"
@@ -193,7 +199,7 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     # Install version of protobuf needed by C-API
     install_protobuf3.4.0 "ubuntu"
     # Install tensorflow
-    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd" "$DISTRO"
 
 ## ------------------------------------------------
 ## DARWIN (macOS)
@@ -231,7 +237,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install ant
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
-    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"
+    install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd" "$DISTRO"
 
 ## ------------------------------------------------
 ## UNKNOWN
