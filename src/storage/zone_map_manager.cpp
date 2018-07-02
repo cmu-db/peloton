@@ -17,6 +17,7 @@
 #include "catalog/database_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
@@ -263,6 +264,15 @@ bool ZoneMapManager::ShouldScanTileGroup(
     }
   }
   return true;
+}
+
+/**
+ * Checks whether a zone map table in catalog was created.
+ *
+ * @return  True if the zone map table in catalog exists and vice versa
+ */
+bool ZoneMapManager::ZoneMapTableExists() {
+  return settings::SettingsManager::GetBool(settings::SettingId::zone_map);
 }
 
 }  // namespace storage

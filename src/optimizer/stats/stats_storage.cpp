@@ -14,6 +14,7 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_stats_catalog.h"
+#include "catalog/system_catalogs.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "optimizer/stats/column_stats.h"
 #include "optimizer/stats/table_stats.h"
@@ -96,7 +97,9 @@ void StatsStorage::InsertOrUpdateColumnStats(
   LOG_TRACE("InsertOrUpdateColumnStats, %d, %lf, %lf, %s, %s, %s", num_rows,
             cardinality, frac_null, most_common_vals.c_str(),
             most_common_freqs.c_str(), histogram_bounds.c_str());
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto column_stats_catalog =
+      catalog::Catalog::GetInstance()->GetSystemCatalogs(database_id)
+                                     ->GetColumnStatsCatalog();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   bool single_statement_txn = false;
@@ -104,9 +107,8 @@ void StatsStorage::InsertOrUpdateColumnStats(
     single_statement_txn = true;
     txn = txn_manager.BeginTransaction();
   }
-  column_stats_catalog->DeleteColumnStats(txn, database_id, table_id, column_id);
+  column_stats_catalog->DeleteColumnStats(txn, table_id, column_id);
   column_stats_catalog->InsertColumnStats(txn,
-                                          database_id,
                                           table_id,
                                           column_id,
                                           column_name,
@@ -131,12 +133,13 @@ void StatsStorage::InsertOrUpdateColumnStats(
 std::shared_ptr<ColumnStats> StatsStorage::GetColumnStatsByID(oid_t database_id,
                                                               oid_t table_id,
                                                               oid_t column_id) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto column_stats_catalog =
+      catalog::Catalog::GetInstance()->GetSystemCatalogs(database_id)
+                                     ->GetColumnStatsCatalog();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // std::unique_ptr<std::vector<type::Value>> column_stats_vector
   auto column_stats_vector = column_stats_catalog->GetColumnStats(txn,
-                                                                  database_id,
                                                                   table_id,
                                                                   column_id);
   txn_manager.CommitTransaction(txn);
@@ -215,10 +218,11 @@ std::shared_ptr<ColumnStats> StatsStorage::ConvertVectorToColumnStats(
  */
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto column_stats_catalog =
+      catalog::Catalog::GetInstance()->GetSystemCatalogs(database_id)
+                                     ->GetColumnStatsCatalog();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
   column_stats_catalog->GetTableStats(txn,
-                                      database_id,
                                       table_id,
                                       column_stats_map);
 
@@ -241,10 +245,11 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 std::shared_ptr<TableStats> StatsStorage::GetTableStats(
     oid_t database_id, oid_t table_id, std::vector<oid_t> column_ids,
     concurrency::TransactionContext *txn) {
-  auto column_stats_catalog = catalog::ColumnStatsCatalog::GetInstance(nullptr);
+  auto column_stats_catalog =
+      catalog::Catalog::GetInstance()->GetSystemCatalogs(database_id)
+                                     ->GetColumnStatsCatalog();
   std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> column_stats_map;
   column_stats_catalog->GetTableStats(txn,
-                                      database_id,
                                       table_id,
                                       column_stats_map);
 
@@ -261,35 +266,30 @@ std::shared_ptr<TableStats> StatsStorage::GetTableStats(
 }
 
 /**
- * AnalyzeStatsForAllTables - This function iterates all databases and
- * datatables to collect their stats and store them in the column_stats_catalog.
+ * AnalyzeStatsForAllTables - This function iterates all tables in a database
+ * to collect their stats and store them in the column_stats_catalog.
  */
 ResultType StatsStorage::AnalyzeStatsForAllTables(
+    storage::Database *database,
     concurrency::TransactionContext *txn) {
   if (txn == nullptr) {
     LOG_TRACE("Do not have transaction to analyze all tables' stats.");
     return ResultType::FAILURE;
   }
 
-  auto storage_manager = storage::StorageManager::GetInstance();
-
-  oid_t database_count = storage_manager->GetDatabaseCount();
-  LOG_TRACE("Database count: %u", database_count);
-  for (oid_t db_offset = 0; db_offset < database_count; db_offset++) {
-    auto database = storage_manager->GetDatabaseWithOffset(db_offset);
-    if (database->GetOid() == CATALOG_DATABASE_OID) {
+  oid_t table_count = database->GetTableCount();
+  for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
+    auto table = database->GetTable(table_offset);
+    auto table_catalog_entry =
+        catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                              database->GetOid(),
+                                                              table->GetOid());
+    if (table_catalog_entry->GetSchemaName() == CATALOG_SCHEMA_NAME)
       continue;
-    }
-    oid_t table_count = database->GetTableCount();
-    for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
-      auto table = database->GetTable(table_offset);
-      LOG_TRACE("Analyzing table: %s", table->GetName().c_str());
-      std::unique_ptr<TableStatsCollector> table_stats_collector(
-          new TableStatsCollector(table));
-      table_stats_collector->CollectColumnStats();
-      InsertOrUpdateTableStats(table, table_stats_collector.get(), txn);
-    }
+    LOG_DEBUG("Analyzing table: %s", table->GetName().c_str());
+    AnalyzeStatsForTable(table, txn);
   }
+
   return ResultType::SUCCESS;
 }
 

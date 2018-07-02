@@ -14,6 +14,8 @@
 
 #include "catalog/catalog.h"
 #include "catalog/column_catalog.h"
+#include "catalog/schema.h"
+#include "catalog/system_catalogs.h"
 #include "common/harness.h"
 #include "common/logger.h"
 #include "concurrency/transaction_manager_factory.h"
@@ -54,9 +56,12 @@ void ExpectSelectivityEqual(double actual, double expected,
 
 // Test range selectivity including >, <, >= and <= using uniform dataset
 TEST_F(SelectivityTests, RangeSelectivityTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -70,7 +75,6 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  auto catalog = catalog::Catalog::GetInstance();
   auto database = catalog->GetDatabaseWithName(txn, DEFAULT_DB_NAME);
   auto table = catalog->GetTableWithName(txn,
                                          DEFAULT_DB_NAME,
@@ -120,32 +124,52 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
 // checks if getting column stats and sampling works.
 TEST_F(SelectivityTests, LikeSelectivityTest) {
   const int tuple_count = 1000;
-  const int tuple_per_tilegroup = 100;
+  const uint32_t tuple_per_tilegroup = 100;
+  auto catalog = catalog::Catalog::GetInstance();
 
-  // Create a table
+  // Create a database
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  std::unique_ptr<storage::DataTable> data_table(
-      TestingExecutorUtil::CreateTable(tuple_per_tilegroup, false));
-  TestingExecutorUtil::PopulateTable(data_table.get(), tuple_count, false,
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
+  txn_manager.CommitTransaction(txn);
+
+  // Create a table
+  txn = txn_manager.BeginTransaction();
+  std::unique_ptr<catalog::Schema> table_schema(
+      new catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                           TestingExecutorUtil::GetColumnInfo(1),
+                           TestingExecutorUtil::GetColumnInfo(2),
+                           TestingExecutorUtil::GetColumnInfo(3)}));
+  catalog->CreateTable(txn,
+                       DEFAULT_DB_NAME,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       "test_table",
+                       false,
+                       tuple_per_tilegroup);
+  auto data_table = catalog->GetTableWithName(txn,
+                                              DEFAULT_DB_NAME,
+                                              DEFAULT_SCHEMA_NAME,
+                                              "test_table");
+  TestingExecutorUtil::PopulateTable(data_table, tuple_count, false,
                                      false, true, txn);
   txn_manager.CommitTransaction(txn);
 
   // Run analyze
   txn = txn_manager.BeginTransaction();
-  optimizer::StatsStorage::GetInstance()->AnalyzeStatsForTable(data_table.get(),
+  optimizer::StatsStorage::GetInstance()->AnalyzeStatsForTable(data_table,
                                                                txn);
   txn_manager.CommitTransaction(txn);
 
   oid_t db_id = data_table->GetDatabaseOid();
   oid_t table_id = data_table->GetOid();
 
-  auto stats_storage = StatsStorage::GetInstance();
   txn = txn_manager.BeginTransaction();
+  auto stats_storage = StatsStorage::GetInstance();
   auto table_stats = stats_storage->GetTableStats(db_id, table_id, txn);
   txn_manager.CommitTransaction(txn);
   table_stats->SetTupleSampler(
-      std::make_shared<TupleSampler>(data_table.get()));
+      std::make_shared<TupleSampler>(data_table));
 
   type::Value value = type::ValueFactory::GetVarcharValue("%3");
   ValueCondition condition1{"test_table.COL_D", ExpressionType::COMPARE_LIKE,
@@ -162,6 +186,10 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
 
   EXPECT_EQ(like_than_sel_1, 1);
   EXPECT_EQ(like_than_sel_2, 0);
+
+  txn = txn_manager.BeginTransaction();
+  catalog->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
+  txn_manager.CommitTransaction(txn);
 }
 
 TEST_F(SelectivityTests, EqualSelectivityTest) {

@@ -13,7 +13,6 @@
 #include "catalog/catalog.h"
 
 #include "catalog/column_catalog.h"
-#include "catalog/column_stats_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/index_catalog.h"
@@ -302,8 +301,10 @@ void Catalog::Bootstrap() {
 
   // TODO: change following catalogs to per database
   ProcCatalog::GetInstance(txn);
-  ColumnStatsCatalog::GetInstance(txn);
-  ZoneMapCatalog::GetInstance(txn);
+
+  if (settings::SettingsManager::GetBool(settings::SettingId::zone_map)) {
+    ZoneMapCatalog::GetInstance(txn);
+  }
 
   if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);

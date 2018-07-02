@@ -18,6 +18,7 @@
 #include "storage/data_table.h"
 
 #include "executor/testing_executor_util.h"
+#include "settings/settings_manager.h"
 #include "storage/tile_group.h"
 #include "storage/database.h"
 #include "storage/tile.h"
@@ -152,6 +153,7 @@ expression::AbstractExpression *CreateConjunctionPredicate(
 }
 
 TEST_F(ZoneMapTests, ZoneMapContentsTest) {
+  settings::SettingsManager::SetBool(settings::SettingId::zone_map, true);
   auto catalog = catalog::Catalog::GetInstance();
   catalog->Bootstrap();
 

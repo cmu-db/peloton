@@ -42,6 +42,9 @@ void CreateAndLoadTable() {
 }
 
 TEST_F(AnalyzeSQLTests, AnalyzeAllTablesTest) {
+  auto catalog = catalog::Catalog::GetInstance();
+  catalog->Bootstrap();
+
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
@@ -54,7 +57,7 @@ TEST_F(AnalyzeSQLTests, AnalyzeAllTablesTest) {
 
   // Free the database
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
+  catalog->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -75,7 +78,7 @@ TEST_F(AnalyzeSQLTests, AnalyzeSingleTableTest) {
   auto catalog = catalog::Catalog::GetInstance();
   storage::DataTable *db_column_stats_collector_table =
       catalog->GetTableWithName(txn,
-                                CATALOG_DATABASE_NAME,
+                                DEFAULT_DB_NAME,
                                 CATALOG_SCHEMA_NAME,
                                 COLUMN_STATS_CATALOG_NAME);
   EXPECT_NE(db_column_stats_collector_table, nullptr);

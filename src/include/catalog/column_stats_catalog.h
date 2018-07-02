@@ -47,17 +47,15 @@ namespace catalog {
 
 class ColumnStatsCatalog : public AbstractCatalog {
  public:
-  ~ColumnStatsCatalog();
+  ColumnStatsCatalog(concurrency::TransactionContext *txn,
+                     const std::string &database_name);
 
-  // Global Singleton
-  static ColumnStatsCatalog *GetInstance(
-      concurrency::TransactionContext *txn = nullptr);
+  ~ColumnStatsCatalog();
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
   bool InsertColumnStats(concurrency::TransactionContext *txn,
-                         oid_t database_id,
                          oid_t table_id,
                          oid_t column_id,
                          std::string column_name,
@@ -71,7 +69,6 @@ class ColumnStatsCatalog : public AbstractCatalog {
                          type::AbstractPool *pool);
 
   bool DeleteColumnStats(concurrency::TransactionContext *txn,
-                         oid_t database_id,
                          oid_t table_id,
                          oid_t column_id);
 
@@ -79,32 +76,15 @@ class ColumnStatsCatalog : public AbstractCatalog {
   // Read-only Related API
   //===--------------------------------------------------------------------===//
   std::unique_ptr<std::vector<type::Value>> GetColumnStats(concurrency::TransactionContext *txn,
-                                                           oid_t database_id,
                                                            oid_t table_id,
                                                            oid_t column_id);
 
   size_t GetTableStats(concurrency::TransactionContext *txn,
-                       oid_t database_id,
                        oid_t table_id,
                        std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
                            &column_stats_map);
+
   // TODO: add more if needed
-
-  enum ColumnId {
-    DATABASE_ID = 0,
-    TABLE_ID = 1,
-    COLUMN_ID = 2,
-    NUM_ROWS = 3,
-    CARDINALITY = 4,
-    FRAC_NULL = 5,
-    MOST_COMMON_VALS = 6,
-    MOST_COMMON_FREQS = 7,
-    HISTOGRAM_BOUNDS = 8,
-    COLUMN_NAME = 9,
-    HAS_INDEX = 10,
-    // Add new columns here in creation order
-  };
-
   enum ColumnStatsOffset {
     NUM_ROWS_OFF = 0,
     CARDINALITY_OFF = 1,
@@ -117,7 +97,19 @@ class ColumnStatsCatalog : public AbstractCatalog {
   };
 
  private:
-  ColumnStatsCatalog(concurrency::TransactionContext *txn);
+  enum ColumnId {
+    TABLE_ID = 0,
+    COLUMN_ID = 1,
+    NUM_ROWS = 2,
+    CARDINALITY = 3,
+    FRAC_NULL = 4,
+    MOST_COMMON_VALS = 5,
+    MOST_COMMON_FREQS = 6,
+    HISTOGRAM_BOUNDS = 7,
+    COLUMN_NAME = 8,
+    HAS_INDEX = 9,
+    // Add new columns here in creation order
+  };
 
   enum IndexId {
     SECONDARY_KEY_0 = 0,

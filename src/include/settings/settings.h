@@ -19,17 +19,17 @@
 //===----------------------------------------------------------------------===//
 // Peloton port
 SETTING_int(port,
-           "Peloton port (default: 15721)",
-           15721,
-           1024, 65535,
-           false, false)
+            "Peloton port (default: 15721)",
+            15721,
+            1024, 65535,
+            false, false)
 
 // Maximum number of connections
 SETTING_int(max_connections,
-           "Maximum number of connections (default: 64)",
-           64,
-           1, 512,
-           true, true)
+            "Maximum number of connections (default: 64)",
+            64,
+            1, 512,
+            true, true)
 
 SETTING_int(rpc_port,
             "Peloton rpc port (default: 15445)",
@@ -83,11 +83,11 @@ SETTING_string(root_cert_file,
 //===----------------------------------------------------------------------===//
 
 SETTING_double(bnlj_buffer_size,
-             "The default buffer size to use for blockwise nested loop joins (default: 1 MB)",
-             1.0 * 1024.0 * 1024.0,
-             1.0 * 1024,
-             1.0 * 1024.0 * 1024.0 * 1024,
-             true, true)
+               "The default buffer size to use for blockwise nested loop joins (default: 1 MB)",
+               1.0 * 1024.0 * 1024.0,
+               1.0 * 1024,
+               1.0 * 1024.0 * 1024.0 * 1024,
+               true, true)
 
 // Size of the MonoQueue task queue
 SETTING_int(monoqueue_task_queue_size,
@@ -214,6 +214,10 @@ SETTING_bool(dump_ir,
              false,
              true, true)
 
+SETTING_bool(zone_map,
+             "Enable zone map (default: false)",
+             false, false, false)
+
 //===----------------------------------------------------------------------===//
 // Optimizer
 //===----------------------------------------------------------------------===//
@@ -232,8 +236,8 @@ SETTING_int(task_execution_timeout,
                 "execution step of optimizer, "
                 "assuming one plan has been found (default 5000)",
             5000,
-	    1000, 60000,
-	    true, true)
+	          1000, 60000,
+	          true, true)
 
 //===----------------------------------------------------------------------===//
 // GENERAL

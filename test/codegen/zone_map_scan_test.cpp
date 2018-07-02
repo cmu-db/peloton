@@ -19,6 +19,7 @@
 #include "expression/operator_expression.h"
 #include "planner/seq_scan_plan.h"
 #include "codegen/counting_consumer.h"
+#include "settings/settings_manager.h"
 
 #include "codegen/testing_codegen_util.h"
 
@@ -31,6 +32,10 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
  public:
   ZoneMapScanTest()
       : PelotonCodeGenTest(TEST_TUPLES_PER_TILEGROUP), num_rows_to_insert(20) {
+    settings::SettingsManager::SetBool(settings::SettingId::zone_map, true);
+    auto catalog = catalog::Catalog::GetInstance();
+    catalog->Bootstrap();
+
     // Load test table
     LoadTestTable(TestTableId(), num_rows_to_insert);
 
@@ -65,9 +70,6 @@ class ZoneMapScanTest : public PelotonCodeGenTest {
 };
 
 TEST_F(ZoneMapScanTest, ScanNoPredicates) {
-  auto catalog = catalog::Catalog::GetInstance();
-  catalog->Bootstrap();
-
   // SELECT a, b, c FROM table;
   // 1) Setup the scan plan node
   planner::SeqScanPlan scan{&GetTestTable(TestTableId()), nullptr, {0, 1, 2}};

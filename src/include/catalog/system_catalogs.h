@@ -14,6 +14,7 @@
 
 #include <mutex>
 
+#include "catalog/column_stats_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -116,6 +117,13 @@ class SystemCatalogs {
     return pg_query_metrics_;
   }
 
+  ColumnStatsCatalog *GetColumnStatsCatalog() {
+    if (!pg_column_stats_) {
+      throw CatalogException("Column stats catalog has not been initialized");
+    }
+    return pg_column_stats_;
+  }
+
  private:
   ColumnCatalog *pg_attribute_;
   SchemaCatalog *pg_namespace_;
@@ -128,6 +136,7 @@ class SystemCatalogs {
   TableMetricsCatalog *pg_table_metrics_;
   IndexMetricsCatalog *pg_index_metrics_;
   QueryMetricsCatalog *pg_query_metrics_;
+  ColumnStatsCatalog * pg_column_stats_;
 };
 
 }  // namespace catalog

@@ -68,6 +68,8 @@ class ZoneMapManager {
                            int32_t num_predicates, storage::DataTable *table,
                            int64_t tile_group_id);
 
+  bool ZoneMapTableExists();
+
  private:
   //===--------------------------------------------------------------------===//
   // Utilities
