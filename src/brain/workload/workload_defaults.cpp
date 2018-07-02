@@ -14,7 +14,6 @@
 
 namespace peloton {
 namespace brain {
-
 const int LSTMWorkloadDefaults::NFEATS = 3;
 const int LSTMWorkloadDefaults::NENCODED = 20;
 const int LSTMWorkloadDefaults::NHID = 20;
