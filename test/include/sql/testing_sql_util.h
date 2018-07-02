@@ -95,6 +95,7 @@ class TestingSQLUtil {
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
   static void UtilTestTaskCallback(void *arg);
 
+  static tcop::ClientProcessState state_;
   static std::atomic_int counter_;
   //  inline static void SetTrafficCopCounter() {
   //    counter_.store(1);
