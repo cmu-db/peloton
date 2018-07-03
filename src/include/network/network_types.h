@@ -42,13 +42,5 @@ enum class Transition {
   NEED_WRITE
 };
 
-enum class ResponseProtocol {
-  // No response required (for intermediate messgaes such as parse, bind, etc.)
-  NO,
-  // PSQL
-  SIMPLE,
-  // JDBC, PQXX, etc.
-  EXTENDED
-};
 }  // namespace network
 }  // namespace peloton
