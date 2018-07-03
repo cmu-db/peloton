@@ -101,12 +101,12 @@ class RunJunit:
 
     def run(self):
         """ Orchestrate the overall JUnit test execution """
-        self._check_peloton_binary()
-        self._run_peloton()
+        # self._check_peloton_binary()
+        # self._run_peloton()
         ret_val = self._run_junit()
         self._print_output(self.junit_output_file)
         
-        self._stop_peloton()
+        # self._stop_peloton()
         if ret_val:
             # print the peloton log file, only if we had a failure
             self._print_output(self.peloton_output_file)     

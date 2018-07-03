@@ -83,13 +83,122 @@ class Buffer {
     size_ = unprocessed_len;
     offset_ = 0;
   }
+//
+//  void PrintBuffer(int offset, int len) {
+//    for (int i = offset; i < offset + len; i++)
+//      printf("%02X ", buf_[i]);
+//    printf("\n");
+//  }
 
-  // TODO(Tianyu): Fix this after protocol refactor
-// protected:
+ protected:
   size_t size_ = 0, offset_ = 0, capacity_;
   ByteBuf buf_;
+
  private:
   friend class WriteQueue;
+  friend class PostgresPacketWriter;
+};
+
+namespace {
+// Helper method for reading nul-terminated string for the read buffer
+inline std::string ReadCString(ByteBuf::const_iterator begin,
+                        ByteBuf::const_iterator end) {
+  // search for the nul terminator
+  for (ByteBuf::const_iterator head = begin; head != end; ++head)
+    if (*head == 0) return std::string(begin, head);
+  // No nul terminator found
+  throw NetworkProcessException("Expected nil in read buffer, none found");
+}
+}
+
+/**
+ * A view of the read buffer that has its own read head.
+ */
+class ReadBufferView {
+ public:
+  inline ReadBufferView(size_t size, ByteBuf::const_iterator begin)
+      : size_(size), begin_(begin) {}
+  /**
+   * Read the given number of bytes into destination, advancing cursor by that
+   * number. It is up to the caller to ensure that there are enough bytes
+   * available in the read buffer at this point.
+   * @param bytes Number of bytes to read
+   * @param dest Desired memory location to read into
+   */
+  inline void Read(size_t bytes, void *dest) {
+    std::copy(begin_ + offset_, begin_ + offset_ + bytes,
+              reinterpret_cast<uchar *>(dest));
+    offset_ += bytes;
+  }
+
+  /**
+   * Read an integer of specified length off of the read buffer (1, 2,
+   * 4, or 8 bytes). It is assumed that the bytes in the buffer are in network
+   * byte ordering and will be converted to the correct host ordering. It is up
+   * to the caller to ensure that there are enough bytes available in the read
+   * buffer at this point.
+   * @tparam T type of value to read off. Has to be size 1, 2, 4, or 8.
+   * @return value of integer switched from network byte order
+   */
+  template<typename T>
+  inline T ReadValue() {
+    // We only want to allow for certain type sizes to be used
+    // After the static assert, the compiler should be smart enough to throw
+    // away the other cases and only leave the relevant return statement.
+    static_assert(sizeof(T) == 1
+                      || sizeof(T) == 2
+                      || sizeof(T) == 4
+                      || sizeof(T) == 8, "Invalid size for integer");
+    auto val = ReadRawValue<T>();
+    switch (sizeof(T)) {
+      case 1: return val;
+      case 2:return _CAST(T, be16toh(_CAST(uint16_t, val)));
+      case 4:return _CAST(T, be32toh(_CAST(uint32_t, val)));
+      case 8:return _CAST(T, be64toh(_CAST(uint64_t, val)));
+        // Will never be here due to compiler optimization
+      default: throw NetworkProcessException("");
+    }
+  }
+
+  /**
+   * Read a nul-terminated string off the read buffer, or throw an exception
+   * if no nul-terminator is found within packet range.
+   * @return string at head of read buffer
+   */
+  inline std::string ReadString() {
+    std::string result = ReadCString(begin_ + offset_, begin_ + size_);
+    // extra byte of nul-terminator
+    offset_ += result.size() + 1;
+    return result;
+  }
+
+  /**
+   * Read a not nul-terminated string off the read buffer of specified length
+   * @return string at head of read buffer
+   */
+  inline std::string ReadString(size_t len) {
+    std::string result(begin_ + offset_, begin_ + offset_ + len);
+    offset_ += len;
+    return result;
+  }
+
+  /**
+   * Read a value of type T off of the buffer, advancing cursor by appropriate
+   * amount. Does NOT convert from network bytes order. It is the caller's
+   * responsibility to do so if needed.
+   * @tparam T type of value to read off. Preferably a primitive type.
+   * @return the value of type T
+   */
+  template<typename T>
+  inline T ReadRawValue() {
+    T result;
+    Read(sizeof(result), &result);
+    return result;
+  }
+
+ private:
+  size_t offset_ = 0, size_;
+  ByteBuf::const_iterator begin_;
 };
 
 /**
@@ -134,7 +243,7 @@ class ReadBuffer : public Buffer {
    * @param size Number of bytes to read
    */
   inline void FillBufferFrom(ReadBuffer &other, size_t size) {
-    other.Read(size, &buf_[size_]);
+    other.ReadIntoView(size).Read(size, &buf_[size_]);
     size_ += size;
   }
 
@@ -145,93 +254,33 @@ class ReadBuffer : public Buffer {
    */
   inline size_t BytesAvailable() { return size_ - offset_; }
 
-
   /**
-   * Read the given number of bytes into destination, advancing cursor by that
-   * number. It is up to the caller to ensure that there are enough bytes
-   * available in the read buffer at this point.
-   * @param bytes Number of bytes to read
-   * @param dest Desired memory location to read into
+   * Mark a chunk of bytes as read and return a view to the bytes read.
+   *
+   * This is necessary because a caller may not read all the bytes in a packet
+   * before exiting (exception occurs, etc.). Reserving a view of the bytes in
+   * a packet makes sure that the remaining bytes in a buffer is not malformed.
+   *
+   * No copying is performed in this process, however, so modifying the read buffer
+   * when a view is in scope will cause undefined behavior on the view's methods
+   *
+   * @param bytes number of butes to read
+   * @return a view of the bytes read.
    */
-  inline void Read(size_t bytes, void *dest) {
-    std::copy(buf_.begin() + offset_, buf_.begin() + offset_ + bytes,
-              reinterpret_cast<uchar *>(dest));
+  inline ReadBufferView ReadIntoView(size_t bytes) {
+    ReadBufferView result = ReadBufferView(bytes, buf_.begin() + offset_);
     offset_ += bytes;
-  }
-
-  /**
-   * Read an integer of specified length off of the read buffer (1, 2,
-   * 4, or 8 bytes). It is assumed that the bytes in the buffer are in network
-   * byte ordering and will be converted to the correct host ordering. It is up
-   * to the caller to ensure that there are enough bytes available in the read
-   * buffer at this point.
-   * @tparam T type of value to read off. Has to be size 1, 2, 4, or 8.
-   * @return value of integer switched from network byte order
-   */
-  template <typename T>
-  inline T ReadValue() {
-    // We only want to allow for certain type sizes to be used
-    // After the static assert, the compiler should be smart enough to throw
-    // away the other cases and only leave the relevant return statement.
-    static_assert(sizeof(T) == 1
-                      || sizeof(T) == 2
-                      || sizeof(T) == 4
-                      || sizeof(T) == 8, "Invalid size for integer");
-    auto val = ReadRawValue<T>();
-    switch (sizeof(T)) {
-      case 1: return val;
-      case 2:
-        return _CAST(T, be16toh(_CAST(uint16_t, val)));
-      case 4:
-        return _CAST(T, be32toh(_CAST(uint32_t, val)));
-      case 8:
-        return _CAST(T, be64toh(_CAST(uint64_t, val)));
-      // Will never be here due to compiler optimization
-      default: throw NetworkProcessException("");
-    }
-  }
-
-  /**
-   * Read a nul-terminated string off the read buffer, or throw an exception
-   * if no nul-terminator is found within packet range.
-   * @return string at head of read buffer
-   */
-  std::string ReadString() {
-    // search for the nul terminator
-    for (size_t i = offset_; i < size_; i++) {
-      if (buf_[i] == 0) {
-        auto result = std::string(buf_.begin() + offset_,
-                                  buf_.begin() + i);
-        // +1 because we want to skip nul
-        offset_ = i + 1;
-        return result;
-      }
-    }
-    // No nul terminator found
-    throw NetworkProcessException("Expected nil in read buffer, none found");
-  }
-
-  /**
-   * Read a not nul-terminated string off the read buffer of specified length
-   * @return string at head of read buffer
-   */
-  inline std::string ReadString(size_t len) {
-    std::string result(buf_.begin() + offset_, buf_.begin() + offset_ + len);
-    offset_ += len;
     return result;
   }
 
-  /**
-   * Read a value of type T off of the buffer, advancing cursor by appropriate
-   * amount. Does NOT convert from network bytes order. It is the caller's
-   * responsibility to do so if needed.
-   * @tparam T type of value to read off. Preferably a primitive type.
-   * @return the value of type T
-   */
-  template<typename T>
-  inline T ReadRawValue() {
-    T result;
-    Read(sizeof(result), &result);
+  template <typename T>
+  inline T ReadValue() {
+    return ReadIntoView(sizeof(T)).ReadValue<T>();
+  }
+
+  inline std::string ReadString() {
+    std::string result = ReadCString(buf_.begin() + offset_, buf_.begin() + size_);
+    offset_ += result.size() + 1;
     return result;
   }
 };
@@ -383,7 +432,8 @@ class WriteQueue {
       size_t written = breakup ? tail.RemainingCapacity() : 0;
       tail.AppendRaw(src, written);
       buffers_.push_back(std::make_shared<WriteBuffer>());
-      BufferWriteRaw(reinterpret_cast<const uchar *>(src) + written, len - written);
+      BufferWriteRaw(reinterpret_cast<const uchar *>(src) + written,
+                     len - written);
     }
   }
 

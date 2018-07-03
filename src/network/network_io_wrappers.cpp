@@ -20,12 +20,9 @@
 namespace peloton {
 namespace network {
 Transition NetworkIoWrapper::FlushAllWrites() {
-  for (auto buffer = out_->FlushHead();
-      buffer != nullptr;
-       buffer = out_->FlushHead()) {
-    auto result = FlushWriteBuffer(*buffer);
+  for (; out_->FlushHead() != nullptr; out_->MarkHeadFlushed()) {
+    auto result = FlushWriteBuffer(*out_->FlushHead());
     if (result != Transition::PROCEED) return result;
-    out_->MarkHeadFlushed();
   }
   out_->Reset();
   return Transition::PROCEED;
@@ -63,12 +60,10 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
         case EAGAIN:
           // Equal to EWOULDBLOCK
           return result;
-        case EINTR:
-          continue;
-        default:
-          LOG_ERROR("Error writing: %s", strerror(errno));
+        case EINTR:continue;
+        default:LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Error when filling read buffer " +
-                                        std::to_string(errno));
+              std::to_string(errno));
       }
   }
   return result;
@@ -99,8 +94,8 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
       case SSL_ERROR_NONE:result = Transition::PROCEED;
         break;
       case SSL_ERROR_ZERO_RETURN: return Transition::TERMINATE;
-      // The SSL packet is partially loaded to the SSL buffer only,
-      // More data is required in order to decode the wh`ole packet.
+        // The SSL packet is partially loaded to the SSL buffer only,
+        // More data is required in order to decode the wh`ole packet.
       case SSL_ERROR_WANT_READ: return result;
       case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
       case SSL_ERROR_SYSCALL:

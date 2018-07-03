@@ -22,11 +22,11 @@
 #define DEFINE_COMMAND(name, flush)                                        \
 class name : public PostgresNetworkCommand {                               \
  public:                                                                   \
-  explicit name(std::shared_ptr<ReadBuffer> in)                            \
-     : PostgresNetworkCommand(std::move(in), flush) {}                     \
+  explicit name(PostgresInputPacket &in)                                   \
+     : PostgresNetworkCommand(in, flush) {}                                \
   virtual Transition Exec(PostgresProtocolInterpreter &,                   \
                           PostgresPacketWriter &,                          \
-                          CallbackFunc) override;                         \
+                          CallbackFunc) override;                          \
 }
 
 namespace peloton {
@@ -43,8 +43,8 @@ class PostgresNetworkCommand {
   inline bool FlushOnComplete() { return flush_on_complete_; }
 
  protected:
-  explicit PostgresNetworkCommand(std::shared_ptr<ReadBuffer> in, bool flush)
-      : in_(std::move(in)), flush_on_complete_(flush) {}
+  explicit PostgresNetworkCommand(PostgresInputPacket &in, bool flush)
+      : in_(in.buf_->ReadIntoView(in.len_)), flush_on_complete_(flush) {}
 
   std::vector<PostgresValueType> ReadParamTypes();
 
@@ -68,12 +68,11 @@ class PostgresNetworkCommand {
 
   std::vector<PostgresDataFormat> ReadResultFormats(size_t tuple_size);
 
-  std::shared_ptr<ReadBuffer> in_;
+  ReadBufferView in_;
  private:
   bool flush_on_complete_;
 };
 
-DEFINE_COMMAND(StartupCommand, true);
 DEFINE_COMMAND(SimpleQueryCommand, true);
 DEFINE_COMMAND(ParseCommand, false);
 DEFINE_COMMAND(BindCommand, false);

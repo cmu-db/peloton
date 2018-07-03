@@ -48,14 +48,10 @@ class PostgresProtocolInterpreter : public ProtocolInterpreter {
         LOG_TRACE("PSQL result");
         ExecQueryMessageGetResult(writer, status);
     }
-
   }
 
-  inline void AddCmdlineOption(const std::string &key, std::string value) {
-    cmdline_options_[key] = std::move(value);
-  }
-
-  inline void FinishStartup() { startup_ = false; }
+  Transition ProcessStartup(std::shared_ptr<ReadBuffer> in,
+                           std::shared_ptr<WriteQueue> out);
 
   inline tcop::ClientProcessState &ClientProcessState() { return state_; }
 

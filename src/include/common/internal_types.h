@@ -1427,17 +1427,6 @@ typedef unsigned char uchar;
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
 
-//===--------------------------------------------------------------------===//
-// Packet Manager: ProcessResult
-//===--------------------------------------------------------------------===//
-enum class ProcessResult {
-  COMPLETE,
-  TERMINATE,
-  PROCESSING,
-  MORE_DATA_REQUIRED,
-  NEED_SSL_HANDSHAKE,
-};
-
 enum class NetworkProtocolType {
   POSTGRES_JDBC,
   POSTGRES_PSQL,

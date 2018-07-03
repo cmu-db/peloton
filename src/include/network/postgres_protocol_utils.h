@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #pragma once
+#include <boost/algorithm/string.hpp>
 #include "network/network_io_utils.h"
 #include "common/statement.h"
 
@@ -19,9 +20,22 @@ namespace peloton {
 namespace network {
 
 // TODO(Tianyu): It looks very broken that this never changes.
-// TODO(Tianyu): Also, Initialize.
+// clang-format off
 const std::unordered_map<std::string, std::string>
-    parameter_status_map;
+    parameter_status_map = {
+        {"application_name", "psql"},
+        {"client_encoding", "UTF8"},
+        {"DateStyle", "ISO, MDY"},
+        {"integer_datetimes", "on"},
+        {"IntervalStyle", "postgres"},
+        {"is_superuser", "on"},
+        {"server_encoding", "UTF8"},
+        {"server_version", "9.5devel"},
+        {"session_authorization", "postgres"},
+        {"standard_conforming_strings", "on"},
+        {"TimeZone", "US/Eastern"}
+    };
+// clang-format on
 
 /**
  * Encapsulates an input packet

@@ -17,9 +17,6 @@
 #include "settings/settings_manager.h"
 #include "planner/abstract_plan.h"
 
-#define SSL_MESSAGE_VERNO 80877103
-#define PROTO_MAJOR_VERSION(x) ((x) >> 16)
-
 namespace peloton {
 namespace network {
 
@@ -29,17 +26,17 @@ namespace network {
 // project though, so I want to do the architectural refactor first.
 std::vector<PostgresValueType> PostgresNetworkCommand::ReadParamTypes() {
   std::vector<PostgresValueType> result;
-  auto num_params = in_->ReadValue<uint16_t>();
+  auto num_params = in_.ReadValue<uint16_t>();
   for (uint16_t i = 0; i < num_params; i++)
-    result.push_back(in_->ReadValue<PostgresValueType>());
+    result.push_back(in_.ReadValue<PostgresValueType>());
   return result;
 }
 
 std::vector<PostgresDataFormat> PostgresNetworkCommand::ReadParamFormats() {
   std::vector<PostgresDataFormat> result;
-  auto num_formats = in_->ReadValue<uint16_t>();
+  auto num_formats = in_.ReadValue<uint16_t>();
   for (uint16_t i = 0; i < num_formats; i++)
-    result.push_back(in_->ReadValue<PostgresDataFormat>());
+    result.push_back(in_.ReadValue<PostgresDataFormat>());
   return result;
 }
 
@@ -48,9 +45,9 @@ void PostgresNetworkCommand::ReadParamValues(std::vector<BindParameter> &bind_pa
                                              const std::vector<PostgresValueType> &param_types,
                                              const std::vector<
                                                  PostgresDataFormat> &formats) {
-  auto num_params = in_->ReadValue<uint16_t>();
+  auto num_params = in_.ReadValue<uint16_t>();
   for (uint16_t i = 0; i < num_params; i++) {
-    auto param_len = in_->ReadValue<int32_t>();
+    auto param_len = in_.ReadValue<int32_t>();
     if (param_len == -1) {
       // NULL
       auto peloton_type = PostgresValueTypeToPelotonValueType(param_types[i]);
@@ -82,7 +79,7 @@ void PostgresNetworkCommand::ProcessTextParamValue(std::vector<BindParameter> &b
                                                    std::vector<type::Value> &param_values,
                                                    PostgresValueType type,
                                                    int32_t len) {
-  std::string val = in_->ReadString((size_t) len);
+  std::string val = in_.ReadString((size_t) len);
   bind_parameters.emplace_back(type::TypeId::VARCHAR, val);
   param_values.push_back(
       PostgresValueTypeToPelotonValueType(type) == type::TypeId::VARCHAR
@@ -98,7 +95,7 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
   switch (type) {
     case PostgresValueType::TINYINT: {
       PELOTON_ASSERT(len == sizeof(int8_t));
-      auto val = in_->ReadValue<int8_t>();
+      auto val = in_.ReadValue<int8_t>();
       bind_parameters.emplace_back(type::TypeId::TINYINT, std::to_string(val));
       param_values.push_back(
           type::ValueFactory::GetTinyIntValue(val).Copy());
@@ -106,7 +103,7 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
     }
     case PostgresValueType::SMALLINT: {
       PELOTON_ASSERT(len == sizeof(int16_t));
-      auto int_val = in_->ReadValue<int16_t>();
+      auto int_val = in_.ReadValue<int16_t>();
       bind_parameters.emplace_back(type::TypeId::SMALLINT,
                                    std::to_string(int_val));
       param_values.push_back(
@@ -115,7 +112,7 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
     }
     case PostgresValueType::INTEGER: {
       PELOTON_ASSERT(len == sizeof(int32_t));
-      auto val = in_->ReadValue<int32_t>();
+      auto val = in_.ReadValue<int32_t>();
       bind_parameters.emplace_back(type::TypeId::INTEGER, std::to_string(val));
       param_values.push_back(
           type::ValueFactory::GetIntegerValue(val).Copy());
@@ -123,7 +120,7 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
     }
     case PostgresValueType::BIGINT: {
       PELOTON_ASSERT(len == sizeof(int64_t));
-      auto val = in_->ReadValue<int64_t>();
+      auto val = in_.ReadValue<int64_t>();
       bind_parameters.emplace_back(type::TypeId::BIGINT, std::to_string(val));
       param_values.push_back(
           type::ValueFactory::GetBigIntValue(val).Copy());
@@ -131,14 +128,14 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
     }
     case PostgresValueType::DOUBLE: {
       PELOTON_ASSERT(len == sizeof(double));
-      auto val = in_->ReadValue<double>();
+      auto val = in_.ReadValue<double>();
       bind_parameters.emplace_back(type::TypeId::DECIMAL, std::to_string(val));
       param_values.push_back(
           type::ValueFactory::GetDecimalValue(val).Copy());
       break;
     }
     case PostgresValueType::VARBINARY: {
-      auto val = in_->ReadString((size_t) len);
+      auto val = in_.ReadString((size_t) len);
       bind_parameters.emplace_back(type::TypeId::VARBINARY, val);
       param_values.push_back(
           type::ValueFactory::GetVarbinaryValue(
@@ -155,7 +152,7 @@ void PostgresNetworkCommand::ProcessBinaryParamValue(std::vector<BindParameter> 
 }
 
 std::vector<PostgresDataFormat> PostgresNetworkCommand::ReadResultFormats(size_t tuple_size) {
-  auto num_format_codes = in_->ReadValue<int16_t>();
+  auto num_format_codes = in_.ReadValue<int16_t>();
   switch (num_format_codes) {
     case 0:
       // Default text mode
@@ -163,55 +160,12 @@ std::vector<PostgresDataFormat> PostgresNetworkCommand::ReadResultFormats(size_t
                                              PostgresDataFormat::TEXT);
     case 1:
       return std::vector<PostgresDataFormat>(tuple_size,
-                                             in_->ReadValue<PostgresDataFormat>());
+                                             in_.ReadValue<PostgresDataFormat>());
     default:std::vector<PostgresDataFormat> result;
       for (auto i = 0; i < num_format_codes; i++)
-        result.push_back(in_->ReadValue<PostgresDataFormat>());
+        result.push_back(in_.ReadValue<PostgresDataFormat>());
       return result;
   }
-}
-
-Transition StartupCommand::Exec(PostgresProtocolInterpreter &interpreter,
-                                PostgresPacketWriter &out,
-                                CallbackFunc) {
-  tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  auto proto_version = in_->ReadValue<uint32_t>();
-  LOG_INFO("protocol version: %d", proto_version);
-  // SSL initialization
-  if (proto_version == SSL_MESSAGE_VERNO) {
-    // TODO(Tianyu): Should this be moved from PelotonServer into settings?
-    if (PelotonServer::GetSSLLevel() == SSLLevel::SSL_DISABLE) {
-      out.WriteSingleTypePacket(NetworkMessageType::SSL_NO);
-      return Transition::PROCEED;
-    }
-    out.WriteSingleTypePacket(NetworkMessageType::SSL_YES);
-    return Transition::NEED_SSL_HANDSHAKE;
-  }
-
-  // Process startup packet
-  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
-    LOG_ERROR("Protocol error: only protocol version 3 is supported");
-    out.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
-                             "Protocol Version Not Supported"}});
-    return Transition::TERMINATE;
-  }
-
-  // The last bit of the packet will be nul. This is not a valid field. When there
-  // is less than 2 bytes of data remaining we can already exit early.
-  while (in_->HasMore(2)) {
-    // TODO(Tianyu): We don't seem to really handle the other flags?
-    std::string key = in_->ReadString(), value = in_->ReadString();
-    LOG_TRACE("Option key %s, value %s", key.c_str(), value.c_str());
-    if (key == std::string("database"))
-      state.db_name_ = value;
-    interpreter.AddCmdlineOption(key, std::move(value));
-  }
-  // skip the last nul byte
-  in_->Skip(1);
-  // TODO(Tianyu): Implement authentication. For now we always send AuthOK
-  out.WriteStartupResponse();
-  interpreter.FinishStartup();
-  return Transition::PROCEED;
 }
 
 Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
@@ -219,7 +173,7 @@ Transition SimpleQueryCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                     CallbackFunc callback) {
   interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_PSQL;
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  std::string query = in_->ReadString();
+  std::string query = in_.ReadString();
   LOG_TRACE("Execute query: %s", query.c_str());
   std::unique_ptr<parser::SQLStatementList> sql_stmt_list;
   try {
@@ -350,8 +304,7 @@ Transition ParseCommand::Exec(PostgresProtocolInterpreter &interpreter,
                               PostgresPacketWriter &out,
                               CallbackFunc) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  std::string statement_name = in_->ReadString(), query = in_->ReadString();
-
+  std::string statement_name = in_.ReadString(), query = in_.ReadString();
   // In JDBC, one query starts with parsing stage.
   // Reset skipped_stmt_ to false for the new query.
   state.skipped_stmt_ = false;
@@ -415,14 +368,14 @@ Transition BindCommand::Exec(PostgresProtocolInterpreter &interpreter,
                              PostgresPacketWriter &out,
                              CallbackFunc) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  std::string portal_name = in_->ReadString(),
-      statement_name = in_->ReadString();
+  std::string portal_name = in_.ReadString(),
+      statement_name = in_.ReadString();
   if (state.skipped_stmt_) {
     out.WriteSingleTypePacket(NetworkMessageType::BIND_COMPLETE);
     return Transition::PROCEED;
   }
-
   std::vector<PostgresDataFormat> formats = ReadParamFormats();
+
 
   // Get statement info generated in PARSE message
   std::shared_ptr<Statement>
@@ -473,8 +426,6 @@ Transition BindCommand::Exec(PostgresProtocolInterpreter &interpreter,
   // Instead of tree traversal, we should put param values in the
   // executor context.
 
-
-
   interpreter.portals_[portal_name] =
       std::make_shared<Portal>(portal_name, statement, std::move(param_values));
   out.WriteSingleTypePacket(NetworkMessageType::BIND_COMPLETE);
@@ -491,8 +442,8 @@ Transition DescribeCommand::Exec(PostgresProtocolInterpreter &interpreter,
     return Transition::PROCEED;
   }
 
-  auto mode = in_->ReadValue<PostgresNetworkObjectType>();
-  std::string portal_name = in_->ReadString();
+  auto mode = in_.ReadValue<PostgresNetworkObjectType>();
+  std::string portal_name = in_.ReadString();
   switch (mode) {
     case PostgresNetworkObjectType::PORTAL: {
       LOG_TRACE("Describe a portal");
@@ -524,7 +475,10 @@ Transition ExecuteCommand::Exec(PostgresProtocolInterpreter &interpreter,
                                 CallbackFunc callback) {
   interpreter.protocol_type_ = NetworkProtocolType::POSTGRES_JDBC;
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  std::string portal_name = in_->ReadString();
+  std::string portal_name = in_.ReadString();
+  // We never seem to use this row limit field in the message?
+  auto row_limit = in_.ReadValue<int32_t>();
+  (void) row_limit;
 
   // covers weird JDBC edge case of sending double BEGIN statements. Don't
   // execute them
@@ -569,8 +523,8 @@ Transition CloseCommand::Exec(PostgresProtocolInterpreter &interpreter,
                               PostgresPacketWriter &out,
                               CallbackFunc) {
   tcop::ClientProcessState &state = interpreter.ClientProcessState();
-  auto close_type = in_->ReadValue<PostgresNetworkObjectType>();
-  std::string name = in_->ReadString();
+  auto close_type = in_.ReadValue<PostgresNetworkObjectType>();
+  std::string name = in_.ReadString();
   switch (close_type) {
     case PostgresNetworkObjectType::STATEMENT: {
       LOG_TRACE("Deleting statement %s from cache", name.c_str());

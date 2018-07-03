@@ -12,10 +12,13 @@
 
 #include "planner/plan_util.h"
 #include "network/postgres_protocol_interpreter.h"
+#include "network/peloton_server.h"
 
 #define MAKE_COMMAND(type)                                 \
   std::static_pointer_cast<PostgresNetworkCommand, type>(  \
-      std::make_shared<type>(std::move(curr_input_packet_.buf_)))
+      std::make_shared<type>(curr_input_packet_))
+#define SSL_MESSAGE_VERNO 80877103
+#define PROTO_MAJOR_VERSION(x) ((x) >> 16)
 
 namespace peloton {
 namespace network {
@@ -23,11 +26,59 @@ Transition PostgresProtocolInterpreter::Process(std::shared_ptr<ReadBuffer> in,
                                                 std::shared_ptr<WriteQueue> out,
                                                 CallbackFunc callback) {
   if (!TryBuildPacket(in)) return Transition::NEED_READ;
+  if (startup_) {
+    // Always flush startup packet response
+    out->ForceFlush();
+    curr_input_packet_.Clear();
+    return ProcessStartup(in, out);
+  }
   std::shared_ptr<PostgresNetworkCommand> command = PacketToCommand();
   curr_input_packet_.Clear();
   PostgresPacketWriter writer(*out);
   if (command->FlushOnComplete()) out->ForceFlush();
   return command->Exec(*this, writer, callback);
+}
+
+Transition PostgresProtocolInterpreter::ProcessStartup(std::shared_ptr<ReadBuffer> in,
+                                                       std::shared_ptr<WriteQueue> out) {
+  PostgresPacketWriter writer(*out);
+  auto proto_version = in->ReadValue<uint32_t>();
+  LOG_INFO("protocol version: %d", proto_version);
+  // SSL initialization
+  if (proto_version == SSL_MESSAGE_VERNO) {
+    // TODO(Tianyu): Should this be moved from PelotonServer into settings?
+    if (PelotonServer::GetSSLLevel() == SSLLevel::SSL_DISABLE) {
+      writer.WriteSingleTypePacket(NetworkMessageType::SSL_NO);
+      return Transition::PROCEED;
+    }
+    writer.WriteSingleTypePacket(NetworkMessageType::SSL_YES);
+    return Transition::NEED_SSL_HANDSHAKE;
+  }
+
+  // Process startup packet
+  if (PROTO_MAJOR_VERSION(proto_version) != 3) {
+    LOG_ERROR("Protocol error: only protocol version 3 is supported");
+    writer.WriteErrorResponse({{NetworkMessageType::HUMAN_READABLE_ERROR,
+                             "Protocol Version Not Supported"}});
+    return Transition::TERMINATE;
+  }
+
+  // The last bit of the packet will be nul. This is not a valid field. When there
+  // is less than 2 bytes of data remaining we can already exit early.
+  while (in->HasMore(2)) {
+    // TODO(Tianyu): We don't seem to really handle the other flags?
+    std::string key = in->ReadString(), value = in->ReadString();
+    LOG_TRACE("Option key %s, value %s", key.c_str(), value.c_str());
+    if (key == std::string("database"))
+      state_.db_name_ = value;
+    cmdline_options_[key] = std::move(value);
+  }
+  // skip the last nul byte
+  in->Skip(1);
+  // TODO(Tianyu): Implement authentication. For now we always send AuthOK
+  writer.WriteStartupResponse();
+  startup_ = false;
+  return Transition::PROCEED;
 }
 
 bool PostgresProtocolInterpreter::TryBuildPacket(std::shared_ptr<ReadBuffer> &in) {
@@ -57,7 +108,7 @@ bool PostgresProtocolInterpreter::TryReadPacketHeader(std::shared_ptr<ReadBuffer
 
   // The header is ready to be read, fill in fields accordingly
   if (!startup_)
-    curr_input_packet_.msg_type_ = in->ReadRawValue<NetworkMessageType>();
+    curr_input_packet_.msg_type_ = in->ReadValue<NetworkMessageType>();
   curr_input_packet_.len_ = in->ReadValue<uint32_t>() - sizeof(uint32_t);
 
   // Extend the buffer as needed
@@ -77,7 +128,6 @@ bool PostgresProtocolInterpreter::TryReadPacketHeader(std::shared_ptr<ReadBuffer
 }
 
 std::shared_ptr<PostgresNetworkCommand> PostgresProtocolInterpreter::PacketToCommand() {
-  if (startup_) return MAKE_COMMAND(StartupCommand);
   switch (curr_input_packet_.msg_type_) {
     case NetworkMessageType::SIMPLE_QUERY_COMMAND:
       return MAKE_COMMAND(SimpleQueryCommand);
