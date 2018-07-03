@@ -202,7 +202,8 @@ void PostgresProtocolInterpreter::ExecExecuteMessageGetResult(PostgresPacketWrit
       auto tuple_descriptor =
           state_.statement_->GetTupleDescriptor();
       out.WriteDataRows(state_.result_, tuple_descriptor.size());
-      state_.rows_affected_ = state_.result_.size() / tuple_descriptor.size();
+      state_.rows_affected_ = tuple_descriptor.size() == 0 ?
+          0 : (state_.result_.size() / tuple_descriptor.size());
       CompleteCommand(out, query_type, state_.rows_affected_);
       return;
     }
