@@ -33,11 +33,16 @@ class AbstractExpression;
 namespace planner {
 
 /**
- * The meta-data for a foreign key reference.
+ * The meta-data for a constraint reference.
  * This is meant to be a bridge from the parser to the
  * catalog. It only has table names and not OIDs, whereas
  * the catalog only wants OIDs.
  */
+struct PrimaryKeyInfo {
+  std::vector<std::string> primary_key_cols;
+  std::string constraint_name;
+};
+
 struct ForeignKeyInfo {
   std::vector<std::string> foreign_key_sources;
   std::vector<std::string> foreign_key_sinks;
@@ -45,6 +50,17 @@ struct ForeignKeyInfo {
   std::string constraint_name;
   FKConstrActionType upd_action;
   FKConstrActionType del_action;
+};
+
+struct UniqueInfo {
+  std::vector<std::string> unique_cols;
+  std::string constraint_name;
+};
+
+struct CheckInfo {
+  std::vector<std::string> check_cols;
+  std::string constraint_name;
+  std::pair<ExpressionType, type::Value> exp;
 };
 
 class CreatePlan : public AbstractPlan {
@@ -90,9 +106,18 @@ class CreatePlan : public AbstractPlan {
 
   std::vector<std::string> GetIndexAttributes() const { return index_attrs; }
 
+  inline bool HasPrimaryKey() const { return has_primary_key; }
+
+  inline PrimaryKeyInfo GetPrimaryKey() const { return primary_key; }
+
   inline std::vector<ForeignKeyInfo> GetForeignKeys() const {
     return foreign_keys;
   }
+
+  inline std::vector<UniqueInfo> GetUniques() const { return con_uniques; }
+
+  inline std::vector<CheckInfo> GetChecks() const { return con_checks; }
+
   std::vector<oid_t> GetKeyAttrs() const { return key_attrs; }
 
   void SetKeyAttrs(std::vector<oid_t> p_key_attrs) { key_attrs = p_key_attrs; }
@@ -115,10 +140,15 @@ class CreatePlan : public AbstractPlan {
   int16_t GetTriggerType() const { return trigger_type; }
 
  protected:
-  // This is a helper method for extracting foreign key information
-  // and storing it in an internal struct.
+  // These following protected function are a helper method for extracting
+  // Multi-column constraint information and storing it in an internal struct.
   void ProcessForeignKeyConstraint(const std::string &table_name,
                                    const parser::ColumnDefinition *col);
+
+  void ProcessUniqueConstraint(const parser::ColumnDefinition *col);
+
+  void ProcessCheckConstraint(const parser::ColumnDefinition *col);
+
 
  private:
   // Table Name
@@ -150,7 +180,11 @@ class CreatePlan : public AbstractPlan {
   bool unique;
 
   // ColumnDefinition for multi-column constraints (including foreign key)
+  bool has_primary_key = false;
+  PrimaryKeyInfo primary_key;
   std::vector<ForeignKeyInfo> foreign_keys;
+  std::vector<UniqueInfo> con_uniques;
+  std::vector<CheckInfo> con_checks;
   std::string trigger_name;
   std::vector<std::string> trigger_funcname;
   std::vector<std::string> trigger_args;
