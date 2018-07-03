@@ -53,6 +53,9 @@ vector_t EigenUtil::ToVectorT(const vector_eig &mat) {
 
 matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   PELOTON_ASSERT(!mat_vec.empty());
+  if(mat_vec.size() == 1) {
+    return mat_vec[0];
+  }
   long num_cols = mat_vec[0].cols();
   size_t num_rows = 0;
   for (size_t mat_idx = 0; mat_idx < mat_vec.size(); ++mat_idx) {
@@ -103,7 +106,7 @@ vector_t EigenUtil::Flatten(const matrix_t &mat) {
 matrix_eig EigenUtil::GaussianNoise(size_t rows, size_t cols, float mean, float stdev) {
   std::default_random_engine generator;
   std::normal_distribution<> distribution{mean, stdev};
-  auto gaussian_sampler = [&] () {return distribution(generator);};
+  auto gaussian_sampler = [&] {return distribution(generator);};
   return matrix_eig::NullaryExpr(rows, cols, gaussian_sampler);
 }
 
@@ -121,6 +124,12 @@ float EigenUtil::StandardDeviation(const matrix_eig &mat) {
   matrix_eig sqdiff_mat = (mat.array() - mat.mean()).array().square();
   float var = sqdiff_mat.mean();
   return std::sqrt(var);
+}
+
+matrix_eig EigenUtil::PadTop(const matrix_eig &mat, float pad_value, int num_rows) {
+  int num_cols = mat.cols();
+  matrix_eig pad_mat = matrix_eig::Ones(num_rows, num_cols) * pad_value;
+  return EigenUtil::VStack({pad_mat, mat});
 }
 
 }  // namespace brain

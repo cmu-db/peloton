@@ -35,14 +35,18 @@ std::string TimeSeriesKernelReg::ToString() const {
 void TimeSeriesKernelReg::Fit(const matrix_eig &X,
                               const matrix_eig &y,
                               UNUSED_ATTRIBUTE int bsz) {
-  kernel_x_ = X;
+  matrix_eig X_proc;
+  ModelUtil::GenerateFeatureMatrix(*this, X, X_proc);
+  kernel_x_ = X_proc;
   kernel_y_ = y;
 }
 
 matrix_eig TimeSeriesKernelReg::Predict(const matrix_eig &X,
                                         UNUSED_ATTRIBUTE int bsz) const {
+  matrix_eig X_proc;
+  ModelUtil::GenerateFeatureMatrix(*this, X, X_proc);
   matrix_eig kernel =
-      (-EigenUtil::PairwiseEuclideanDist(X, kernel_x_)).array().exp();
+      (-EigenUtil::PairwiseEuclideanDist(X_proc, kernel_x_)).array().exp();
   // Eigen doesnt auto-broadcast on division
   matrix_eig norm = kernel.rowwise().sum().replicate(1, kernel_y_.cols());
   matrix_eig y_hat = (kernel * kernel_y_).array() / (norm.array());
@@ -51,7 +55,7 @@ matrix_eig TimeSeriesKernelReg::Predict(const matrix_eig &X,
 
 float TimeSeriesKernelReg::TrainEpoch(const matrix_eig &data) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(*this, data, X, y);
+  ModelUtil::FeatureLabelSplit(*this, data, X, y);
   Fit(X, y);
   matrix_eig y_hat = Predict(X);
   return ModelUtil::MeanSqError(y, y_hat);
@@ -59,7 +63,7 @@ float TimeSeriesKernelReg::TrainEpoch(const matrix_eig &data) {
 
 float TimeSeriesKernelReg::ValidateEpoch(const matrix_eig &data) {
   matrix_eig X, y;
-  ModelUtil::GenerateFeatureMatrix(*this, data, X, y);
+  ModelUtil::FeatureLabelSplit(*this, data, X, y);
   matrix_eig y_hat = Predict(X);
   return ModelUtil::MeanSqError(y, y_hat);
 }

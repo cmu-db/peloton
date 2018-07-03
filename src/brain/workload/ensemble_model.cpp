@@ -1,57 +1,49 @@
 #include "brain/workload/ensemble_model.h"
-#include "brain/util/model_util.h
+#include "brain/util/model_util.h"
 #include <numeric>
 
 namespace peloton{
 namespace brain{
-TimeSeriesEnsemble::TimeSeriesEnsemble(std::vector<std::unique_ptr<BaseForecastModel>> &models,
-                                       std::vector<int> &num_epochs,
-                                       std::vector<float> &model_weights,
+TimeSeriesEnsemble::TimeSeriesEnsemble(std::vector<std::shared_ptr<BaseForecastModel>> models,
+                                       const vector_t &model_weights,
                                        int batch_size)
     :models_(models),
-     num_epochs_(num_epochs),
      batch_size_(batch_size),
      model_weights_(model_weights) {}
 
-float TimeSeriesEnsemble::Train(const matrix_eig &data) {
-  vector_t losses;
-  for(int i = 0; i < models_.size(); i++) {
-    auto &model = models_[i];
-    int epochs = num_epochs_[i];
-    float loss = 0.0;
-    for(int epoch = 1; epoch <= epochs; epoch++) {
-      loss = model->TrainEpoch(data);
+float TimeSeriesEnsemble::Validate(const matrix_eig &data) {
+  std::vector<matrix_eig> preds;
+  matrix_eig X, y_true;
+  ModelUtil::FeatureLabelSplit(GetModel(0), data, X, y_true);
+  matrix_eig y_ensemble_hat = matrix_eig::Zero(y_true.rows(), y_true.cols());
+  for(size_t i = 0; i < ModelsSize(); i++) {
+    auto& model = GetModel(i);
+    matrix_eig y_hat;
+    if(model.IsTFModel()) {
+      std::vector<std::vector<matrix_eig>> data_batches;
+      ModelUtil::GetBatches(model, X, batch_size_, data_batches);
+      std::vector<matrix_eig> y_hat_batch;
+      for(std::vector<matrix_eig>& batch: data_batches) {
+        auto y_hat_i = model.Predict(EigenUtil::VStack(batch), batch.size());
+        y_hat_batch.push_back(y_hat_i);
+      }
+      y_hat = EigenUtil::VStack(y_hat_batch);
+    } else {
+      y_hat = model.Predict(X, 1);
     }
-    losses.push_back(loss);
+    // Lstm models will have (bptt - 1) samples extra
+    y_ensemble_hat += y_hat.bottomRows(y_true.rows())*model_weights_[i];
   }
-  return static_cast<float>(std::accumulate(losses.begin(), losses.end(), 0.0)/losses.size());
+  y_ensemble_hat.array() /= std::accumulate(model_weights_.begin(), model_weights_.end(), 0.0f);
+  return ModelUtil::MeanSqError(y_true, y_ensemble_hat);
 }
 
-float TimeSeriesEnsemble::Validate(const matrix_eig &data) {
-  std::vector<float> losses;
-  std::vector<std::vector<matrix_eig>> data_batches, target_batches;
-  // TODO(saatviks): Hacky!!
-  ModelUtil::GetBatches(*models_[0], data, batch_size_, data_batches, target_batches);
+BaseForecastModel& TimeSeriesEnsemble::GetModel(size_t idx) {
+  return *models_[idx];
+}
 
-  PELOTON_ASSERT(data_batches.size() == target_batches.size());
-
-  // Run through each batch and compute loss/apply backprop
-  std::vector<matrix_eig> y_hat_batch, y_batch;
-  for(size_t i = 0; i < data_batches.size(); i++) {
-    int bsz = data_batches[i].size();
-    matrix_eig data_batch_eig = EigenUtil::VStack(data_batches[i]);
-    matrix_eig target_batch_eig = EigenUtil::VStack(target_batches[i]);
-    matrix_eig y_hat_ensemble_i = matrix_eig::Zero(data_batch_eig.rows(), data_batch_eig.cols());
-    for(int model_idx = 0; model_idx < models_.size(); model_idx++) {
-      y_hat_ensemble_i += models_[model_idx]->Predict(data_batch_eig, bsz)*model_weights_[i];
-    }
-
-    y_hat_batch.push_back(y_hat_ensemble_i);
-    y_batch.push_back(target_batch_eig);
-  }
-  matrix_eig y = EigenUtil::VStack(y_batch);
-  matrix_eig y_hat = EigenUtil::VStack(y_hat_batch);
-  return ModelUtil::MeanSqError(y, y_hat);
+size_t TimeSeriesEnsemble::ModelsSize() const {
+  return models_.size();
 }
 
 }

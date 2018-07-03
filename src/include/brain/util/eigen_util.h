@@ -47,6 +47,7 @@ class EigenUtil {
   // TODO(saatviks): Add axis version and simple version
   static vector_eig StandardDeviation(const matrix_eig &mat, uint8_t axis);
   static float StandardDeviation(const matrix_eig &mat);
+  static matrix_eig PadTop(const matrix_eig& mat, float pad_value, int num_rows);
 };
 }
 }

@@ -24,13 +24,14 @@ const int LSTMWorkloadDefaults::NFEATS = 3;
 const int LSTMWorkloadDefaults::NENCODED = 20;
 const int LSTMWorkloadDefaults::NHID = 20;
 const int LSTMWorkloadDefaults::NLAYERS = 2;
-const float LSTMWorkloadDefaults::LR = 0.001f;
+const float LSTMWorkloadDefaults::LR = 0.01f;
 const float LSTMWorkloadDefaults::DROPOUT_RATE = 0.5f;
 const float LSTMWorkloadDefaults::CLIP_NORM = 0.5f;
 const int LSTMWorkloadDefaults::BATCH_SIZE = 12;
 const int LSTMWorkloadDefaults::BPTT = 90;
+const int LSTMWorkloadDefaults::EPOCHS = 100;
 
-const int LinearRegWorkloadDefaults::BPTT = 72;
+const int LinearRegWorkloadDefaults::BPTT = 90;
 
 const int KernelRegWorkloadDefaults::BPTT = 90;
 

@@ -23,10 +23,10 @@ namespace brain {
 TimeSeriesLSTM::TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                                float learn_rate, float dropout_ratio,
                                float clip_norm, int batch_size, int bptt,
-                               int horizon, int interval)
+                               int horizon, int interval, int epochs)
     : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/LSTM.py",
                   "src/brain/modelgen/LSTM.pb"),
-      BaseForecastModel(bptt, horizon, interval),
+      BaseForecastModel(bptt, horizon, interval, epochs),
       nfeats_(nfeats),
       nencoded_(nencoded),
       nhid_(nhid),

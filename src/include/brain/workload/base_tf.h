@@ -48,28 +48,32 @@ class BaseModel {
                    const matrix_eig &y,
                    int bsz) = 0;
   virtual matrix_eig Predict(const matrix_eig &X, int bsz) const = 0;
+  virtual bool IsTFModel() const { return false; }
 };
 
 /**
  * Base Abstract class to inherit for writing forecasting ML models
  */
-class BaseForecastModel : public BaseModel {
+class BaseForecastModel : public virtual BaseModel {
  public:
-  BaseForecastModel(int bptt, int horizon, int interval)
+  BaseForecastModel(int bptt, int horizon, int interval, int epochs = 1)
       : BaseModel(), bptt_(bptt),
-        horizon_(horizon), interval_(interval) {};
+        horizon_(horizon), interval_(interval),
+        epochs_(epochs) {};
   virtual float TrainEpoch(const matrix_eig &data) = 0;
   virtual float ValidateEpoch(const matrix_eig &data) = 0;
   int GetHorizon() const { return horizon_; }
   int GetBPTT() const { return bptt_; }
   int GetInterval() const { return interval_; }
   int GetPaddlingDays() const { return paddling_days_; }
+  int GetEpochs() const { return epochs_; }
 
  protected:
   int bptt_;
   int horizon_;
   int interval_;
   int paddling_days_;
+  int epochs_;
 };
 
 template <typename InputType, typename OutputType>
@@ -87,7 +91,7 @@ class TfSessionEntity;
  * accept a string
  * path to the serialized graph and import the same.
  */
-class BaseTFModel : public BaseModel {
+class BaseTFModel : public virtual BaseModel {
  public:
   // Constructor - sets up session object
   BaseTFModel(const std::string &modelgen_path, const std::string &pymodel_path,
@@ -102,6 +106,8 @@ class BaseTFModel : public BaseModel {
    * a need for re-training the model.
    */
   void TFInit();
+
+  bool IsTFModel() const override { return true; }
 
  protected:
   std::unique_ptr<TfSessionEntity<float, float>> tf_session_entity_;

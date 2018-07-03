@@ -8,7 +8,6 @@ namespace test{
 
 void TestingForecastUtil::WorkloadTest(brain::BaseForecastModel& model,
                                        WorkloadType w,
-                                       size_t max_epochs,
                                        size_t val_interval,
                                        size_t num_samples,
                                        size_t num_feats,
@@ -21,6 +20,9 @@ void TestingForecastUtil::WorkloadTest(brain::BaseForecastModel& model,
 
   matrix_eig data = GetWorkload(w, num_samples, num_feats);
   brain::Normalizer n(normalize);
+  val_interval = std::min<size_t>(val_interval, model.GetEpochs());
+
+
   // Determine the split point
   size_t split_point = data.rows() - static_cast<size_t>(data.rows()*val_split);
 
@@ -34,8 +36,8 @@ void TestingForecastUtil::WorkloadTest(brain::BaseForecastModel& model,
   float prev_train_loss = std::numeric_limits<float>::max();
   float val_loss = val_loss_thresh*2;
   std::vector<float> val_losses;
-  for (size_t epoch = 1;
-       epoch <= max_epochs && !brain::ModelUtil::EarlyStop(val_losses,
+  for (int epoch = 1;
+       epoch <= model.GetEpochs() && !brain::ModelUtil::EarlyStop(val_losses,
                                                            early_stop_patience,
                                                            early_stop_delta);
        epoch++) {
@@ -54,6 +56,25 @@ void TestingForecastUtil::WorkloadTest(brain::BaseForecastModel& model,
     }
   }
   EXPECT_LE(val_loss, val_loss_thresh);
+}
+
+void TestingForecastUtil::WorkloadTest(brain::TimeSeriesEnsemble &model,
+                                       WorkloadType w,
+                                       size_t val_interval,
+                                       size_t num_samples,
+                                       size_t num_feats,
+                                       float val_split,
+                                       bool normalize,
+                                       float val_loss_thresh,
+                                       size_t early_stop_patience,
+                                       float early_stop_delta) {
+  for(size_t i = 0; i < model.ModelsSize(); i++) {
+    WorkloadTest(model.GetModel(i), w, val_interval, num_samples, num_feats, val_split,
+                 normalize, val_loss_thresh, early_stop_patience, early_stop_delta);
+  }
+  matrix_eig valid_data = GetWorkload(w, num_samples, num_feats);
+  float ensemble_loss = model.Validate(valid_data);
+  LOG_DEBUG("Ensemble Loss: %.10f", ensemble_loss);
 }
 
 matrix_eig TestingForecastUtil::GetWorkload(WorkloadType w, size_t num_samples, size_t num_feats) {

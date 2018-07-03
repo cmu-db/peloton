@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace brain {
-class TimeSeriesLinearReg : public BaseForecastModel {
+class TimeSeriesLinearReg : public virtual BaseForecastModel {
  public:
   TimeSeriesLinearReg(int bptt, int horizon,
                       int interval);

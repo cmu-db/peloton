@@ -16,7 +16,7 @@
 
 namespace peloton {
 namespace brain {
-class TimeSeriesKernelReg : public BaseForecastModel {
+class TimeSeriesKernelReg : public virtual BaseForecastModel {
  public:
   TimeSeriesKernelReg(int bptt, int horizon, int interval);
   void Fit(const matrix_eig &X, const matrix_eig &y,

@@ -6,18 +6,17 @@ namespace peloton{
 namespace brain{
 class TimeSeriesEnsemble {
  public:
-  TimeSeriesEnsemble(std::vector<std::unique_ptr<BaseForecastModel>>& models,
-                     std::vector<int> &num_epochs,
-                     std::vector<float> &model_weights,
-                     int batch_size);
-  float Train(const matrix_eig &data);
+  TimeSeriesEnsemble(std::vector<std::shared_ptr<BaseForecastModel>> models,
+                     const std::vector<float> &model_weights, int batch_size);
   float Validate(const matrix_eig &data);
+  BaseForecastModel& GetModel(size_t idx);
+  size_t ModelsSize() const;
+
  private:
-  std::vector<std::unique_ptr<BaseForecastModel>> models_;
-  std::vector<int> num_epochs_;
-  std::vector<float> model_weights_;
-  // Pass TFModel's bsz here
+  std::vector<std::shared_ptr<BaseForecastModel>> models_;
   int batch_size_;
+  const vector_t model_weights_;
+  // TODO(saatviks): Pass TFModel's bsz here(Find better way of handling this)
 };
 }
 }

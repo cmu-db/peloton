@@ -56,7 +56,8 @@ class ModelUtil {
   static void GetBatch(const BaseForecastModel& model, const matrix_eig &mat,
                        size_t batch_offset, size_t bsz,
                        std::vector<matrix_eig> &data,
-                       std::vector<matrix_eig> &target);
+                       std::vector<matrix_eig> &target,
+                       bool time_major = false);
 
   /**
    * Converts a dataset/workload(upto RAM sized) passed to it into (X, y) batches
@@ -68,17 +69,31 @@ class ModelUtil {
   static void GetBatches(const BaseForecastModel& model, const matrix_eig &mat,
                          size_t batch_size, 
                          std::vector<std::vector<matrix_eig>> &data,
-                         std::vector<std::vector<matrix_eig>> &target);
+                         std::vector<std::vector<matrix_eig>> &target,
+                         bool time_major = false);
+
+  // Convert a dataset into batches
+  static void GetBatches(const BaseForecastModel& model,
+                         const matrix_eig &mat,
+                         size_t batch_size,
+                         std::vector<std::vector<matrix_eig>> &data_batches);
 
   /**
-   * Given data of the form (timesteps, feat_len), this function generates
-   * a feature matrix appropriate for learning a forecast model.
-   * Useful for Linear and Kernel Regression Models
+   * Split the data into X, y which can be featurized
    */
+  static void FeatureLabelSplit(const BaseForecastModel& model,
+                                const matrix_eig &data,
+                                matrix_eig &X,
+                                matrix_eig &y);
+
+  /**
+ * Given data of the form (timesteps, feat_len), this function generates
+ * a feature matrix appropriate for learning a forecast model.
+ * Useful for Linear and Kernel Regression Models
+ */
   static void GenerateFeatureMatrix(const BaseForecastModel& model,
                                     const matrix_eig &data,
-                                    matrix_eig &processed_features,
-                                    matrix_eig &processed_forecasts);
+                                    matrix_eig &processed_features);
 };
 }  // namespace brain
 }  // namespace peloton

@@ -151,5 +151,18 @@ TEST_F(EigenUtilTests, StandardDeviationTest2) {
   EXPECT_TRUE(expected_stdev.isApprox(stdev));
 }
 
+TEST_F(EigenUtilTests, PadTopTest) {
+  matrix_eig m = brain::EigenUtil::ToEigenMat({
+                                                  {0, 1, 0},
+                                                  {1, 1, 1},
+                                              });
+  matrix_eig m_padded = brain::EigenUtil::ToEigenMat({
+                                                         {0, 0, 0},
+                                                         {0, 1, 0},
+                                                         {1, 1, 1},
+                                                     });
+  EXPECT_EQ(m_padded, brain::EigenUtil::PadTop(m, 0, 1));
+}
+
 }  // namespace test
 }  // namespace peloton

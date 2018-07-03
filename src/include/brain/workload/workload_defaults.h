@@ -45,6 +45,7 @@ struct LSTMWorkloadDefaults {
   static const float CLIP_NORM;
   static const int BATCH_SIZE;
   static const int BPTT;
+  static const int EPOCHS;
 };
 
 /**

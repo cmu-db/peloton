@@ -29,7 +29,8 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
  public:
   TimeSeriesLSTM(int nfeats, int nencoded, int nhid, int nlayers,
                  float learn_rate, float dropout_ratio, float clip_norm,
-                 int batch_size, int bptt, int horizon, int interval);
+                 int batch_size, int bptt, int horizon, int interval,
+                 int epochs);
   /**
    * Train the Tensorflow model
    * @param data: Contiguous time-series data
