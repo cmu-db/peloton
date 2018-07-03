@@ -29,9 +29,13 @@ namespace concurrency {
 
 bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
     const storage::TileGroupHeader *const tile_group_header,
-    const oid_t &tuple_id, const cid_t &current_cid, const bool is_owner) {
+    const oid_t &tuple_id, const cid_t &current_cid, UNUSED_ATTRIBUTE const bool is_owner) {
   // get the pointer to the last_reader_cid field.
   cid_t read_ts = tile_group_header->GetLastReaderCommitId(tuple_id);
+
+  if (current_cid <= read_ts) {
+    return true;
+  }
 
   auto &latch = tile_group_header->GetSpinLatch(tuple_id);
 
@@ -39,7 +43,7 @@ bool TimestampOrderingTransactionManager::SetLastReaderCommitId(
 
   txn_id_t tuple_txn_id = tile_group_header->GetTransactionId(tuple_id);
 
-  if (is_owner == false && tuple_txn_id != INITIAL_TXN_ID) {
+  if (tuple_txn_id != INITIAL_TXN_ID && tuple_txn_id < current_cid) {
     // if the write lock has already been acquired by some concurrent
     // transactions,
     // then return without setting the last_reader_cid.
@@ -323,14 +327,10 @@ bool TimestampOrderingTransactionManager::PerformRead(TransactionContext *const 
         }
 
       } else {
-        // if the current transaction has already owned this tuple,
-        // then perform read directly.
-        PELOTON_ASSERT(tile_group_header->GetLastReaderCommitId(tuple_id) ==
-                           current_txn->GetCommitId() ||
-                       tile_group_header->GetLastReaderCommitId(tuple_id) == 0);
+        UNUSED_ATTRIBUTE bool ret = SetLastReaderCommitId(
+            tile_group_header, tuple_id, current_txn->GetCommitId(), true);
 
-        // this version must already be in the read/write set.
-        // so no need to update read set.
+        PELOTON_ASSERT(ret == true);
         return true;
       }
     }
