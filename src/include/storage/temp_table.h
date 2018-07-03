@@ -91,12 +91,6 @@ class TempTable : public AbstractTable {
 
   std::string GetName() const override;
 
-  inline bool HasPrimaryKey() const override { return (false); }
-
-  inline bool HasUniqueConstraints() const override { return (false); }
-
-  inline bool HasForeignKeys() const override { return (false); }
-
   //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
