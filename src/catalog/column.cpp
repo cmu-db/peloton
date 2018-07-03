@@ -45,7 +45,9 @@ void Column::SetInlined() {
 const std::string Column::GetInfo() const {
   std::ostringstream os;
 
-  os << "Column[" << column_name << ", " << TypeIdToString(column_type_) << ", "
+  os << "Column[" << column_name_ << ", "
+     << TypeIdToString(column_type_) << ", "
+
      << "Offset:" << column_offset_ << ", ";
 
   if (is_inlined_) {
@@ -54,19 +56,17 @@ const std::string Column::GetInfo() const {
     os << "VarLength:" << variable_length_;
   }
 
-  if (constraints_.empty() == false) {
-    os << ", {";
-    bool first = true;
-    for (auto constraint : constraints_) {
-      if (first) {
-        first = false;
-      } else {
-        os << ", ";
-      }
-      os << constraint.GetInfo();
-    }
-    os << "}";
+  if (is_not_null_ && has_default_) {
+    os << ", {NOT NULL, DEFAULT:"
+       << default_value_->ToString() << "}";
+  } else if (is_not_null_) {
+    os << ", {NOT NULL}";
+  } else if (has_default_) {
+    os << ", {DEFAULT:"
+       << default_value_->ToString() << "}";
+
   }
+
   os << "]";
 
   return (os.str());

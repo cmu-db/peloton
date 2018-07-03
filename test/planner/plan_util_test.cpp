@@ -68,7 +68,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
+  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.GetName());
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
 
@@ -83,7 +83,7 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
                        IndexType::BWTREE);
 
   // create index on 'id' and 'first_name'
-  col_id = source_table->GetSchema()->GetColumnID(fname_column.column_name);
+  col_id = source_table->GetSchema()->GetColumnID(fname_column.GetName());
   source_col_ids.push_back(col_id);
 
   catalog->CreateIndex(txn,
@@ -232,11 +232,11 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   oid_t table_id = source_table->GetOid();
   oid_t id_col_oid =
-      source_table->GetSchema()->GetColumnID(id_column.column_name);
+      source_table->GetSchema()->GetColumnID(id_column.GetName());
   oid_t fname_col_oid =
-      source_table->GetSchema()->GetColumnID(fname_column.column_name);
+      source_table->GetSchema()->GetColumnID(fname_column.GetName());
   oid_t lname_col_oid =
-      source_table->GetSchema()->GetColumnID(lname_column.column_name);
+      source_table->GetSchema()->GetColumnID(lname_column.GetName());
 
   // Insert a 'test_table_job' with 'age', 'job' and 'pid'
   txn = txn_manager.BeginTransaction();
@@ -266,11 +266,11 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
                                                     "test_table_job");
   oid_t table_job_id = source_table_job->GetOid();
   oid_t age_col_oid =
-      source_table_job->GetSchema()->GetColumnID(age_column.column_name);
+      source_table_job->GetSchema()->GetColumnID(age_column.GetName());
   oid_t job_col_oid =
-      source_table_job->GetSchema()->GetColumnID(job_column.column_name);
+      source_table_job->GetSchema()->GetColumnID(job_column.GetName());
   oid_t pid_col_oid =
-      source_table_job->GetSchema()->GetColumnID(pid_column.column_name);
+      source_table_job->GetSchema()->GetColumnID(pid_column.GetName());
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();

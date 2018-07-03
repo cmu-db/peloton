@@ -36,7 +36,7 @@ class Column : public Printable {
   Column(type::TypeId value_type, size_t column_length,
          std::string column_name, bool is_inlined = false,
          oid_t column_offset = INVALID_OID)
-      : column_name(column_name),
+      : column_name_(column_name),
         column_type_(value_type),
         fixed_length_(INVALID_OID),
         is_inlined_(is_inlined),
@@ -61,47 +61,52 @@ class Column : public Printable {
   // Set the appropriate column length
   void SetLength(size_t column_length);
 
-  oid_t GetOffset() const { return column_offset_; }
+  inline oid_t GetOffset() const { return column_offset_; }
 
-  std::string GetName() const { return column_name; }
+  inline std::string GetName() const { return column_name_; }
 
-  size_t GetLength() const {
+  inline size_t GetLength() const {
     if (is_inlined_)
       return fixed_length_;
     else
       return variable_length_;
   }
 
-  size_t GetFixedLength() const { return fixed_length_; }
+  inline size_t GetFixedLength() const { return fixed_length_; }
 
-  size_t GetVariableLength() const { return variable_length_; }
+  inline size_t GetVariableLength() const { return variable_length_; }
 
   inline type::TypeId GetType() const { return column_type_; }
 
   inline bool IsInlined() const { return is_inlined_; }
 
-  inline bool IsPrimary() const { return is_primary_; }
+  // Constraint check functions for NOT NULL and DEFAULT
+  inline bool IsNotNull() const { return is_not_null_; }
 
-  inline bool IsUnique() const { return is_unique_; }
+  inline bool HasDefault() const { return has_default_; }
 
-  // Add a constraint to the column
-  void AddConstraint(const catalog::Constraint &constraint) {
-    if (constraint.GetType() == ConstraintType::DEFAULT) {
-      // Add the default constraint to the front
-      constraints_.insert(constraints_.begin(), constraint);
-    } else {
-      constraints_.push_back(constraint);
-    }
+  // Manage NOT NULL constraint
+  inline void SetNotNull() { is_not_null_ = true; }
 
-    if (constraint.GetType() == ConstraintType::PRIMARY) {
-      is_primary_ = true;
+  inline void ClearNotNull() { is_not_null_ = false; }
+
+  // Manage DEFAULT constraint
+  inline void SetDefaultValue(const type::Value &value) {
+    if (default_value_.get() != nullptr) {
+      return;
     }
-    if (constraint.GetType() == ConstraintType::UNIQUE) {
-      is_unique_ = true;
-    }
+    default_value_.reset(new type::Value(value));
+    has_default_ = true;
   }
 
-  const std::vector<Constraint> &GetConstraints() const { return constraints_; }
+  inline std::shared_ptr<type::Value> GetDefaultValue() const {
+    return default_value_;
+  }
+
+  inline void ClearDefaultValue() {
+    default_value_.reset();
+    has_default_ = false;
+  }
 
   hash_t Hash() const {
     hash_t hash = HashUtil::Hash(&column_type_);
@@ -110,7 +115,8 @@ class Column : public Printable {
 
   // Compare two column objects
   bool operator==(const Column &other) const {
-    if (other.column_type_ != column_type_ || other.is_inlined_ != is_inlined_) {
+    if (other.column_type_ != column_type_ ||
+        other.is_inlined_ != is_inlined_) {
       return false;
     }
     return true;
@@ -121,14 +127,14 @@ class Column : public Printable {
   // Get a string representation for debugging
   const std::string GetInfo() const;
 
-  // name of the column
-  std::string column_name;
-
   //===--------------------------------------------------------------------===//
   // MEMBERS
   //===--------------------------------------------------------------------===//
 
  private:
+  // name of the column
+  std::string column_name_;
+
   // value type of column
   type::TypeId column_type_;  //  = type::TypeId::INVALID;
 
@@ -143,17 +149,17 @@ class Column : public Printable {
   // is the column inlined ?
   bool is_inlined_ = false;
 
-  // is the column contained the primary key?
-  bool is_primary_ = false;
+  // is the column allowed null
+  bool is_not_null_ = false;
 
-  // is the column unique
-  bool is_unique_ = false;
+  // does the column have the default value
+  bool has_default_ = false;
+
+  // default value
+  std::shared_ptr<type::Value> default_value_;
 
   // offset of column in tuple
   oid_t column_offset_ = INVALID_OID;
-
-  // Constraints
-  std::vector<Constraint> constraints_;
 };
 
 }  // namespace catalog
