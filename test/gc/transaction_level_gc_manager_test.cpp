@@ -279,7 +279,7 @@ TEST_F(TransactionLevelGCManagerTests, FailedInsertSecondaryKeyTest) {
 //// Commit
 //// Update tuple
 //// Commit
-//// Assert RQ size = 1
+//// Assert RQ size = 2
 //// Assert old version in 1 index (primary key)
 //// Assert new version in 2 indexes
 TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
@@ -319,7 +319,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
-  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
 
   EXPECT_EQ(0, CountOccurrencesInIndex(table.get(), 1, 5, 1));
 
@@ -339,7 +339,7 @@ TEST_F(TransactionLevelGCManagerTests, CommitUpdateSecondaryKeyTest) {
 // Commit
 // Update tuple
 // Abort
-// Assert RQ size = 1
+// Assert RQ size = 2
 // Assert old version is in 2 indexes
 // Assert new version is in 1 index (primary key)
 TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
@@ -379,7 +379,7 @@ TEST_F(TransactionLevelGCManagerTests, AbortUpdateSecondaryKeyTest) {
   epoch_manager.SetCurrentEpochId(++current_epoch);
   gc_manager.ClearGarbage(0);
 
-  EXPECT_EQ(1, GetNumRecycledTuples(table.get()));
+  EXPECT_EQ(2, GetNumRecycledTuples(table.get()));
 
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 0, 0, 1));
   EXPECT_EQ(1, CountOccurrencesInIndex(table.get(), 1, 0, 1));
