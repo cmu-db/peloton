@@ -892,26 +892,27 @@ enum class PostgresConstraintType {
 
 enum class ConstraintType {
   INVALID = INVALID_TYPE_ID,  // invalid
-  NOT_NULL = 1,               // notnull
-  NOTNULL = 2,                // notnull
-  DEFAULT = 3,                // default
-  CHECK = 4,                  // check
-  PRIMARY = 5,                // primary key
-  UNIQUE = 6,                 // unique
-  FOREIGN = 7,                // foreign key
-  EXCLUSION = 8               // foreign key
+  CHECK = 1,                  // check
+  PRIMARY = 2,                // primary key
+  UNIQUE = 3,                 // unique
+  FOREIGN = 4,                // foreign key
+  EXCLUSION = 5               // foreign key
 };
 std::string ConstraintTypeToString(ConstraintType type);
 ConstraintType StringToConstraintType(const std::string &str);
 std::ostream &operator<<(std::ostream &os, const ConstraintType &type);
 
 enum class FKConstrActionType {
-  NOACTION = 0,
-  RESTRICT = 1,
-  CASCADE = 2,
-  SETNULL = 3,
-  SETDEFAULT = 4
+  INVALID = INVALID_TYPE_ID,  // invalid
+  NOACTION = 1,
+  RESTRICT = 2,
+  CASCADE = 3,
+  SETNULL = 4,
+  SETDEFAULT = 5
 };
+std::string FKConstrActionTypeToString(FKConstrActionType type);
+FKConstrActionType StringToFKConstrActionType(const std::string &str);
+std::ostream &operator<<(std::ostream &os, const FKConstrActionType &type);
 
 enum class FKConstrMatchType { SIMPLE = 0, PARTIAL = 1, FULL = 2 };
 

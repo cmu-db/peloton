@@ -86,23 +86,15 @@ catalog::Column PelotonCodeGenTest::GetTestColumn(uint32_t col_id) const {
 }
 
 // Create the test schema for all the tables
-std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema(
-    bool add_primary) const {
+std::unique_ptr<catalog::Schema> PelotonCodeGenTest::CreateTestSchema() const {
   // Create the columns
   std::vector<catalog::Column> cols = {GetTestColumn(0), GetTestColumn(1),
                                        GetTestColumn(2), GetTestColumn(3)};
 
   // Add NOT NULL constraints on COL_A, COL_C, COL_D
-  cols[0].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
-  if (add_primary) {
-    cols[0].AddConstraint(
-        catalog::Constraint{ConstraintType::PRIMARY, "con_primary"});
-  }
-  cols[2].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
-  cols[3].AddConstraint(
-      catalog::Constraint{ConstraintType::NOTNULL, "not_null"});
+  cols[0].SetNotNull();
+  cols[2].SetNotNull();
+  cols[3].SetNotNull();
 
   // Return the schema
   return std::unique_ptr<catalog::Schema>{new catalog::Schema(cols)};
@@ -131,7 +123,7 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
                                   ->GetTableOid());
   }
   for (int i = 4; i < 5; i++) {
-    auto table_schema = CreateTestSchema(true);
+    auto table_schema = CreateTestSchema();
     catalog->CreateTable(txn,
                          test_db_name,
                          DEFAULT_SCHEMA_NAME,
@@ -140,12 +132,15 @@ void PelotonCodeGenTest::CreateTestTables(concurrency::TransactionContext *txn,
                          false,
                          tuples_per_tilegroup,
                          layout_type);
-    test_table_oids.push_back(catalog
-                                  ->GetTableCatalogEntry(txn,
-                                                         test_db_name,
-                                                         DEFAULT_SCHEMA_NAME,
-                                                         test_table_names[i])
-                                  ->GetTableOid());
+    auto table_object = catalog->GetTableCatalogEntry(txn, test_db_name,
+                                                      DEFAULT_SCHEMA_NAME,
+                                                      test_table_names[i]);
+    catalog->AddPrimaryKeyConstraint(txn,
+                                     table_object->GetDatabaseOid(),
+                                     table_object->GetTableOid(),
+                                     {0},
+                                     "con_primary");
+    test_table_oids.push_back(table_object->GetTableOid());
   }
 }
 

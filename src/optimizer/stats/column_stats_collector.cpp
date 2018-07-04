@@ -44,11 +44,12 @@ void ColumnStatsCollector::AddValue(const type::Value &value) {
   total_count_++;
   if (value.IsNull()) {
     null_count_++;
+  } else {
+    // Update all stats
+    hll_.Update(value);
+    hist_.Update(value);
+    topk_.Add(value);
   }
-  // Update all stats
-  hll_.Update(value);
-  hist_.Update(value);
-  topk_.Add(value);
 }
 
 double ColumnStatsCollector::GetFracNull() {

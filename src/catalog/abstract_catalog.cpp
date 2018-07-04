@@ -29,6 +29,7 @@
 #include "planner/seq_scan_plan.h"
 
 #include "executor/executor_context.h"
+#include "executor/create_executor.h"
 #include "executor/delete_executor.h"
 #include "executor/index_scan_executor.h"
 #include "executor/insert_executor.h"
@@ -60,30 +61,24 @@ AbstractCatalog::AbstractCatalog(storage::Database *pg_catalog,
 
 AbstractCatalog::AbstractCatalog(concurrency::TransactionContext *txn,
                                  const std::string &catalog_table_ddl) {
-  // get catalog table schema
+  // Execute create catalog table
   auto &peloton_parser = parser::PostgresParser::GetInstance();
+  std::unique_ptr<executor::ExecutorContext> context(
+      new executor::ExecutorContext(txn));
   auto create_plan = std::dynamic_pointer_cast<planner::CreatePlan>(
       optimizer::Optimizer().BuildPelotonPlanTree(
           peloton_parser.BuildParseTree(catalog_table_ddl), txn));
-  auto catalog_table_schema = create_plan->GetSchema();
-  auto catalog_table_name = create_plan->GetTableName();
-  auto catalog_schema_name = create_plan->GetSchemaName();
-  auto catalog_database_name = create_plan->GetDatabaseName();
-  PELOTON_ASSERT(catalog_schema_name == std::string(CATALOG_SCHEMA_NAME));
-  // create catalog table
-  Catalog::GetInstance()->CreateTable(txn,
-                                      catalog_database_name,
-                                      catalog_schema_name,
-                                      std::unique_ptr<catalog::Schema>(
-                                          catalog_table_schema),
-                                      catalog_table_name,
-                                      true);
+  executor::CreateExecutor executor(create_plan.get(), context.get());
+
+  executor.Init();
+  executor.Execute();
 
   // get catalog table oid
-  auto catalog_table_object = Catalog::GetInstance()->GetTableCatalogEntry(txn,
-                                                                           catalog_database_name,
-                                                                           catalog_schema_name,
-                                                                           catalog_table_name);
+  auto catalog_table_object =
+      Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                   create_plan->GetDatabaseName(),
+                                                   create_plan->GetSchemaName(),
+                                                   create_plan->GetTableName());
 
   // set catalog_table_
   try {
