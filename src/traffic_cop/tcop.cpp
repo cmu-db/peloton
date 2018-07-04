@@ -384,7 +384,7 @@ void Tcop::ExecuteStatementPlanGetResult(ClientProcessState &state) {
 
 ResultType Tcop::ExecuteStatementGetResult(ClientProcessState &state) {
   LOG_TRACE("Statement executed. Result: %s",
-           ResultTypeToString(p_status_.m_result).c_str());
+           ResultTypeToString(state.p_status_.m_result).c_str());
   state.rows_affected_ = state.p_status_.m_processed;
   LOG_TRACE("rows_changed %d", state.p_status_.m_processed);
   state.is_queuing_ = false;
