@@ -83,12 +83,6 @@ class Buffer {
     size_ = unprocessed_len;
     offset_ = 0;
   }
-//
-//  void PrintBuffer(int offset, int len) {
-//    for (int i = offset; i < offset + len; i++)
-//      printf("%02X ", buf_[i]);
-//    printf("\n");
-//  }
 
  protected:
   size_t size_ = 0, offset_ = 0, capacity_;
