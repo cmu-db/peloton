@@ -372,7 +372,7 @@ void Tcop::ExecuteStatementPlanGetResult(ClientProcessState &state) {
         // Abort
         LOG_TRACE("Abort Transaction");
         if (state.single_statement_txn_) {
-          LOG_TRACE("Tcop_txn_state size: %lu", tcop_txn_state_.size());
+          LOG_TRACE("Tcop_txn_state size: %lu", state.tcop_txn_state_.size());
           state.p_status_.m_result = AbortQueryHelper(state);
         } else {
           state.tcop_txn_state_.top().second = ResultType::ABORTED;
