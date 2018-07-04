@@ -89,8 +89,7 @@ class PelotonCodeGenTest : public PelotonTest {
   // Create the schema (common among all tables)
   catalog::Column GetTestColumn(uint32_t col_id) const;
 
-  std::unique_ptr<catalog::Schema> CreateTestSchema(
-      bool add_primary = false) const;
+  std::unique_ptr<catalog::Schema> CreateTestSchema() const;
 
   // Create the test tables
   void CreateTestTables(concurrency::TransactionContext *txn,

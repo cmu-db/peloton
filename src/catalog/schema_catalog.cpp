@@ -42,11 +42,11 @@ SchemaCatalog::SchemaCatalog(concurrency::TransactionContext *,
   // Add indexes for pg_namespace
   AddIndex(SCHEMA_CATALOG_NAME "_pkey",
            SCHEMA_CATALOG_PKEY_OID,
-           {0},
+           {ColumnId::SCHEMA_OID},
            IndexConstraintType::PRIMARY_KEY);
   AddIndex(SCHEMA_CATALOG_NAME "_skey0",
            SCHEMA_CATALOG_SKEY0_OID,
-           {1},
+           {ColumnId::SCHEMA_NAME},
            IndexConstraintType::UNIQUE);
 }
 
@@ -56,24 +56,28 @@ SchemaCatalog::~SchemaCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  const std::string primary_key_constraint_name = "primary_key";
-
   auto schema_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "schema_oid", true);
-  schema_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  schema_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_id_column.SetNotNull();
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size_, "schema_name", false);
-  schema_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_name_column.SetNotNull();
 
   std::unique_ptr<catalog::Schema> schema(
       new catalog::Schema({schema_id_column, schema_name_column}));
+
+  schema->AddConstraint(std::make_shared<Constraint>(
+      SCHEMA_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_OID},
+      SCHEMA_CATALOG_PKEY_OID));
+
+  schema->AddConstraint(std::make_shared<catalog::Constraint>(
+      SCHEMA_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_NAME},
+      SCHEMA_CATALOG_SKEY0_OID));
+
   return schema;
 }
 

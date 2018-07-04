@@ -14,7 +14,7 @@
 
 #include <memory>
 #include "catalog/column.h"
-#include "catalog/multi_constraint.h"
+#include "catalog/constraint.h"
 #include "common/printable.h"
 #include "type/type.h"
 #include "boost/algorithm/string.hpp"
@@ -174,58 +174,146 @@ class Schema : public Printable {
     return indexed_columns_;
   }
 
+  //===--------------------------------------------------------------------===//
+  // Single column constraint accessors
+  //===--------------------------------------------------------------------===//
+
   // Get the nullability of the column at a given index.
   inline bool AllowNull(const oid_t column_id) const {
-    for (auto constraint : columns_[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::NOTNULL) return false;
+    if (columns_[column_id].IsNotNull()) {
+      return false;
     }
     return true;
   }
 
-  // For single column default
-  inline bool AllowDefault(const oid_t column_id) const {
-    for (auto constraint : columns_[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::DEFAULT) {
-        return true;
-      }
-    }
-
-    return false;
+  // Set the not null for the column
+  inline void SetNotNull(const oid_t column_id) {
+    columns_[column_id].SetNotNull();
+    not_null_columns_.push_back(column_id);
   }
 
-  // Get the default value for the column
-  inline type::Value *GetDefaultValue(const oid_t column_id) const {
-    for (auto constraint : columns_[column_id].GetConstraints()) {
-      if (constraint.GetType() == ConstraintType::DEFAULT) {
-        return constraint.getDefaultValue();
+  // Drop the not null for the column
+  inline void DropNotNull(const oid_t column_id) {
+    columns_[column_id].ClearNotNull();
+    for (auto itr = not_null_columns_.begin(); itr < not_null_columns_.end(); itr++) {
+      if (*itr == column_id) {
+        not_null_columns_.erase(itr);
+        break;
       }
     }
+  }
 
+  // Get not null column list
+  inline std::vector<oid_t> GetNotNullColumns() const {
+    return not_null_columns_;
+  }
+
+  // For single column default
+  inline bool AllowDefault(const oid_t column_id) const {
+    return columns_[column_id].HasDefault();
+  }
+  // Get the default value for the column
+  inline type::Value* GetDefaultValue(const oid_t column_id) const {
+    if (columns_[column_id].HasDefault()) {
+      return columns_[column_id].GetDefaultValue().get();
+    }
     return nullptr;
   }
 
-  // Add constraint for column by id
-  inline void AddConstraint(oid_t column_id,
-                            const catalog::Constraint &constraint) {
-    columns_[column_id].AddConstraint(constraint);
+  // Set the default value for the column
+  inline void SetDefaultValue(const oid_t column_id,
+                              const type::Value &default_value) {
+    if (columns_[column_id].HasDefault()) {
+      columns_[column_id].ClearDefaultValue();
+    }
+    columns_[column_id].SetDefaultValue(default_value);
   }
 
-  // Add constraint for column by name
-  inline void AddConstraint(std::string column_name,
-                            const catalog::Constraint &constraint) {
-    for (size_t column_itr = 0; column_itr < columns_.size(); column_itr++) {
-      if (columns_[column_itr].GetName() == column_name) {
-        columns_[column_itr].AddConstraint(constraint);
+  // Drop the default value for the column
+  inline void DropDefaultValue(const oid_t column_id) {
+    if (columns_[column_id].HasDefault()) {
+      columns_[column_id].ClearDefaultValue();
+    }
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Multi-column constraint accessors
+  //===--------------------------------------------------------------------===//
+
+  // Add a constraint for the table
+  inline void AddConstraint(const std::shared_ptr<Constraint> constraint) {
+    constraints[constraint->GetConstraintOid()] = constraint;
+
+    if (constraint->GetType() == ConstraintType::PRIMARY) {
+      has_primary_key_ = true;
+    } else if (constraint->GetType() == ConstraintType::UNIQUE) {
+      unique_constraint_count_++;
+    } else if (constraint->GetType() == ConstraintType::FOREIGN) {
+      fk_constraints_.push_back(constraint->GetConstraintOid());
+    }
+  }
+
+  // Delete a constraint by id from the table
+  inline void DropConstraint(oid_t constraint_oid) {
+    if (constraints[constraint_oid]->GetType() == ConstraintType::PRIMARY) {
+      has_primary_key_ = false;
+    } else if (constraints[constraint_oid]->GetType() == ConstraintType::UNIQUE) {
+      unique_constraint_count_--;
+    } else if (constraints[constraint_oid]->GetType() == ConstraintType::FOREIGN) {
+      for (auto itr = fk_constraints_.begin(); itr < fk_constraints_.end(); itr++) {
+        if (*itr == constraint_oid) {
+          fk_constraints_.erase(itr);
+          break;
+        }
+      }
+    }
+
+    constraints.erase(constraint_oid);
+  }
+
+  inline std::unordered_map<oid_t, std::shared_ptr<Constraint>> GetConstraints() const {
+    return constraints;
+  }
+
+  inline std::shared_ptr<Constraint> GetConstraint(oid_t constraint_oid) const {
+    return constraints.at(constraint_oid);
+  }
+
+  // For primary key constraints
+  inline bool HasPrimary() { return has_primary_key_; }
+
+  // For unique constraints
+  inline bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
+
+  // For foreign key constraints
+  inline std::vector<std::shared_ptr<Constraint>> GetForeignKeyConstraints() {
+    std::vector<std::shared_ptr<Constraint>> fks;
+    for (auto oid : fk_constraints_) {
+      PELOTON_ASSERT(constraints[oid]->GetType() == ConstraintType::FOREIGN);
+      fks.push_back(constraints[oid]);
+    }
+    return fks;
+  }
+
+  inline bool HasForeignKeys() const { return (fk_constraints_.size() > 0); }
+
+  inline void RegisterForeignKeySource(const std::shared_ptr<Constraint> constraint) {
+    fk_sources_.push_back(constraint);
+  }
+
+  inline void DeleteForeignKeySource(const oid_t constraint_oid) {
+    for (auto itr = fk_sources_.begin(); itr < fk_sources_.end(); itr++) {
+      if ((*itr)->GetConstraintOid() == constraint_oid) {
+        fk_sources_.erase(itr);
+        break;
       }
     }
   }
 
-  inline void AddMultiConstraints(const catalog::MultiConstraint &mc) {
-    multi_constraints_.push_back(mc);
-  }
+  inline bool HasForeignKeySources() const { return (fk_sources_.size() > 0); }
 
-  inline std::vector<MultiConstraint> GetMultiConstraints() {
-    return multi_constraints_;
+  inline std::vector<std::shared_ptr<Constraint>> GetForeignKeySources() {
+    return fk_sources_;
   }
 
   // Get a string representation for debugging
@@ -238,14 +326,11 @@ class Schema : public Printable {
   // all inlined and uninlined columns in the tuple
   std::vector<Column> columns_;
 
-  // keeps track of unlined columns
-  std::vector<oid_t> uninlined_columns_;
-
-  // keeps multi_constraints
-  std::vector<MultiConstraint> multi_constraints_;
-
   // keep these in sync with the vectors above
   oid_t column_count_ = INVALID_OID;
+
+  // keeps track of unlined columns
+  std::vector<oid_t> uninlined_columns_;
 
   oid_t uninlined_column_count_ = INVALID_OID;
 
@@ -254,6 +339,27 @@ class Schema : public Printable {
 
   // keeps track of indexed columns in original table
   std::vector<oid_t> indexed_columns_;
+
+  // Constraint Information
+  // keeps constraints
+  std::unordered_map<oid_t, std::shared_ptr<Constraint>> constraints;
+
+  // not null column list for fast constraint checking
+  std::vector<oid_t> not_null_columns_;
+
+  // has a primary key ?
+  bool has_primary_key_ = false;
+
+  // # of unique constraints
+  oid_t unique_constraint_count_ = START_OID;
+
+  // list of foreign key constraints
+  std::vector<oid_t> fk_constraints_;
+
+  // fk constraints for which this table is the sink
+  // The complete information is stored so no need to lookup the table
+  // everytime there is a constraint check
+  std::vector<std::shared_ptr<Constraint>> fk_sources_;
 };
 
 }  // namespace catalog

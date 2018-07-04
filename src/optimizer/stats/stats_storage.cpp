@@ -277,16 +277,19 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
     return ResultType::FAILURE;
   }
 
-  oid_t table_count = database->GetTableCount();
-  for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
-    auto table = database->GetTable(table_offset);
-    auto table_catalog_entry =
-        catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
-                                                              database->GetOid(),
-                                                              table->GetOid());
+  auto catalog = catalog::Catalog::GetInstance();
+  auto table_catalog_entries =
+      catalog->GetDatabaseCatalogEntry(txn, database->GetOid())
+             ->GetTableCatalogEntries();
+  for (auto table_catalog_entry_pair : table_catalog_entries) {
+    auto table_oid = table_catalog_entry_pair.first;
+    auto table_catalog_entry = table_catalog_entry_pair.second;
+
     if (table_catalog_entry->GetSchemaName() == CATALOG_SCHEMA_NAME)
       continue;
-    LOG_DEBUG("Analyzing table: %s", table->GetName().c_str());
+
+    auto table = database->GetTableWithOid(table_oid);
+    LOG_DEBUG("Analyzing table: %s", table_catalog_entry->GetTableName().c_str());
     AnalyzeStatsForTable(table, txn);
   }
 

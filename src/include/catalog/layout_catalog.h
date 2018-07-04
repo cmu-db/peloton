@@ -23,6 +23,7 @@ class Layout;
 namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
+  friend class Catalog;
  public:
 
   LayoutCatalog(concurrency::TransactionContext *txn,

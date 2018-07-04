@@ -43,13 +43,11 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
-  id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+  id_column.SetNotNull();
   auto value_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
-  value_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+  value_column.SetNotNull();
 
   // Create the table
   catalog::Schema *table_schema =
@@ -77,6 +75,12 @@ storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
 
   table->AddIndex(pkey_index);
 
+  // Create constraint on the table
+  std::shared_ptr<catalog::Constraint> constraint(
+      new catalog::Constraint(1000, ConstraintType::PRIMARY,
+          "con_primary", TEST_TABLE_OID, key_attrs, 1234));
+  table->GetSchema()->AddConstraint(constraint);
+
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -92,8 +96,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
-  id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, "not_null"));
+  id_column.SetNotNull();
   auto value_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "value", true);
@@ -124,6 +127,12 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   table->AddIndex(pkey_index);
 
+  // Create primary key constraint on the table
+  std::shared_ptr<catalog::Constraint> constraint(
+      new catalog::Constraint(1000, ConstraintType::PRIMARY,
+          "con_primary", TEST_TABLE_OID, key_attrs, 1234));
+  table->GetSchema()->AddConstraint(constraint);
+
   // Create unique index on the value column
   std::vector<oid_t> key_attrs2 = {1};
   auto tuple_schema2 = table->GetSchema();
@@ -140,6 +149,12 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
   table->AddIndex(ukey_index);
 
+  // Create unique constraint on the table
+  std::shared_ptr<catalog::Constraint> unique_constraint(
+      new catalog::Constraint(1001, ConstraintType::UNIQUE,
+          "con_unique", TEST_TABLE_OID, key_attrs, 1235));
+  table->GetSchema()->AddConstraint(unique_constraint);
+
   // Insert tuple
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
@@ -153,7 +168,7 @@ storage::DataTable *TestingTransactionUtil::CreatePrimaryKeyUniqueKeyTable() {
 
 storage::DataTable *TestingTransactionUtil::CreateTable(
     int num_key, std::string table_name, oid_t database_id, oid_t relation_id,
-    oid_t index_oid, bool need_primary_index, size_t tuples_per_tilegroup) {
+    oid_t index_oid, bool need_primary_key, size_t tuples_per_tilegroup) {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "id", true);
@@ -177,8 +192,8 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   key_schema->SetIndexedColumns(key_attrs);
 
   auto index_metadata = new index::IndexMetadata(
-      "primary_btree_index", index_oid, TEST_TABLE_OID, CATALOG_DATABASE_OID,
-      IndexType::BWTREE, need_primary_index ? IndexConstraintType::PRIMARY_KEY
+      "primary_btree_index", index_oid, relation_id, database_id,
+      IndexType::BWTREE, need_primary_key ? IndexConstraintType::PRIMARY_KEY
                                             : IndexConstraintType::DEFAULT,
       tuple_schema, key_schema, key_attrs, unique);
 
@@ -186,6 +201,14 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
       index::IndexFactory::GetIndex(index_metadata));
 
   table->AddIndex(pkey_index);
+
+  // Create primary key constraint on the table
+  if (need_primary_key) {
+    std::shared_ptr<catalog::Constraint> constraint(
+        new catalog::Constraint(1000, ConstraintType::PRIMARY,
+            "con_primary", relation_id, key_attrs, index_oid));
+    table->GetSchema()->AddConstraint(constraint);
+  }
 
   // add this table to current database
   catalog::Catalog::GetInstance();
@@ -195,7 +218,7 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
     db =
         storage::StorageManager::GetInstance()->GetDatabaseWithOid(database_id);
   } catch (CatalogException &e) {
-    LOG_TRACE("Can't find database %d! ", database_id);
+    LOG_ERROR("Can't find database %d! ", database_id);
     return nullptr;
   }
   PELOTON_ASSERT(db);

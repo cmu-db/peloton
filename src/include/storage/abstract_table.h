@@ -112,16 +112,6 @@ class AbstractTable : public Printable {
   const std::string GetInfo() const;
 
   //===--------------------------------------------------------------------===//
-  // UTILITIES
-  //===--------------------------------------------------------------------===//
-
-  virtual bool HasPrimaryKey() const = 0;
-
-  virtual bool HasUniqueConstraints() const = 0;
-
-  virtual bool HasForeignKeys() const = 0;
-
-  //===--------------------------------------------------------------------===//
   // STATS
   //===--------------------------------------------------------------------===//
 
