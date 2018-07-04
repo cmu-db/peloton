@@ -43,7 +43,7 @@ struct ClientProcessState {
   // flag of single statement txn
   std::vector<ResultValue> result_;
   std::stack<TcopTxnState> tcop_txn_state_;
-  NetworkTransactionStateType txn_state_ = NetworkTransactionStateType::INVALID;
+  NetworkTransactionStateType txn_state_ = NetworkTransactionStateType::IDLE;
   bool skipped_stmt_ = false;
   std::string skipped_query_string_;
   QueryType skipped_query_type_ = QueryType::QUERY_INVALID;
@@ -74,7 +74,7 @@ struct ClientProcessState {
     result_format_.clear();
     result_.clear();
     tcop_txn_state_ = std::stack<TcopTxnState>();
-    txn_state_ = NetworkTransactionStateType::INVALID;
+    txn_state_ = NetworkTransactionStateType::IDLE;
     skipped_stmt_ = false;
     skipped_query_string_ = "";
     skipped_query_type_ = QueryType::QUERY_INVALID;
