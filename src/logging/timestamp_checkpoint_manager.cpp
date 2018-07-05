@@ -73,12 +73,10 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
     Timer<std::milli> recovery_timer;
     recovery_timer.Start();
 
-    // begin transaction
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-
     // recover catalog table checkpoint
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    if (!LoadCatalogTableCheckpoint(txn, epoch_id)) {
+    if (!LoadCatalogTableCheckpoints(txn, epoch_id)) {
       LOG_ERROR("Catalog table checkpoint recovery was failed");
       txn_manager.AbortTransaction(txn);
       return false;
@@ -87,13 +85,11 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
 
     // recover user table checkpoint
     txn = txn_manager.BeginTransaction();
-    if (!LoadUserTableCheckpoint(txn, epoch_id)) {
+    if (!LoadUserTableCheckpoints(txn, epoch_id)) {
       LOG_ERROR("User table checkpoint recovery was failed");
       txn_manager.AbortTransaction(txn);
       return false;
     }
-
-    // commit transaction
     txn_manager.CommitTransaction(txn);
 
     // set recovered epoch id
@@ -178,7 +174,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
       eid_t begin_epoch_id = txn->GetEpochId();
 
       // create checkpoint
-      CreateCheckpoint(txn, begin_cid);
+      CreateCheckpoints(txn, begin_cid);
 
       // end transaction
       txn_manager.EndTransaction(txn);
@@ -200,7 +196,7 @@ void TimestampCheckpointManager::PerformCheckpointing() {
   }
 }
 
-void TimestampCheckpointManager::CreateCheckpoint(
+void TimestampCheckpointManager::CreateCheckpoints(
     concurrency::TransactionContext *txn,
     const cid_t begin_cid) {
   // prepare for data loading
@@ -454,7 +450,7 @@ bool TimestampCheckpointManager::IsVisible(
   }
 }
 
-bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
+bool TimestampCheckpointManager::LoadCatalogTableCheckpoints(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id) {
   // prepare for catalog data file loading
@@ -644,7 +640,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   return true;
 }
 
-bool TimestampCheckpointManager::LoadUserTableCheckpoint(
+bool TimestampCheckpointManager::LoadUserTableCheckpoints(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id) {
   // Recover table

@@ -98,8 +98,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   void PerformCheckpointing();
 
   // checkpointing for the user tables
-  void CreateCheckpoint(concurrency::TransactionContext *txn,
-                        const cid_t begin_cid);
+  void CreateCheckpoints(concurrency::TransactionContext *txn,
+                         const cid_t begin_cid);
 
   // read table data and write it down to checkpoint data file
   void CheckpointingTableData(const storage::DataTable *table,
@@ -131,8 +131,8 @@ class TimestampCheckpointManager : public CheckpointManager {
   //===--------------------------------------------------------------------===//
 
   // load catalog table checkpoints
-  bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
-                                  const eid_t &epoch_id);
+  bool LoadCatalogTableCheckpoints(concurrency::TransactionContext *txn,
+                                   const eid_t &epoch_id);
 
   // load a specific catalog table checkpoint
   bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
@@ -141,8 +141,8 @@ class TimestampCheckpointManager : public CheckpointManager {
                                   const oid_t table_oid);
 
   // load user table checkpoints
-  bool LoadUserTableCheckpoint(concurrency::TransactionContext *txn,
-                               const eid_t &epoch_id);
+  bool LoadUserTableCheckpoints(concurrency::TransactionContext *txn,
+                                const eid_t &epoch_id);
 
   // recover an user table storage object by using recovered catalog
   // Note: Foreign key constraint is recovered just for the source table.
