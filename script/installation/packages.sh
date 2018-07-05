@@ -74,7 +74,7 @@ function install_protobuf3.4.0() {
 
 # Utility function for installing tensorflow components of python/C++
 function install_tf() {
-    if pip show -q tensorflow && [ -d /usr/local/include/tensorflow/c ]; then
+    if pip3 show -q tensorflow && [ -d /usr/local/include/tensorflow/c ]; then
         echo "tensorflow already installed"
         return
     fi
