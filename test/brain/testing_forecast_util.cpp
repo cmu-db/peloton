@@ -63,6 +63,7 @@ void TestingForecastUtil::WorkloadTest(
   matrix_eig valid_data = GetWorkload(w, num_samples, num_feats);
   float ensemble_loss = model.Validate(valid_data);
   LOG_DEBUG("Ensemble Loss: %.10f", ensemble_loss);
+  EXPECT_LE(ensemble_loss, val_loss_thresh);
 }
 
 matrix_eig TestingForecastUtil::GetWorkload(WorkloadType w, size_t num_samples,

@@ -27,7 +27,7 @@ namespace test {
 
 class TensorflowUtilTests : public PelotonTest {};
 
-TEST_F(TensorflowUtilTests, BasicTFTest) {
+TEST_F(TensorflowUtilTests, DISABLED_BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly
   EXPECT_TRUE(brain::TFUtil::GetTFVersion());
 }

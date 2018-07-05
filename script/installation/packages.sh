@@ -225,12 +225,10 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install tbb
     brew install curl
     brew install wget
-    # brew install python
-    # brew upgrade python
+    brew install python
+    brew upgrade python
     brew install eigen
     brew install ant
-    # Install Pip if not present
-    sudo -E python3 -m ensurepip
     # Brew installs correct version of Protobuf(3.5.1 >= 3.4.0)
     # So we can directly install tensorflow
     install_tf "$TFCApiFile" "$TF_VERSION" "$LinkerConfigCmd"

@@ -34,7 +34,7 @@ TEST_F(ModelTests, NormalizerTest) {
 }
 
 // Enable after resolving
-TEST_F(ModelTests, TimeSeriesLSTMTest) {
+TEST_F(ModelTests, DISABLED_TimeSeriesLSTMTest) {
   auto model = std::unique_ptr<brain::TimeSeriesLSTM>(new brain::TimeSeriesLSTM(
       brain::LSTMWorkloadDefaults::NFEATS,
       brain::LSTMWorkloadDefaults::NENCODED, brain::LSTMWorkloadDefaults::NHID,
@@ -91,7 +91,7 @@ TEST_F(ModelTests, KernelRegTest) {
                                     VAL_SPLIT, NORMALIZE, VAL_THESH);
 }
 
-TEST_F(ModelTests, TimeSeriesEnsembleTest) {
+TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
   auto lr_model = std::make_shared<brain::TimeSeriesLinearReg>(
       brain::LinearRegWorkloadDefaults::BPTT,
       brain::CommonWorkloadDefaults::HORIZON,

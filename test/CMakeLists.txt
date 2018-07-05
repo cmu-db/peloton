@@ -59,6 +59,7 @@ add_library(peloton-test-common EXCLUDE_FROM_ALL ${gmock_srcs} ${HARNESS}
             ${TESTING_UTIL_INDEX}
             ${TESTING_UTIL_SQL}
             ${TESTING_UTIL_CODEGEN}
+            ${TESTING_UTIL_FORECAST}
 )
 
 # --[ Add "make check" target
