@@ -132,35 +132,36 @@ TEST_F(EigenUtilTests, PairwiseEuclideanDistTest) {
 
 TEST_F(EigenUtilTests, StandardDeviationTest1) {
   matrix_eig m = brain::EigenUtil::ToEigenMat({
-                                                  {0, 1, 0},
-                                                  {1, 1, 1},
-                                                  {2, 1, 3},
-                                              });
+      {0, 1, 0},
+      {1, 1, 1},
+      {2, 1, 3},
+  });
   float expected_stdev = 0.8748897;
   EXPECT_FLOAT_EQ(expected_stdev, brain::EigenUtil::StandardDeviation(m));
 }
 
 TEST_F(EigenUtilTests, StandardDeviationTest2) {
   matrix_eig m = brain::EigenUtil::ToEigenMat({
-                                                  {0, 1, 0},
-                                                  {1, 1, 1},
-                                                  {2, 1, 3},
-                                              });
-  vector_eig expected_stdev = brain::EigenUtil::ToEigenVec({0.816496, 0.0, 1.247219});
+      {0, 1, 0},
+      {1, 1, 1},
+      {2, 1, 3},
+  });
+  vector_eig expected_stdev =
+      brain::EigenUtil::ToEigenVec({0.816496, 0.0, 1.247219});
   vector_eig stdev = brain::EigenUtil::StandardDeviation(m, 0);
   EXPECT_TRUE(expected_stdev.isApprox(stdev));
 }
 
 TEST_F(EigenUtilTests, PadTopTest) {
   matrix_eig m = brain::EigenUtil::ToEigenMat({
-                                                  {0, 1, 0},
-                                                  {1, 1, 1},
-                                              });
+      {0, 1, 0},
+      {1, 1, 1},
+  });
   matrix_eig m_padded = brain::EigenUtil::ToEigenMat({
-                                                         {0, 0, 0},
-                                                         {0, 1, 0},
-                                                         {1, 1, 1},
-                                                     });
+      {0, 0, 0},
+      {0, 1, 0},
+      {1, 1, 1},
+  });
   EXPECT_EQ(m_padded, brain::EigenUtil::PadTop(m, 0, 1));
 }
 

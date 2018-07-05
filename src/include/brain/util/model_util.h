@@ -53,45 +53,43 @@ class ModelUtil {
    * the time-major format there is converted to this Batch-major one.
    * Refer to ModelUtilTest to better understand whats happening here.
    */
-  static void GetBatch(const BaseForecastModel& model, const matrix_eig &mat,
+  static void GetBatch(const BaseForecastModel &model, const matrix_eig &mat,
                        size_t batch_offset, size_t bsz,
                        std::vector<matrix_eig> &data,
                        std::vector<matrix_eig> &target,
                        bool time_major = false);
 
   /**
-   * Converts a dataset/workload(upto RAM sized) passed to it into (X, y) batches
-   * useful for either training/validation of models working on batches of data.
-   * This is only meant for forecastable models
-   * The produced batches are of form [num_batches(outer std::vector), 
-   * bsz/num_seq(inner std::vector), (seq_len, feat_len)(eigen matrix)]
+   * Converts a dataset/workload(upto RAM sized) passed to it into (X, y)
+   * batches useful for either training/validation of models working on batches
+   * of data. This is only meant for forecastable models The produced batches
+   * are of form [num_batches(outer std::vector), bsz/num_seq(inner
+   * std::vector), (seq_len, feat_len)(eigen matrix)]
    */
-  static void GetBatches(const BaseForecastModel& model, const matrix_eig &mat,
-                         size_t batch_size, 
+  static void GetBatches(const BaseForecastModel &model, const matrix_eig &mat,
+                         size_t batch_size,
                          std::vector<std::vector<matrix_eig>> &data,
                          std::vector<std::vector<matrix_eig>> &target,
                          bool time_major = false);
 
   // Convert a dataset into batches
-  static void GetBatches(const BaseForecastModel& model,
-                         const matrix_eig &mat,
+  static void GetBatches(const BaseForecastModel &model, const matrix_eig &mat,
                          size_t batch_size,
                          std::vector<std::vector<matrix_eig>> &data_batches);
 
   /**
    * Split the data into X, y which can be featurized
    */
-  static void FeatureLabelSplit(const BaseForecastModel& model,
-                                const matrix_eig &data,
-                                matrix_eig &X,
+  static void FeatureLabelSplit(const BaseForecastModel &model,
+                                const matrix_eig &data, matrix_eig &X,
                                 matrix_eig &y);
 
   /**
- * Given data of the form (timesteps, feat_len), this function generates
- * a feature matrix appropriate for learning a forecast model.
- * Useful for Linear and Kernel Regression Models
- */
-  static void GenerateFeatureMatrix(const BaseForecastModel& model,
+   * Given data of the form (timesteps, feat_len), this function generates
+   * a feature matrix appropriate for learning a forecast model.
+   * Useful for Linear and Kernel Regression Models
+   */
+  static void GenerateFeatureMatrix(const BaseForecastModel &model,
                                     const matrix_eig &data,
                                     matrix_eig &processed_features);
 };

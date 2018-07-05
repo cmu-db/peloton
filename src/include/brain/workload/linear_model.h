@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// linear_models.h
+// linear_model.h
 //
-// Identification: src/include/brain/workload/linear_models.h
+// Identification: src/include/brain/workload/linear_model.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -18,8 +18,7 @@ namespace peloton {
 namespace brain {
 class TimeSeriesLinearReg : public virtual BaseForecastModel {
  public:
-  TimeSeriesLinearReg(int bptt, int horizon,
-                      int interval);
+  TimeSeriesLinearReg(int bptt, int horizon, int interval);
   void Fit(const matrix_eig &X, const matrix_eig &y,
            UNUSED_ATTRIBUTE int bsz = 1) override;
   matrix_eig Predict(const matrix_eig &X, int bsz = 1) const override;

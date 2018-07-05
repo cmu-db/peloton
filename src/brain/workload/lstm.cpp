@@ -73,9 +73,7 @@ std::string TimeSeriesLSTM::ToString() const {
   return model_str_builder.str();
 }
 
-void TimeSeriesLSTM::Fit(const matrix_eig &X,
-                         const matrix_eig &y,
-                         int bsz) {
+void TimeSeriesLSTM::Fit(const matrix_eig &X, const matrix_eig &y, int bsz) {
   auto data_batch = EigenUtil::Flatten(X);
   auto target_batch = EigenUtil::Flatten(y);
   int seq_len = data_batch.size() / (bsz * nfeats_);
@@ -100,9 +98,9 @@ float TimeSeriesLSTM::TrainEpoch(const matrix_eig &data) {
 
   // Run through each batch and compute loss/apply backprop
   std::vector<matrix_eig> y_batch, y_hat_batch;
-  for(size_t i = 0; i < data_batches.size(); i++) {
-    std::vector<matrix_eig> &data_batch_eig =  data_batches[i];
-    std::vector<matrix_eig> &target_batch_eig =  target_batches[i];
+  for (size_t i = 0; i < data_batches.size(); i++) {
+    std::vector<matrix_eig> &data_batch_eig = data_batches[i];
+    std::vector<matrix_eig> &target_batch_eig = target_batches[i];
     matrix_eig X_batch = EigenUtil::VStack(data_batch_eig);
     int bsz = static_cast<int>(data_batch_eig.size());
     // Fit
@@ -129,11 +127,11 @@ matrix_eig TimeSeriesLSTM::Predict(const matrix_eig &X, int bsz) const {
   auto out = tf_session_entity_->Eval(inputs_predict, output_predict);
   std::vector<matrix_eig> y_hat;
   int idx = 0;
-  for(int seq_idx = 0; seq_idx < bsz; seq_idx++) {
+  for (int seq_idx = 0; seq_idx < bsz; seq_idx++) {
     matrix_t seq;
-    for(int samp_idx = 0; samp_idx < seq_len; samp_idx++) {
+    for (int samp_idx = 0; samp_idx < seq_len; samp_idx++) {
       vector_t feat_vec;
-      for(int feat_idx = 0; feat_idx < nfeats_; feat_idx++) {
+      for (int feat_idx = 0; feat_idx < nfeats_; feat_idx++) {
         feat_vec.push_back(out[idx++]);
       }
       seq.push_back(feat_vec);
@@ -154,7 +152,7 @@ float TimeSeriesLSTM::ValidateEpoch(const matrix_eig &data) {
 
   // Run through each batch and compute loss/apply backprop
   std::vector<matrix_eig> y_hat_batch, y_batch;
-  for(size_t i = 0; i < data_batches.size(); i++) {
+  for (size_t i = 0; i < data_batches.size(); i++) {
     std::vector<matrix_eig> &data_batch_eig = data_batches[i];
     std::vector<matrix_eig> &target_batch_eig = target_batches[i];
     matrix_eig y_hat_i = Predict(EigenUtil::VStack(data_batch_eig),

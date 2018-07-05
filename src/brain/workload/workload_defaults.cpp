@@ -15,7 +15,6 @@
 namespace peloton {
 namespace brain {
 
-
 const int CommonWorkloadDefaults::HORIZON = 216;
 const int CommonWorkloadDefaults::INTERVAL = 100;
 const int CommonWorkloadDefaults::PADDLING_DAYS = 7;
@@ -36,4 +35,4 @@ const int LinearRegWorkloadDefaults::BPTT = 90;
 const int KernelRegWorkloadDefaults::BPTT = 90;
 
 }  // namespace brain
-}
+}  // namespace peloton

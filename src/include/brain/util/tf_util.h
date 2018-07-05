@@ -22,9 +22,7 @@ namespace peloton {
 namespace brain {
 class TFUtil {
  public:
-  static const char *GetTFVersion() {
-    return TF_Version();
-  }
+  static const char *GetTFVersion() { return TF_Version(); }
 };
-}
-}
+}  // namespace brain
+}  // namespace peloton

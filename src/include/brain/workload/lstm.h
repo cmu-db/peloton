@@ -58,9 +58,7 @@ class TimeSeriesLSTM : public BaseTFModel, public BaseForecastModel {
    */
   float ValidateEpoch(const matrix_eig &data) override;
 
-  void Fit(const matrix_eig &X,
-           const matrix_eig &y,
-           int bsz) override;
+  void Fit(const matrix_eig &X, const matrix_eig &y, int bsz) override;
   matrix_eig Predict(const matrix_eig &X, int bsz) const override;
 
   /**

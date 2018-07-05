@@ -23,7 +23,7 @@ namespace brain {
  * Normalizer methods
  */
 void Normalizer::Fit(const matrix_eig &X) {
-  if(do_normalize_) {
+  if (do_normalize_) {
     min_ = 1 - X.minCoeff();
     matrix_eig Xadj = (X.array() + min_).array().log();
     mean_ = Xadj.mean();
@@ -34,24 +34,23 @@ void Normalizer::Fit(const matrix_eig &X) {
 }
 
 matrix_eig Normalizer::Transform(const matrix_eig &X) const {
-  if(fit_complete_ && do_normalize_) {
+  if (fit_complete_ && do_normalize_) {
     matrix_eig Xadj = (X.array() + min_).array().log();
     Xadj.array() -= mean_;
     return Xadj.array() / std_;
-  } else if(do_normalize_) {
-    throw ("Please call `Fit` before `Transform` or `ReverseTransform`");
+  } else if (do_normalize_) {
+    throw("Please call `Fit` before `Transform` or `ReverseTransform`");
   } else {
     return X;
   }
 }
 
-
 matrix_eig Normalizer::ReverseTransform(const matrix_eig &X) const {
-  if(fit_complete_ && do_normalize_) {
+  if (fit_complete_ && do_normalize_) {
     matrix_eig Xadj = X.array() * std_ + mean_;
     return Xadj.array().exp() - min_;
-  } else if(do_normalize_) {
-    throw ("Please call `Fit` before `Transform` or `ReverseTransform`");
+  } else if (do_normalize_) {
+    throw("Please call `Fit` before `Transform` or `ReverseTransform`");
   } else {
     return X;
   }
@@ -86,5 +85,5 @@ void BaseTFModel::GenerateModel(const std::string &args_str) {
   PELOTON_ASSERT(succ == 0);
   PELOTON_ASSERT(FileUtil::Exists(graph_path_));
 }
-}
-}
+}  // namespace brain
+}  // namespace peloton

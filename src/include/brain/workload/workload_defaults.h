@@ -15,7 +15,7 @@
 /**
  * This header file contains default attributes
  * associated with the workload prediction task
-**/
+ **/
 
 namespace peloton {
 namespace brain {

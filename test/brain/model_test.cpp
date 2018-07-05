@@ -10,15 +10,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/workload/linear_model.h"
+#include <algorithm>
+#include "brain/testing_forecast_util.h"
+#include "brain/util/model_util.h"
 #include "brain/workload/kernel_model.h"
+#include "brain/workload/linear_model.h"
 #include "brain/workload/lstm.h"
 #include "brain/workload/workload_defaults.h"
-#include <algorithm>
-#include "brain/util/model_util.h"
 #include "common/harness.h"
 #include "util/file_util.h"
-#include "brain/testing_forecast_util.h"
 
 namespace peloton {
 namespace test {
@@ -26,15 +26,14 @@ class ModelTests : public PelotonTest {};
 
 TEST_F(ModelTests, NormalizerTest) {
   auto n = brain::Normalizer();
-  matrix_eig X = brain::EigenUtil::ToEigenMat({{1, 2, 3},
-                                               {4, 5, 6},
-                                               {7, 8, 9}});
+  matrix_eig X =
+      brain::EigenUtil::ToEigenMat({{1, 2, 3}, {4, 5, 6}, {7, 8, 9}});
   n.Fit(X);
   matrix_eig Xrecon = n.ReverseTransform(n.Transform(X));
   EXPECT_TRUE(Xrecon.isApprox(X));
 }
 
-// Enable after resolving  
+// Enable after resolving
 TEST_F(ModelTests, DISABLED_TimeSeriesLSTMTest) {
   auto model = std::unique_ptr<brain::TimeSeriesLSTM>(new brain::TimeSeriesLSTM(
       brain::LSTMWorkloadDefaults::NFEATS,
@@ -54,16 +53,15 @@ TEST_F(ModelTests, DISABLED_TimeSeriesLSTMTest) {
   bool NORMALIZE = false;
   float VAL_THESH = 0.05;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::SimpleSinusoidal,
-                                    LOG_INTERVAL, NUM_SAMPLES,
-                                    NUM_FEATS, VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
 }
 
 TEST_F(ModelTests, LinearRegTest) {
   auto model = std::unique_ptr<brain::TimeSeriesLinearReg>(
-    new brain::TimeSeriesLinearReg(
-        brain::LinearRegWorkloadDefaults::BPTT,
-        brain::CommonWorkloadDefaults::HORIZON,
-        brain::CommonWorkloadDefaults::INTERVAL));
+      new brain::TimeSeriesLinearReg(brain::LinearRegWorkloadDefaults::BPTT,
+                                     brain::CommonWorkloadDefaults::HORIZON,
+                                     brain::CommonWorkloadDefaults::INTERVAL));
   EXPECT_FALSE(model->IsTFModel());
   size_t LOG_INTERVAL = 1;
   size_t NUM_SAMPLES = 1000;
@@ -72,16 +70,15 @@ TEST_F(ModelTests, LinearRegTest) {
   bool NORMALIZE = true;
   float VAL_THESH = 0.1;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::NoisyLinear,
-                                    LOG_INTERVAL, NUM_SAMPLES,
-                                    NUM_FEATS, VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
 }
 
 TEST_F(ModelTests, KernelRegTest) {
   auto model = std::unique_ptr<brain::TimeSeriesKernelReg>(
-      new brain::TimeSeriesKernelReg(
-          brain::KernelRegWorkloadDefaults::BPTT,
-          brain::CommonWorkloadDefaults::HORIZON,
-          brain::CommonWorkloadDefaults::INTERVAL));
+      new brain::TimeSeriesKernelReg(brain::KernelRegWorkloadDefaults::BPTT,
+                                     brain::CommonWorkloadDefaults::HORIZON,
+                                     brain::CommonWorkloadDefaults::INTERVAL));
   EXPECT_FALSE(model->IsTFModel());
   size_t LOG_INTERVAL = 1;
   size_t NUM_SAMPLES = 1000;
@@ -90,8 +87,8 @@ TEST_F(ModelTests, KernelRegTest) {
   bool NORMALIZE = true;
   float VAL_THESH = 0.1;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::NoisyLinear,
-                                    LOG_INTERVAL, NUM_SAMPLES,
-                                    NUM_FEATS, VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
 }
 
 TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
@@ -114,7 +111,6 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
       brain::CommonWorkloadDefaults::INTERVAL,
       brain::LSTMWorkloadDefaults::EPOCHS);
 
-
   size_t LOG_INTERVAL = 20;
   size_t NUM_SAMPLES = 1000;
   size_t NUM_FEATS = 3;
@@ -122,14 +118,15 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
   bool NORMALIZE = false;
   float VAL_THESH = 0.06;
 
-////  auto models_vec = {std::move(model1), std::move(model2), std::move(model3)};
-  auto model = std::unique_ptr<brain::TimeSeriesEnsemble>(
-      new brain::TimeSeriesEnsemble({lr_model, kr_model, lstm_model},
-                                    {0.33f, 0.33f, 0.33}, brain::LSTMWorkloadDefaults::BATCH_SIZE));
+  ////  auto models_vec = {std::move(model1), std::move(model2),
+  ///std::move(model3)};
+  auto model =
+      std::unique_ptr<brain::TimeSeriesEnsemble>(new brain::TimeSeriesEnsemble(
+          {lr_model, kr_model, lstm_model}, {0.33f, 0.33f, 0.33},
+          brain::LSTMWorkloadDefaults::BATCH_SIZE));
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::SimpleSinusoidal,
-                                    LOG_INTERVAL, NUM_SAMPLES,
-                                    NUM_FEATS, VAL_SPLIT, NORMALIZE, VAL_THESH);
-
+                                    LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
 }
 
 }  // namespace test

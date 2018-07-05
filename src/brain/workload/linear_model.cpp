@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// linear_models.cpp
+// linear_model.cpp
 //
-// Identification: src/brain/workload/linear_models.cpp
+// Identification: src/brain/workload/linear_model.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -33,13 +33,12 @@ std::string TimeSeriesLinearReg::ToString() const {
   return model_str_builder.str();
 }
 
-void TimeSeriesLinearReg::Fit(const matrix_eig &X,
-                              const matrix_eig &y,
+void TimeSeriesLinearReg::Fit(const matrix_eig &X, const matrix_eig &y,
                               UNUSED_ATTRIBUTE int bsz) {
   matrix_eig X_proc;
   ModelUtil::GenerateFeatureMatrix(*this, X, X_proc);
   matrix_eig XTX = X_proc.transpose() * X_proc;
-  XTX += matrix_eig::Identity(XTX.rows(), XTX.rows())*epsilon_;
+  XTX += matrix_eig::Identity(XTX.rows(), XTX.rows()) * epsilon_;
   XTX = (XTX.inverse() * (X_proc.transpose()));
   matrix_eig y_hat(y.rows(), y.cols());
   for (long label_idx = 0; label_idx < y.cols(); label_idx++) {

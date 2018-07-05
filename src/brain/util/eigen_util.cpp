@@ -13,8 +13,8 @@
 #include "brain/util/eigen_util.h"
 #include <random>
 
-namespace peloton{
-namespace brain{
+namespace peloton {
+namespace brain {
 
 matrix_eig EigenUtil::ToEigenMat(const matrix_t &mat) {
   std::vector<float> mat_flat;
@@ -53,7 +53,7 @@ vector_t EigenUtil::ToVectorT(const vector_eig &mat) {
 
 matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   PELOTON_ASSERT(!mat_vec.empty());
-  if(mat_vec.size() == 1) {
+  if (mat_vec.size() == 1) {
     return mat_vec[0];
   }
   long num_cols = mat_vec[0].cols();
@@ -72,7 +72,8 @@ matrix_eig EigenUtil::VStack(const std::vector<matrix_eig> &mat_vec) {
   return vstacked_mat;
 }
 
-matrix_eig EigenUtil::PairwiseEuclideanDist(const matrix_eig& m1, const matrix_eig& m2) {
+matrix_eig EigenUtil::PairwiseEuclideanDist(const matrix_eig &m1,
+                                            const matrix_eig &m2) {
   matrix_eig m_dist(m1.rows(), m2.rows());
   for (int i = 0; i < m1.rows(); i++) {
     for (int j = 0; j < m2.rows(); j++) {
@@ -103,16 +104,20 @@ vector_t EigenUtil::Flatten(const matrix_t &mat) {
   return flattened_mat;
 }
 
-matrix_eig EigenUtil::GaussianNoise(size_t rows, size_t cols, float mean, float stdev) {
+matrix_eig EigenUtil::GaussianNoise(size_t rows, size_t cols, float mean,
+                                    float stdev) {
   std::default_random_engine generator;
   std::normal_distribution<> distribution{mean, stdev};
-  auto gaussian_sampler = [&] {return distribution(generator);};
+  auto gaussian_sampler = [&](UNUSED_ATTRIBUTE float dummy) {
+    return distribution(generator);
+  };
   return matrix_eig::NullaryExpr(rows, cols, gaussian_sampler);
 }
 
 vector_eig EigenUtil::StandardDeviation(const matrix_eig &mat, uint8_t axis) {
-  if(axis == 0) {
-    matrix_eig sqdiff_mat = (mat.rowwise() - mat.colwise().mean()).array().square();
+  if (axis == 0) {
+    matrix_eig sqdiff_mat =
+        (mat.rowwise() - mat.colwise().mean()).array().square();
     vector_eig var_mat = sqdiff_mat.colwise().mean();
     return var_mat.cwiseSqrt();
   } else {
@@ -126,11 +131,12 @@ float EigenUtil::StandardDeviation(const matrix_eig &mat) {
   return std::sqrt(var);
 }
 
-matrix_eig EigenUtil::PadTop(const matrix_eig &mat, float pad_value, int num_rows) {
+matrix_eig EigenUtil::PadTop(const matrix_eig &mat, float pad_value,
+                             int num_rows) {
   int num_cols = mat.cols();
   matrix_eig pad_mat = matrix_eig::Ones(num_rows, num_cols) * pad_value;
   return EigenUtil::VStack({pad_mat, mat});
 }
 
 }  // namespace brain
-}
+}  // namespace peloton

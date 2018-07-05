@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// linear_models.cpp
+// kernel_model.cpp
 //
-// Identification: src/brain/workload/linear_models.cpp
+// Identification: src/brain/workload/kernel_model.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -32,8 +32,7 @@ std::string TimeSeriesKernelReg::ToString() const {
   return model_str_builder.str();
 }
 
-void TimeSeriesKernelReg::Fit(const matrix_eig &X,
-                              const matrix_eig &y,
+void TimeSeriesKernelReg::Fit(const matrix_eig &X, const matrix_eig &y,
                               UNUSED_ATTRIBUTE int bsz) {
   matrix_eig X_proc;
   ModelUtil::GenerateFeatureMatrix(*this, X, X_proc);
