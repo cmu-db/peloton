@@ -16,7 +16,6 @@
 #include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/database_metrics_catalog.h"
-#include "catalog/foreign_key.h"
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/language_catalog.h"
@@ -959,7 +958,8 @@ ResultType Catalog::AddUniqueConstraint(concurrency::TransactionContext *txn,
                     ->GetSchema();
 
   // Create index
-  std::stringstream index_name(table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << table_object->GetTableName();
   for (auto column_id : column_ids)
     index_name << "_" + schema->GetColumn(column_id).GetName();
   index_name << "_UNIQ";
@@ -1034,7 +1034,8 @@ ResultType Catalog::AddForeignKeyConstraint(concurrency::TransactionContext *txn
                                 ->GetTableCatalogEntry(txn, src_table_oid);
   auto src_schema = src_table->GetSchema();
 
-  std::stringstream index_name(src_table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << src_table_object->GetTableName();
   for (auto col_id : src_col_ids)
     index_name << "_" << src_schema->GetColumn(col_id).GetName();
   index_name << "_fkey";

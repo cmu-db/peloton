@@ -17,7 +17,6 @@
 #include "catalog/database_metrics_catalog.h"
 #include "catalog/column.h"
 #include "catalog/column_catalog.h"
-#include "catalog/foreign_key.h"
 #include "catalog/index_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/manager.h"
@@ -76,16 +75,18 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
 
     // begin transaction
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
 
     // recover catalog table checkpoint
+    auto txn = txn_manager.BeginTransaction();
     if (!LoadCatalogTableCheckpoint(txn, epoch_id)) {
       LOG_ERROR("Catalog table checkpoint recovery was failed");
       txn_manager.AbortTransaction(txn);
       return false;
     }
+    txn_manager.CommitTransaction(txn);
 
     // recover user table checkpoint
+    txn = txn_manager.BeginTransaction();
     if (!LoadUserTableCheckpoint(txn, epoch_id)) {
       LOG_ERROR("User table checkpoint recovery was failed");
       txn_manager.AbortTransaction(txn);
@@ -265,16 +266,6 @@ void TimestampCheckpointManager::CreateCheckpoint(
 
   }  // end database loop
 
-  // do checkpointing to storage object
-  FileHandle metadata_file;
-  std::string metadata_filename = GetWorkingMetadataFileFullPath();
-  if (LoggingUtil::OpenFile(metadata_filename.c_str(), "wb", metadata_file) !=
-      true) {
-    LOG_ERROR("Create catalog file failed!");
-    return;
-  }
-  CheckpointingStorageObject(txn, metadata_file);
-  LoggingUtil::CloseFile(metadata_file);
 }
 
 void TimestampCheckpointManager::CheckpointingTableData(
@@ -409,7 +400,7 @@ void TimestampCheckpointManager::CheckpointingTableDataWithPersistentCheck(
              column_id++) {
           type::Value value = tile_group->GetValue(tuple_id, column_id);
           value.SerializeTo(output_buffer);
-          LOG_DEBUG("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
+          LOG_TRACE("%s(column %d, tuple %d):%s\n", table->GetName().c_str(),
                     column_id, tuple_id, value.ToString().c_str());
         }
       } else {
@@ -461,122 +452,6 @@ bool TimestampCheckpointManager::IsVisible(
       return activated && !invalidated;
     }
   }
-}
-
-// TODO: Integrate this function to CreateCatalogTableCheckpoint,
-//       after all necessary catalog data to recover all storage data
-//       is stored into catalog table. (Not serialize storage data for catalog)
-void TimestampCheckpointManager::CheckpointingStorageObject(
-    concurrency::TransactionContext *txn,
-    FileHandle &file_handle) {
-  CopySerializeOutput metadata_buffer;
-  auto catalog = catalog::Catalog::GetInstance();
-  LOG_TRACE("Do checkpointing to storage objects");
-
-  // insert each database information into metadata file
-  auto storage_manager = storage::StorageManager::GetInstance();
-  auto db_catalog_entrys = catalog->GetDatabaseCatalogEntries(txn);
-  metadata_buffer.WriteLong(db_catalog_entrys.size() - 1);
-  for (auto &db_catalog_entry_pair : db_catalog_entrys) {
-    auto &db_oid = db_catalog_entry_pair.first;
-    auto &db_catalog_entry = db_catalog_entry_pair.second;
-
-    // except for catalog database
-    if (db_oid == CATALOG_DATABASE_OID) continue;
-
-    LOG_TRACE("Write database storage object %d '%s'", db_oid,
-              db_catalog_entry->GetDatabaseName().c_str());
-
-    // write database information
-    metadata_buffer.WriteInt(db_oid);
-
-    // eliminate catalog tables from table catalog entries in the database
-    std::vector<std::shared_ptr<catalog::TableCatalogEntry>> table_catalog_entries;
-    auto all_table_catalog_entries = db_catalog_entry->GetTableCatalogEntries();
-    for (auto &table_catalog_entry_pair : all_table_catalog_entries) {
-      auto &table_catalog_entry = table_catalog_entry_pair.second;
-      if (table_catalog_entry->GetSchemaName() != CATALOG_SCHEMA_NAME) {
-        table_catalog_entries.push_back(table_catalog_entry);
-      }
-    }
-
-    // insert each table information in the database into metadata file
-    metadata_buffer.WriteLong(table_catalog_entries.size());
-    for (auto &table_catalog_entry : table_catalog_entries) {
-      auto table_oid = table_catalog_entry->GetTableOid();
-      auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
-      auto schema = table->GetSchema();
-
-      LOG_DEBUG(
-          "Write table storage object %d '%s' (%lu columns) in database "
-          "%d '%s'",
-          table_oid, table_catalog_entry->GetTableName().c_str(),
-          schema->GetColumnCount(), db_oid,
-          db_catalog_entry->GetDatabaseName().c_str());
-
-      // write table information
-      metadata_buffer.WriteInt(table_oid);
-
-      // Write schema information
-      auto column_catalog_entries = table_catalog_entry->GetColumnCatalogEntries();
-      metadata_buffer.WriteLong(column_catalog_entries.size());
-      for (auto &column_catalog_entry_pair : column_catalog_entries) {
-        auto &column_oid = column_catalog_entry_pair.first;
-        auto column = schema->GetColumn(column_oid);
-
-        // write column information
-        metadata_buffer.WriteInt(column_oid);
-
-        // Column constraints
-        // ToDo: Constraints should be contained in catalog
-        auto constraints = column.GetConstraints();
-        metadata_buffer.WriteLong(constraints.size());
-        for (auto constraint : constraints) {
-          constraint.SerializeTo(metadata_buffer);
-        }
-      }
-
-      // Write schema information (multi-column constraints)
-      // ToDo: Multi-constraints should be contained in catalog
-      auto multi_constraints = schema->GetMultiConstraints();
-      metadata_buffer.WriteLong(multi_constraints.size());
-      for (auto multi_constraint : multi_constraints) {
-        multi_constraint.SerializeTo(metadata_buffer);
-      }
-
-      // Write foreign key information of this sink table
-      // ToDo: Foreign key should be contained in catalog
-      auto foreign_key_count = table->GetForeignKeyCount();
-      metadata_buffer.WriteLong(foreign_key_count);
-      for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
-        auto foreign_key = table->GetForeignKey(fk_idx);
-        foreign_key->SerializeTo(metadata_buffer);
-      }
-
-      // Write foreign key information of this source tables
-      // ToDo: Foreign key should be contained in catalog
-      auto foreign_key_src_count = table->GetForeignKeySrcCount();
-      metadata_buffer.WriteLong(foreign_key_src_count);
-      for (oid_t fk_src_idx = 0; fk_src_idx < foreign_key_src_count;
-           fk_src_idx++) {
-        auto foreign_key_src = table->GetForeignKeySrc(fk_src_idx);
-        foreign_key_src->SerializeTo(metadata_buffer);
-      }
-
-      // Nothing to write about index
-
-    }  // table loop end
-
-  }  // database loop end
-
-  // Output data to file
-  int ret = fwrite((void *)metadata_buffer.Data(), metadata_buffer.Size(), 1,
-                   file_handle.file);
-  if (ret != 1) {
-    LOG_ERROR("Checkpoint metadata file write error");
-    return;
-  }
-  LoggingUtil::FFlushFsync(file_handle);
 }
 
 bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
@@ -676,7 +551,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
       (db_oid == CATALOG_DATABASE_OID && (
           table_oid == SCHEMA_CATALOG_OID || table_oid == TABLE_CATALOG_OID ||
           table_oid == COLUMN_CATALOG_OID || table_oid == INDEX_CATALOG_OID ||
-          table_oid == LAYOUT_CATALOG_OID))) {
+          table_oid == LAYOUT_CATALOG_OID || table_oid == CONSTRAINT_CATALOG_OID))) {
     // nothing to do (keep the default values, and not recover other data)
   } else {
     // read a checkpoint file for the catalog
@@ -701,15 +576,18 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
               db_catalog_entry->GetDatabaseName().c_str());
 
     // catalogs with duplicate check
-    // keep the default values, but other data is recovered
+    // keep the embedded tuples which are stored in Peloton initialization,
+    // but user tuples is recovered
     if (table_oid == DATABASE_CATALOG_OID || table_oid == SCHEMA_CATALOG_OID ||
         table_oid == TABLE_CATALOG_OID || table_oid == COLUMN_CATALOG_OID ||
         table_oid == INDEX_CATALOG_OID || table_oid == LAYOUT_CATALOG_OID ||
-        table_name == "pg_language" || table_name == "pg_proc") {
+        table_oid == CONSTRAINT_CATALOG_OID || table_name == "pg_language" ||
+        table_name == "pg_proc") {
       oid_align =
           RecoverTableDataWithDuplicateCheck(txn, table, table_file);
     }
-    //
+    // catalogs with persistent check
+    // recover settings which need to update embedded tuples with user set values.
     else if (table_name == "pg_settings") {
       std::vector<oid_t> key_column_ids = {table->GetSchema()->GetColumnID("name")};
       oid_t flag_column_id = table->GetSchema()->GetColumnID("is_persistent");
@@ -719,8 +597,12 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
                                               table_file,
                                               key_column_ids,
                                               flag_column_id);
+      // Reload settings data
+      // TODO: settings::SettingsManager::GetInstance()->UpdateSettingListFromCatalog(txn)
     }
     // catalogs to be recovered without duplicate check
+    // these catalog tables have no embedded tuples
+    // Targets: pg_trigger, pg_*_metrics, pg_query_history, pg_column_stats, zone_map
     else {
       oid_align = RecoverTableDataWithoutTileGroup(txn, table, table_file);
     }
@@ -740,6 +622,8 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
       system_catalogs->GetIndexCatalog()->UpdateOid(oid_align);
     } else if (table_oid == LAYOUT_CATALOG_OID) {
       // Layout OID is controlled within each DataTable object
+    } else if (table_oid == CONSTRAINT_CATALOG_OID) {
+      system_catalogs->GetConstraintCatalog()->UpdateOid(oid_align);
     } else if (table_name == "pg_proc") {
       catalog::ProcCatalog::GetInstance().UpdateOid(oid_align);
     } else if (table_name == "pg_trigger") {
@@ -763,19 +647,6 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
 bool TimestampCheckpointManager::LoadUserTableCheckpoint(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id) {
-  // Recover storage object
-  FileHandle metadata_file;
-  std::string metadata_filename = GetMetadataFileFullPath(epoch_id);
-  if (!LoggingUtil::OpenFile(metadata_filename.c_str(), "rb", metadata_file)) {
-    LOG_ERROR("Open checkpoint metadata file failed!");
-    return false;
-  }
-  if (!RecoverStorageObject(txn, metadata_file)) {
-    LOG_ERROR("Storage object recovery failed");
-    return false;
-  }
-  LoggingUtil::CloseFile(metadata_file);
-
   // Recover table
   auto storage_manager = storage::StorageManager::GetInstance();
   auto catalog = catalog::Catalog::GetInstance();
@@ -789,11 +660,17 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
 
     for (auto &table_catalog_entry_pair : db_catalog_entry->GetTableCatalogEntries()) {
       auto &table_oid = table_catalog_entry_pair.first;
-      auto table = database->GetTableWithOid(table_oid);
       auto &table_catalog_entry = table_catalog_entry_pair.second;
 
-      // catalog tables in each database have already benn recovered
+      // catalog tables in each database have already been recovered
       if (table_catalog_entry->GetSchemaName() == CATALOG_SCHEMA_NAME) continue;
+
+      // Recover storage object of the table
+      if (!RecoverTableStorageObject(txn, db_oid, table_oid)) {
+        LOG_ERROR("Storage object recovery for table %s failed",
+                  table_catalog_entry->GetTableName().c_str());
+        continue;
+      }
 
       // read a checkpoint file for the catalog
       FileHandle table_file;
@@ -813,210 +690,234 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoint(
                 db_catalog_entry->GetDatabaseName().c_str());
 
       // recover the table from the checkpoint file
-      RecoverTableData(txn, table, table_file);
+      RecoverTableData(txn, database->GetTableWithOid(table_oid), table_file);
 
       LoggingUtil::CloseFile(table_file);
 
     }  // table loop end
+
+    // register foreign key to sink table
+    for (auto &table_catalog_entry_pair : db_catalog_entry->GetTableCatalogEntries()) {
+      auto source_table_schema =
+          database->GetTableWithOid(table_catalog_entry_pair.first)->GetSchema();
+      if (source_table_schema->HasForeignKeys()) {
+        for(auto constraint : source_table_schema->GetForeignKeyConstraints()) {
+          auto sink_table = database->GetTableWithOid(constraint->GetFKSinkTableOid());
+          sink_table->GetSchema()->RegisterForeignKeySource(constraint);
+        }
+      }
+    }
 
   }  // database loop end
 
   return true;
 }
 
-
-// TODO: Use data in catalog table to create storage objects (not serialized
-// catalog object data)
-bool TimestampCheckpointManager::RecoverStorageObject(
+bool TimestampCheckpointManager::RecoverTableStorageObject(
     concurrency::TransactionContext *txn,
-    FileHandle &file_handle) {
-  // read metadata file to recovered storage object
-  size_t metadata_size = LoggingUtil::GetFileSize(file_handle);
-  std::unique_ptr<char[]> metadata_data(new char[metadata_size]);
+    const oid_t db_oid,
+    const oid_t table_oid) {
+  auto database =
+      storage::StorageManager::GetInstance()->GetDatabaseWithOid(db_oid);
+  auto table_catalog_entry =
+      catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn, db_oid, table_oid);
 
-  LOG_DEBUG("Recover storage object (%lu byte)", metadata_size);
+  // This function targets user tables rather than catalogs
+  PELOTON_ASSERT(db_oid != CATALOG_DATABASE_OID);
+  PELOTON_ASSERT(table_catalog_entry->GetSchemaName() != CATALOG_SCHEMA_NAME);
 
-  if (!LoggingUtil::ReadNBytesFromFile(file_handle,
-                                       metadata_data.get(),
-                                       metadata_size)) {
-    LOG_ERROR("Checkpoint metadata file read error");
-    return false;
-  }
+  LOG_DEBUG("Create table storage object %d '%s.%s'", table_oid,
+            table_catalog_entry->GetSchemaName().c_str(),
+            table_catalog_entry->GetTableName().c_str());
 
-  CopySerializeInput metadata_buffer(metadata_data.get(), metadata_size);
-  auto catalog = catalog::Catalog::GetInstance();
-  auto storage_manager = storage::StorageManager::GetInstance();
+  // recover column information
+  std::vector<catalog::Column> columns;
+  for (auto column_catalog_entry_pair : table_catalog_entry->GetColumnCatalogEntries()) {
+    auto column_oid = column_catalog_entry_pair.first;
+    auto column_catalog_entry = column_catalog_entry_pair.second;
 
-  // recover database storage object
-  size_t db_size = metadata_buffer.ReadLong();
-  for (oid_t db_idx = 0; db_idx < db_size; db_idx++) {
-    oid_t db_oid = metadata_buffer.ReadInt();
-    auto db_catalog_entry = catalog->GetDatabaseCatalogEntry(txn, db_oid);
-    PELOTON_ASSERT(db_catalog_entry != nullptr);
+    // create column storage object
+    auto column = catalog::Column(column_catalog_entry->GetColumnType(),
+                                  column_catalog_entry->GetColumnLength(),
+                                  column_catalog_entry->GetColumnName(),
+                                  column_catalog_entry->IsInlined(),
+                                  column_catalog_entry->GetColumnOffset());
 
-    // database object has already been recovered in catalog recovery
-    auto database = storage_manager->GetDatabaseWithOid(db_oid);
+    // recover column constraints: NOT NULL
+    if (column_catalog_entry->IsNotNull()) {
+      column.SetNotNull();
+    }
 
-    LOG_DEBUG("Recover table object for database %d '%s'",
-        db_catalog_entry->GetDatabaseOid(), db_catalog_entry->GetDatabaseName().c_str());
+    // recover column constraints: DEFAULT
+    if (column_catalog_entry->HasDefault()) {
+      column.SetDefaultValue(column_catalog_entry->GetDefaultValue());
+    }
 
-    // recover table storage objects
-    size_t table_size = metadata_buffer.ReadLong();
-    for (oid_t table_idx = 0; table_idx < table_size; table_idx++) {
-      oid_t table_oid = metadata_buffer.ReadInt();
-
-      auto table_catalog_entry = db_catalog_entry->GetTableCatalogEntry(table_oid);
-      PELOTON_ASSERT(table_catalog_entry != nullptr);
-
-      LOG_DEBUG("Create table object %d '%s.%s'", table_oid,
-                table_catalog_entry->GetSchemaName().c_str(),
-                table_catalog_entry->GetTableName().c_str());
-
-      // recover column information
-      size_t column_count = metadata_buffer.ReadLong();
-      std::vector<catalog::Column> columns;
-      for (oid_t column_idx = 0; column_idx < column_count; column_idx++) {
-        oid_t column_oid = metadata_buffer.ReadInt();
-
-        auto column_catalog_entry = table_catalog_entry->GetColumnCatalogEntry(column_oid);
-        PELOTON_ASSERT(column_catalog_entry != nullptr);
-
-        // create column storage object
-        auto column = catalog::Column(
-            column_catalog_entry->GetColumnType(), column_catalog_entry->GetColumnLength(),
-            column_catalog_entry->GetColumnName(), column_catalog_entry->IsInlined(),
-            column_catalog_entry->GetColumnOffset());
-
-        // recover column constraints
-        // ToDo: Constraint should be recovered from catalog
-        size_t column_constraint_count = metadata_buffer.ReadLong();
-        for (oid_t constraint_idx = 0; constraint_idx < column_constraint_count;
-             constraint_idx++) {
-          auto column_constraint = catalog::Constraint::DeserializeFrom(
-              metadata_buffer, column.GetType());
-          // Foreign key constraint will be stored by DataTable deserializer
-          if (column_constraint.GetType() != ConstraintType::FOREIGN) {
-            column.AddConstraint(column_constraint);
-          }
-        }
-
-        // Set a column into the vector in order of the column_oid.
-        // Cannot use push_back of vector because column_catalog_entry doesn't acquire
-        // the column info from pg_attribute in the order.
-        auto column_itr = columns.begin();
-        for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
-          if (column_itr == columns.end() ||
-              column_itr->GetOffset() > column.GetOffset()) {
-              break;
-          } else {
-            column_itr++;
-          }
-        }
-        columns.insert(column_itr, column);;
-
-      }  // column loop end
-
-      std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
-
-      // read schema information (multi-column constraints)
-      size_t multi_constraint_count = metadata_buffer.ReadLong();
-      for (oid_t multi_constraint_idx = 0;
-           multi_constraint_idx < multi_constraint_count;
-           multi_constraint_idx++) {
-        schema->AddMultiConstraints(
-            catalog::MultiConstraint::DeserializeFrom(metadata_buffer));
-      }
-
-      // load layout info from catalog
-      auto default_layout =
-          table_catalog_entry->GetLayout(table_catalog_entry->GetDefaultLayoutOid());
-
-      // create table storage object.
-      // if the default layout type is hybrid, set default layout separately
-      bool own_schema = true;
-      bool adapt_table = false;
-      bool is_catalog = false;
-      storage::DataTable *table;
-      if (default_layout->IsHybridStore()) {
-        table = storage::TableFactory::GetDataTable(
-            db_oid, table_oid, schema.release(), table_catalog_entry->GetTableName(),
-            DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog);
-        table->SetDefaultLayout(default_layout);
-        // adjust layout oid value
-        table->GetNextLayoutOid();
+    // Set a column into the vector in order of the column_oid.
+    // Cannot use push_back of vector because column_catalog_entries doesn't acquire
+    // the column info in the order from pg_attribute.
+    auto column_itr = columns.begin();
+    for (oid_t idx_count = START_OID; idx_count < column_oid; idx_count++) {
+      if (column_itr == columns.end() ||
+          column_itr->GetOffset() > column.GetOffset()) {
+          break;
       } else {
-        table = storage::TableFactory::GetDataTable(
-            db_oid, table_oid, schema.release(), table_catalog_entry->GetTableName(),
-            DEFAULT_TUPLES_PER_TILEGROUP, own_schema, adapt_table, is_catalog,
-            default_layout->GetLayoutType());
+        column_itr++;
       }
-      database->AddTable(table, is_catalog);
+    }
+    columns.insert(column_itr, column);;
 
-      // put data table object into rw_object_set
-      txn->RecordCreate(db_oid, table_oid, INVALID_OID);
+  } // column loop end
 
-      // recover foreign key information as sink table
-      auto foreign_key_count = metadata_buffer.ReadLong();
-      for (oid_t fk_idx = 0; fk_idx < foreign_key_count; fk_idx++) {
-        table->AddForeignKey(
-            catalog::ForeignKey::DeserializeFrom(metadata_buffer));
+  // create schema for the table
+  std::unique_ptr<catalog::Schema> schema(new catalog::Schema(columns));
+
+  // recover default layout
+  auto default_layout =
+      table_catalog_entry->GetLayout(table_catalog_entry->GetDefaultLayoutOid());
+
+  // create table storage object.
+  // if the default layout type is hybrid, set default layout separately
+  bool own_schema = true;
+  bool adapt_table = false;
+  bool is_catalog = false;
+  storage::DataTable *table;
+  if (default_layout->IsHybridStore()) {
+    table =
+        storage::TableFactory::GetDataTable(db_oid,
+                                            table_oid,
+                                            schema.release(),
+                                            table_catalog_entry->GetTableName(),
+                                            DEFAULT_TUPLES_PER_TILEGROUP,
+                                            own_schema,
+                                            adapt_table,
+                                            is_catalog);
+    table->SetDefaultLayout(default_layout);
+    // adjust layout oid value
+    table->GetNextLayoutOid();
+  } else {
+    table =
+        storage::TableFactory::GetDataTable(db_oid,
+                                            table_oid,
+                                            schema.release(),
+                                            table_catalog_entry->GetTableName(),
+                                            DEFAULT_TUPLES_PER_TILEGROUP,
+                                            own_schema,
+                                            adapt_table,
+                                            is_catalog,
+                                            default_layout->GetLayoutType());
+  }
+  database->AddTable(table, is_catalog);
+
+  // put data table object into rw_object_set
+  txn->RecordCreate(db_oid, table_oid, INVALID_OID);
+
+  // recover triggers of the storage table
+  table->UpdateTriggerListFromCatalog(txn);
+
+  // recover index storage objects
+  for (auto &index_catalog_entry_pair :
+          table_catalog_entry->GetIndexCatalogEntries()) {
+    auto index_oid = index_catalog_entry_pair.first;
+    auto index_catalog_entry = index_catalog_entry_pair.second;
+
+    LOG_TRACE(
+        "|- Index %d '%s':  Index type %s, Index constraint %s, unique "
+        "keys %d",
+        index_oid, index_catalog_entry->GetIndexName().c_str(),
+        IndexTypeToString(index_catalog_entry->GetIndexType()).c_str(),
+        IndexConstraintTypeToString(index_catalog_entry->GetIndexConstraint())
+            .c_str(),
+        index_catalog_entry->HasUniqueKeys());
+
+    auto &key_attrs = index_catalog_entry->GetKeyAttrs();
+    auto key_schema =
+        catalog::Schema::CopySchema(table->GetSchema(), key_attrs);
+    key_schema->SetIndexedColumns(key_attrs);
+
+    // Set index metadata
+    auto index_metadata =
+        new index::IndexMetadata(index_catalog_entry->GetIndexName(),
+                                 index_oid,
+                                 table_oid,
+                                 db_oid,
+                                 index_catalog_entry->GetIndexType(),
+                                 index_catalog_entry->GetIndexConstraint(),
+                                 table->GetSchema(),
+                                 key_schema,
+                                 key_attrs,
+                                 index_catalog_entry->HasUniqueKeys());
+
+    // create index storage objects and add it to the table
+    std::shared_ptr<index::Index> index(
+        index::IndexFactory::GetIndex(index_metadata));
+    table->AddIndex(index);
+
+    // Put index object into rw_object_set
+    txn->RecordCreate(db_oid, table_oid, index_oid);
+
+  }  // index loop end
+
+  // recover table constraints
+  for (auto constraint_catalog_entry_pair :
+          table_catalog_entry->GetConstraintCatalogEntries()) {
+    auto constraint_oid = constraint_catalog_entry_pair.first;
+    auto constraint_catalog_entry = constraint_catalog_entry_pair.second;
+
+    // create constraint
+    std::shared_ptr<catalog::Constraint> constraint;
+    switch (constraint_catalog_entry->GetConstraintType()) {
+      case ConstraintType::PRIMARY:
+      case ConstraintType::UNIQUE: {
+        constraint =
+            std::make_shared<catalog::Constraint>(constraint_oid,
+                                                  constraint_catalog_entry->GetConstraintType(),
+                                                  constraint_catalog_entry->GetConstraintName(),
+                                                  constraint_catalog_entry->GetTableOid(),
+                                                  constraint_catalog_entry->GetColumnIds(),
+                                                  constraint_catalog_entry->GetIndexOid());
+        break;
       }
-
-      // recover foreign key information as source table
-      auto foreign_key_src_count = metadata_buffer.ReadLong();
-      for (oid_t fk_src_idx = 0; fk_src_idx < foreign_key_src_count;
-           fk_src_idx++) {
-        table->RegisterForeignKeySource(
-            catalog::ForeignKey::DeserializeFrom(metadata_buffer));
+      case ConstraintType::FOREIGN: {
+        constraint =
+            std::make_shared<catalog::Constraint>(constraint_oid,
+                                                  constraint_catalog_entry->GetConstraintType(),
+                                                  constraint_catalog_entry->GetConstraintName(),
+                                                  constraint_catalog_entry->GetTableOid(),
+                                                  constraint_catalog_entry->GetColumnIds(),
+                                                  constraint_catalog_entry->GetIndexOid(),
+                                                  constraint_catalog_entry->GetFKSinkTableOid(),
+                                                  constraint_catalog_entry->GetFKSinkColumnIds(),
+                                                  constraint_catalog_entry->GetFKUpdateAction(),
+                                                  constraint_catalog_entry->GetFKDeleteAction());
+        // cannot register foreign key into a sink table here
+        // because the sink table might not be recovered yet.
+        break;
       }
+      case ConstraintType::CHECK: {
+        constraint =
+            std::make_shared<catalog::Constraint>(constraint_oid,
+                                                  constraint_catalog_entry->GetConstraintType(),
+                                                  constraint_catalog_entry->GetConstraintName(),
+                                                  constraint_catalog_entry->GetTableOid(),
+                                                  constraint_catalog_entry->GetColumnIds(),
+                                                  constraint_catalog_entry->GetIndexOid(),
+                                                  constraint_catalog_entry->GetCheckExp());
+        break;
+      }
+      default:
+        LOG_ERROR("Unexpected constraint type is appeared: %s",
+                  ConstraintTypeToString(constraint_catalog_entry->GetConstraintType()).c_str());
+        break;
+    }
 
-      // recover trigger object of the storage table
-      table->UpdateTriggerListFromCatalog(txn);
+    LOG_TRACE("|- %s", constraint->GetInfo().c_str());
 
-      // Settings
+    // set the constraint into the table
+    table->GetSchema()->AddConstraint(constraint);
 
-      // tuning
+  } // constraint loop end
 
-      // recover index storage objects
-      auto index_catalog_entries = table_catalog_entry->GetIndexCatalogEntries();
-      for (auto &index_catalog_entry_pair : index_catalog_entries) {
-        auto index_oid = index_catalog_entry_pair.first;
-        auto index_catalog_entry = index_catalog_entry_pair.second;
-
-        LOG_TRACE(
-            "|- Index %d '%s':  Index type %s, Index constraint %s, unique "
-            "keys %d",
-            index_oid, index_catalog_entry->GetIndexName().c_str(),
-            IndexTypeToString(index_catalog_entry->GetIndexType()).c_str(),
-            IndexConstraintTypeToString(index_catalog_entry->GetIndexConstraint())
-                .c_str(),
-            index_catalog_entry->HasUniqueKeys());
-
-        auto &key_attrs = index_catalog_entry->GetKeyAttrs();
-        auto key_schema =
-            catalog::Schema::CopySchema(table->GetSchema(), key_attrs);
-        key_schema->SetIndexedColumns(key_attrs);
-
-        // Set index metadata
-        auto index_metadata = new index::IndexMetadata(
-            index_catalog_entry->GetIndexName(), index_oid, table_oid, db_oid,
-            index_catalog_entry->GetIndexType(), index_catalog_entry->GetIndexConstraint(),
-            table->GetSchema(), key_schema, key_attrs,
-            index_catalog_entry->HasUniqueKeys());
-
-        // create index storage objects and add it to the table
-        std::shared_ptr<index::Index> key_index(
-            index::IndexFactory::GetIndex(index_metadata));
-        table->AddIndex(key_index);
-
-        // Put index object into rw_object_set
-        txn->RecordCreate(db_oid, table_oid, index_oid);
-
-      }  // index loop end
-
-    }  // table loop end
-
-  }  // database loop end
 
   return true;
 }
@@ -1199,10 +1100,11 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
   // look for all primary key columns
   std::vector<oid_t> pk_columns;
   auto schema = table->GetSchema();
+  PELOTON_ASSERT(schema->HasPrimary());
   oid_t column_count = schema->GetColumnCount();
-  for (oid_t column_id = 0; column_id < column_count; column_id++) {
-    if (schema->GetColumn(column_id).IsPrimary()) {
-      pk_columns.push_back(column_id);
+  for (auto constraint : schema->GetConstraints()) {
+    if (constraint.second->GetType() == ConstraintType::PRIMARY) {
+      pk_columns = constraint.second->GetColumnIds();
     }
   }
 

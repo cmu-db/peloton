@@ -19,7 +19,6 @@
 #include "concurrency/transaction_manager_factory.h"
 #include "logging/timestamp_checkpoint_manager.h"
 #include "logging/logging_util.h"
-#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/tile_group_factory.h"
 #include "sql/testing_sql_util.h"
@@ -104,7 +103,6 @@ bool RecoverTileGroupFromFile(
 
 
 TEST_F(TimestampCheckpointingTests, CheckpointingTest) {
-  settings::SettingsManager::SetBool(settings::SettingId::checkpointing, false);
   PelotonInit::Initialize();
 
   auto &checkpoint_manager = logging::TimestampCheckpointManager::GetInstance();

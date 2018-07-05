@@ -83,13 +83,6 @@ class Constraint : public Printable {
 
   inline std::string GetName() const { return constraint_name_; }
 
-  // Serialize this constraint
-  void SerializeTo(SerializeOutput &out) const;
-
-  // Deserialize this constraint
-  static Constraint DeserializeFrom(SerializeInput &in,
-                                    const type::TypeId column_type);
-
   // Get a string representation for debugging
   const std::string GetInfo() const override;
 

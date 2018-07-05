@@ -126,32 +126,30 @@ class TimestampCheckpointManager : public CheckpointManager {
                  const oid_t &tuple_id,
                  const cid_t &begin_cid);
 
-  // read storage objects data for user tables and write it down to a checkpoint
-  // metadata file
-  void CheckpointingStorageObject(concurrency::TransactionContext *txn,
-                                  FileHandle &file_handle);
-
   //===--------------------------------------------------------------------===//
   // Checkpoint Recovery Functions
   //===--------------------------------------------------------------------===//
 
-  // recover catalog table checkpoints
+  // load catalog table checkpoints
   bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
                                   const eid_t &epoch_id);
 
-  // read a checkpoint catalog
+  // load a specific catalog table checkpoint
   bool LoadCatalogTableCheckpoint(concurrency::TransactionContext *txn,
                                   const eid_t &epoch_id,
                                   const oid_t db_oid,
                                   const oid_t table_oid);
 
-  // recover user table checkpoints and these catalog objects
+  // load user table checkpoints
   bool LoadUserTableCheckpoint(concurrency::TransactionContext *txn,
                                const eid_t &epoch_id);
 
-  // Read a checkpoint catalog file and recover catalog objects for user tables
-  bool RecoverStorageObject(concurrency::TransactionContext *txn,
-                            FileHandle &file_handle);
+  // recover an user table storage object by using recovered catalog
+  // Note: Foreign key constraint is recovered just for the source table.
+  //       Caller has to register its constraint in the sink table.
+  bool RecoverTableStorageObject(concurrency::TransactionContext *txn,
+                                 const oid_t db_oid,
+                                 const oid_t table_oid);
 
   // Read a checkpoint data file and recover the table
   // This function is provided for checkpointed user table
