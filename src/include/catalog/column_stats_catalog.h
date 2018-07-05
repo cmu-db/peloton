@@ -56,27 +56,38 @@ class ColumnStatsCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-                         int num_rows, double cardinality, double frac_null,
+  bool InsertColumnStats(concurrency::TransactionContext *txn,
+                         oid_t database_id,
+                         oid_t table_id,
+                         oid_t column_id,
+                         std::string column_name,
+                         int num_rows,
+                         double frac_null,
                          std::string most_common_vals,
                          std::string most_common_freqs,
-                         std::string histogram_bounds, std::string column_name,
-                         bool has_index, type::AbstractPool *pool,
-                         concurrency::TransactionContext *txn);
-  bool DeleteColumnStats(oid_t database_id, oid_t table_id, oid_t column_id,
-                         concurrency::TransactionContext *txn);
+                         std::string histogram_bounds,
+                         double cardinality,
+                         bool has_index,
+                         type::AbstractPool *pool);
+
+  bool DeleteColumnStats(concurrency::TransactionContext *txn,
+                         oid_t database_id,
+                         oid_t table_id,
+                         oid_t column_id);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
-  std::unique_ptr<std::vector<type::Value>> GetColumnStats(
-      oid_t database_id, oid_t table_id, oid_t column_id,
-      concurrency::TransactionContext *txn);
+  std::unique_ptr<std::vector<type::Value>> GetColumnStats(concurrency::TransactionContext *txn,
+                                                           oid_t database_id,
+                                                           oid_t table_id,
+                                                           oid_t column_id);
 
-  size_t GetTableStats(
-      oid_t database_id, oid_t table_id, concurrency::TransactionContext *txn,
-      std::map<oid_t, std::unique_ptr<std::vector<type::Value>>> &
-          column_stats_map);
+  size_t GetTableStats(concurrency::TransactionContext *txn,
+                       oid_t database_id,
+                       oid_t table_id,
+                       std::map<oid_t, std::unique_ptr<std::vector<type::Value>>>
+                           &column_stats_map);
   // TODO: add more if needed
 
   enum ColumnId {

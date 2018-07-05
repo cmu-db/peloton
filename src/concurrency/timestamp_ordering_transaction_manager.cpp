@@ -358,6 +358,8 @@ void TimestampOrderingTransactionManager::PerformInsert(
   PELOTON_ASSERT(tile_group_header->GetEndCommitId(tuple_id) == MAX_CID);
 
   tile_group_header->SetTransactionId(tuple_id, transaction_id);
+  tile_group_header->SetLastReaderCommitId(tuple_id,
+                                           current_txn->GetCommitId());
 
   // no need to set next item pointer.
 
@@ -412,6 +414,8 @@ void TimestampOrderingTransactionManager::PerformUpdate(
   new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetLastReaderCommitId(new_location.offset,
+                                               current_txn->GetCommitId());
 
   // we should guarantee that the newer version is all set before linking the
   // newer version to older version.
@@ -515,6 +519,8 @@ void TimestampOrderingTransactionManager::PerformDelete(
   new_tile_group_header->SetNextItemPointer(new_location.offset, old_location);
 
   new_tile_group_header->SetTransactionId(new_location.offset, transaction_id);
+  new_tile_group_header->SetLastReaderCommitId(new_location.offset,
+                                               current_txn->GetCommitId());
 
   new_tile_group_header->SetEndCommitId(new_location.offset, INVALID_CID);
 

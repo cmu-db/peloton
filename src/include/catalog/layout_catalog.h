@@ -23,34 +23,38 @@ class Layout;
 namespace catalog {
 
 class LayoutCatalog : public AbstractCatalog {
+  friend class Catalog;
  public:
 
-  LayoutCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
+  LayoutCatalog(concurrency::TransactionContext *txn,
+                storage::Database *pg_catalog,
+                type::AbstractPool *pool);
 
   ~LayoutCatalog();
 
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertLayout(oid_t table_oid,
+  bool InsertLayout(concurrency::TransactionContext *txn,
+                    oid_t table_oid,
                     std::shared_ptr<const storage::Layout> layout,
-                    type::AbstractPool *pool,
-                    concurrency::TransactionContext *txn);
+                    type::AbstractPool *pool);
 
-  bool DeleteLayout(oid_t table_oid, oid_t layout_oid,
-                    concurrency::TransactionContext *txn);
+  bool DeleteLayout(concurrency::TransactionContext *txn,
+                    oid_t table_oid,
+                    oid_t layout_oid);
 
-  bool DeleteLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool DeleteLayouts(concurrency::TransactionContext *txn, oid_t table_oid);
 
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
   const std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
-  GetLayouts(oid_t table_oid, concurrency::TransactionContext *txn);
+  GetLayouts(concurrency::TransactionContext *txn, oid_t table_oid);
 
-  std::shared_ptr<const storage::Layout> GetLayoutWithOid(
-      oid_t table_oid, oid_t layout_oid, concurrency::TransactionContext *txn);
+  std::shared_ptr<const storage::Layout> GetLayoutWithOid(concurrency::TransactionContext *txn,
+                                                          oid_t table_oid,
+                                                          oid_t layout_oid);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeSchema();
@@ -62,7 +66,7 @@ class LayoutCatalog : public AbstractCatalog {
     COLUMN_MAP = 3,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3};
 
   enum IndexId {
     PRIMARY_KEY = 0,

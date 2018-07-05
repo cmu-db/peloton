@@ -73,12 +73,18 @@ void SettingsManager::InitializeCatalog() {
 
   for (auto s : settings_) {
     // TODO: Use Update instead Delete & Insert
-    settings_catalog.DeleteSetting(s.second.name, txn);
-    if (!settings_catalog.InsertSetting(
-            s.second.name, s.second.value.ToString(),
-            s.second.value.GetTypeId(), s.second.desc, "", "",
-            s.second.default_value.ToString(), s.second.is_mutable,
-            s.second.is_persistent, pool, txn)) {
+    settings_catalog.DeleteSetting(txn, s.second.name);
+    if (!settings_catalog.InsertSetting(txn,
+                                        s.second.name,
+                                        s.second.value.ToString(),
+                                        s.second.value.GetTypeId(),
+                                        s.second.desc,
+                                        "",
+                                        "",
+                                        s.second.default_value.ToString(),
+                                        s.second.is_mutable,
+                                        s.second.is_persistent,
+                                        pool)) {
       txn_manager.AbortTransaction(txn);
       throw SettingsException("failed to initialize catalog pg_settings on " +
                               s.second.name);
@@ -174,11 +180,18 @@ bool SettingsManager::InsertIntoCatalog(const Param &param) {
   auto txn = txn_manager.BeginTransaction();
   type::AbstractPool *pool = pool_.get();
   // TODO: Use Update instead Delete & Insert
-  settings_catalog.DeleteSetting(param.name, txn);
-  if (!settings_catalog.InsertSetting(
-          param.name, param.value.ToString(), param.value.GetTypeId(),
-          param.desc, "", "", param.default_value.ToString(), param.is_mutable,
-          param.is_persistent, pool, txn)) {
+  settings_catalog.DeleteSetting(txn, param.name);
+  if (!settings_catalog.InsertSetting(txn,
+                                      param.name,
+                                      param.value.ToString(),
+                                      param.value.GetTypeId(),
+                                      param.desc,
+                                      "",
+                                      "",
+                                      param.default_value.ToString(),
+                                      param.is_mutable,
+                                      param.is_persistent,
+                                      pool)) {
     txn_manager.AbortTransaction(txn);
     return false;
   }

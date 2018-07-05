@@ -22,46 +22,61 @@
 namespace peloton {
 namespace catalog {
 
-TriggerCatalog::TriggerCatalog(const std::string &database_name,
-                               concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " + database_name +
-                          "." CATALOG_SCHEMA_NAME "." TRIGGER_CATALOG_NAME
-                          " ("
-                          "oid          INT NOT NULL PRIMARY KEY, "
-                          "tgrelid      INT NOT NULL, "
-                          "tgname       VARCHAR NOT NULL, "
-                          "tgfoid       VARCHAR, "
-                          "tgtype       INT NOT NULL, "
-                          "tgargs       VARCHAR, "
-                          "tgqual       VARBINARY, "
-                          "timestamp    TIMESTAMP NOT NULL);",
-                      txn) {
+TriggerCatalog::TriggerCatalog(concurrency::TransactionContext *txn,
+                               const std::string &database_name)
+    : AbstractCatalog(txn, "CREATE TABLE " + database_name +
+    "." CATALOG_SCHEMA_NAME "." TRIGGER_CATALOG_NAME
+    " ("
+    "oid          INT NOT NULL PRIMARY KEY, "
+    "tgrelid      INT NOT NULL, "
+    "tgname       VARCHAR NOT NULL, "
+    "tgfoid       VARCHAR, "
+    "tgtype       INT NOT NULL, "
+    "tgargs       VARCHAR, "
+    "tgqual       VARBINARY, "
+    "timestamp    TIMESTAMP NOT NULL);") {
   // Add secondary index here if necessary
-  Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
-      {ColumnId::TABLE_OID, ColumnId::TRIGGER_TYPE},
-      TRIGGER_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      database_name,
+                                      CATALOG_SCHEMA_NAME,
+                                      TRIGGER_CATALOG_NAME,
+                                      TRIGGER_CATALOG_NAME "_skey0",
+                                      {ColumnId::TABLE_OID,
+                                       ColumnId::TRIGGER_TYPE},
+                                      false,
+                                      IndexType::BWTREE);
 
-  Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
-      {ColumnId::TABLE_OID}, TRIGGER_CATALOG_NAME "_skey1", false,
-      IndexType::BWTREE, txn);
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      database_name,
+                                      CATALOG_SCHEMA_NAME,
+                                      TRIGGER_CATALOG_NAME,
+                                      TRIGGER_CATALOG_NAME "_skey1",
+                                      {ColumnId::TABLE_OID},
+                                      false,
+                                      IndexType::BWTREE);
 
-  Catalog::GetInstance()->CreateIndex(
-      database_name, CATALOG_SCHEMA_NAME, TRIGGER_CATALOG_NAME,
-      {ColumnId::TRIGGER_NAME, ColumnId::TABLE_OID},
-      TRIGGER_CATALOG_NAME "_skey2", false, IndexType::BWTREE, txn);
+  Catalog::GetInstance()->CreateIndex(txn,
+                                      database_name,
+                                      CATALOG_SCHEMA_NAME,
+                                      TRIGGER_CATALOG_NAME,
+                                      TRIGGER_CATALOG_NAME "_skey2",
+                                      {ColumnId::TRIGGER_NAME,
+                                       ColumnId::TABLE_OID},
+                                      false,
+                                      IndexType::BWTREE);
 }
 
 TriggerCatalog::~TriggerCatalog() {}
 
-bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
-                                   int16_t trigger_type, std::string proc_oid,
+bool TriggerCatalog::InsertTrigger(concurrency::TransactionContext *txn,
+                                   oid_t table_oid,
+                                   std::string trigger_name,
+                                   int16_t trigger_type,
+                                   std::string proc_oid,
                                    std::string function_arguments,
                                    type::Value fire_condition,
                                    type::Value timestamp,
-                                   type::AbstractPool *pool,
-                                   concurrency::TransactionContext *txn) {
+                                   type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -86,14 +101,14 @@ bool TriggerCatalog::InsertTrigger(oid_t table_oid, std::string trigger_name,
   tuple->SetValue(ColumnId::TIMESTAMP, val7, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-ResultType TriggerCatalog::DropTrigger(const oid_t database_oid,
+ResultType TriggerCatalog::DropTrigger(concurrency::TransactionContext *txn,
+                                       const oid_t database_oid,
                                        const oid_t table_oid,
-                                       const std::string &trigger_name,
-                                       concurrency::TransactionContext *txn) {
-  bool delete_success = DeleteTriggerByName(trigger_name, table_oid, txn);
+                                       const std::string &trigger_name) {
+  bool delete_success = DeleteTriggerByName(txn, table_oid, trigger_name);
   if (delete_success) {
     LOG_TRACE("Delete trigger successfully");
     // ask target table to update its trigger list variable
@@ -107,8 +122,9 @@ ResultType TriggerCatalog::DropTrigger(const oid_t database_oid,
   return ResultType::FAILURE;
 }
 
-oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
-                                    concurrency::TransactionContext *txn) {
+oid_t TriggerCatalog::GetTriggerOid(concurrency::TransactionContext *txn,
+                                    oid_t table_oid,
+                                    std::string trigger_name) {
   std::vector<oid_t> column_ids({ColumnId::TRIGGER_OID});
   oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
   std::vector<type::Value> values;
@@ -116,7 +132,10 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   oid_t trigger_oid = INVALID_OID;
   if (result_tiles->size() == 0) {
@@ -131,20 +150,20 @@ oid_t TriggerCatalog::GetTriggerOid(std::string trigger_name, oid_t table_oid,
   return trigger_oid;
 }
 
-bool TriggerCatalog::DeleteTriggerByName(const std::string &trigger_name,
+bool TriggerCatalog::DeleteTriggerByName(concurrency::TransactionContext *txn,
                                          oid_t table_oid,
-                                         concurrency::TransactionContext *txn) {
+                                         const std::string &trigger_name) {
   oid_t index_offset = IndexId::NAME_TABLE_KEY_2;
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetVarcharValue(trigger_name).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
-    oid_t table_oid, int16_t trigger_type,
-    concurrency::TransactionContext *txn) {
+std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(concurrency::TransactionContext *txn,
+                                                                        oid_t table_oid,
+                                                                        int16_t trigger_type) {
   LOG_INFO("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
@@ -157,7 +176,10 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
 
   // the result is a vector of executor::LogicalTile
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
     LOG_INFO("no trigger on table %d", table_oid);
@@ -185,8 +207,8 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(
   return new_trigger_list;
 }
 
-std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
-    oid_t table_oid, concurrency::TransactionContext *txn) {
+std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(concurrency::TransactionContext *txn,
+                                                                  oid_t table_oid) {
   // LOG_DEBUG("Get triggers for table %d", table_oid);
   // select trigger_name, fire condition, function_name, function_args
   std::vector<oid_t> column_ids(
@@ -200,7 +222,10 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggers(
 
   // the result is a vector of executor::LogicalTile
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
   // carefull! the result tile could be null!
   // if (result_tiles == nullptr) {
   //   LOG_INFO("no trigger on table %d", table_oid);

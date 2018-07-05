@@ -128,24 +128,34 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_id", true);
-  catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
-  id_column.AddConstraint(constraint);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
-  catalog->CreateDatabase("emp_db", txn);
-  catalog::Catalog::GetInstance()->CreateTable("emp_db", DEFAULT_SCHEMA_NAME,
+  catalog->CreateDatabase(txn, "emp_db");
+  catalog::Catalog::GetInstance()->CreateTable(txn,
+                                               "emp_db",
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
                                                "department_table",
-                                               std::move(table_schema), txn);
+                                               false);
 
   // Create multiple stat worker threads
   int num_threads = 8;
   storage::Database *database =
-      catalog->GetDatabaseWithName("emp_db", txn);
-  storage::DataTable *table = catalog->GetTableWithName(
-      "emp_db", DEFAULT_SCHEMA_NAME, "department_table", txn);
+      catalog->GetDatabaseWithName(txn, "emp_db");
+  storage::DataTable *table = catalog->GetTableWithName(txn,
+                                                  "emp_db",
+                                                  DEFAULT_SCHEMA_NAME,
+                                                  "department_table");
+
+  catalog->AddPrimaryKeyConstraint(txn,
+                                   database->GetOid(),
+                                   table->GetOid(),
+                                   {0},
+                                   "con_primary");
+
   txn_manager.CommitTransaction(txn);
   LaunchParallelTest(num_threads, TransactionTest, database, table);
   // Wait for aggregation to finish
@@ -194,7 +204,7 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
             num_threads * NUM_ITERATION * NUM_INDEX_INSERT);
 
   txn = txn_manager.BeginTransaction();
-  catalog->DropDatabaseWithName("emp_db", txn);
+  catalog->DropDatabaseWithName(txn, "emp_db");
   txn_manager.CommitTransaction(txn);
 }
 //

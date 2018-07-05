@@ -129,12 +129,14 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
+  auto prev_tc = gc_manager.GetTableCount();
+
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "UPDATE_TABLE", db_id, INVALID_OID, 1234, true));
+      num_key, "UPDATE_TABLE", db_id, 12345, 1234, true));
 
-  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+  EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
 
   gc_manager.StartGC(gc_threads);
 
@@ -200,7 +202,8 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
   TestingExecutorUtil::DeleteDatabase("update_db");
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseObject(db_id, txn),
+  EXPECT_THROW(catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                                        db_id),
                CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));
@@ -222,12 +225,15 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   auto database = TestingExecutorUtil::InitializeDatabase("delete_db");
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
+
+  auto prev_tc = gc_manager.GetTableCount();
+
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "DELETE_TABLE", db_id, INVALID_OID, 1234, true));
+      num_key, "DELETE_TABLE", db_id, 12346, 1234, true));
 
-  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
+  EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
 
   gc_manager.StartGC(gc_threads);
 
@@ -299,7 +305,7 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   EXPECT_THROW(
-      catalog::Catalog::GetInstance()->GetDatabaseObject("DATABASE0", txn),
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn, "DATABASE0"),
       CatalogException);
   txn_manager.CommitTransaction(txn);
   // EXPECT_FALSE(storage_manager->HasDatabase(db_id));

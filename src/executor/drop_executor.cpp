@@ -80,8 +80,9 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
 
   if (node.IsMissing()) {
     try {
-      auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-          database_name, txn);
+      auto database_object =
+          catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                                   database_name);
     } catch (CatalogException &e) {
       LOG_TRACE("Database %s does not exist.", database_name.c_str());
       return false;
@@ -89,10 +90,11 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
   }
 
   auto database_object =
-      catalog::Catalog::GetInstance()->GetDatabaseObject(database_name, txn);
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               database_name);
 
   ResultType result =
-      catalog::Catalog::GetInstance()->DropDatabaseWithName(database_name, txn);
+      catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, database_name);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -100,7 +102,7 @@ bool DropExecutor::DropDatabase(const planner::DropPlan &node,
 
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       std::set<oid_t> table_ids;
-      auto table_objects = database_object->GetTableObjects(false);
+      auto table_objects = database_object->GetTableCatalogEntries(false);
       for (auto it : table_objects) {
         table_ids.insert(it.second->GetTableOid());
       }
@@ -118,8 +120,9 @@ bool DropExecutor::DropSchema(const planner::DropPlan &node,
   std::string database_name = node.GetDatabaseName();
   std::string schema_name = node.GetSchemaName();
 
-  ResultType result = catalog::Catalog::GetInstance()->DropSchema(
-      database_name, schema_name, txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropSchema(txn,
+                                                                  database_name,
+                                                                  schema_name);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -127,9 +130,10 @@ bool DropExecutor::DropSchema(const planner::DropPlan &node,
     // add dropped table into StatementCacheManager
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       std::set<oid_t> table_ids;
-      auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-          database_name, txn);
-      auto table_objects = database_object->GetTableObjects(schema_name);
+      auto database_object =
+          catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                                   database_name);
+      auto table_objects = database_object->GetTableCatalogEntries(schema_name);
       for (int i = 0; i < (int)table_objects.size(); i++) {
         table_ids.insert(table_objects[i]->GetTableOid());
       }
@@ -150,16 +154,21 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
 
   if (node.IsMissing()) {
     try {
-      auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-          database_name, schema_name, table_name, txn);
+      auto table_object =
+          catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                database_name,
+                                                                schema_name,
+                                                                table_name);
     } catch (CatalogException &e) {
       LOG_TRACE("Table %s does not exist.", table_name.c_str());
       return false;
     }
   }
 
-  ResultType result = catalog::Catalog::GetInstance()->DropTable(
-      database_name, schema_name, table_name, txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropTable(txn,
+                                                                 database_name,
+                                                                 schema_name,
+                                                                 table_name);
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {
@@ -168,7 +177,10 @@ bool DropExecutor::DropTable(const planner::DropPlan &node,
     if (StatementCacheManager::GetStmtCacheManager().get()) {
       oid_t table_id =
           catalog::Catalog::GetInstance()
-              ->GetTableObject(database_name, schema_name, table_name, txn)
+              ->GetTableCatalogEntry(txn,
+                                     database_name,
+                                     schema_name,
+                                     table_name)
               ->GetTableOid();
       StatementCacheManager::GetStmtCacheManager()->InvalidateTableOid(
           table_id);
@@ -186,15 +198,19 @@ bool DropExecutor::DropTrigger(const planner::DropPlan &node,
   std::string table_name = node.GetTableName();
   std::string trigger_name = node.GetTriggerName();
 
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name, schema_name, table_name, txn);
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+                                                                            database_name,
+                                                                            schema_name,
+                                                                            table_name);
   // drop trigger
   ResultType result =
       catalog::Catalog::GetInstance()
           ->GetSystemCatalogs(table_object->GetDatabaseOid())
           ->GetTriggerCatalog()
-          ->DropTrigger(table_object->GetDatabaseOid(),
-                        table_object->GetTableOid(), trigger_name, txn);
+          ->DropTrigger(txn,
+                        table_object->GetDatabaseOid(),
+                        table_object->GetTableOid(),
+                        trigger_name);
   txn->SetResult(result);
   if (txn->GetResult() == ResultType::SUCCESS) {
     LOG_DEBUG("Dropping trigger succeeded!");
@@ -219,8 +235,9 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
                              concurrency::TransactionContext *txn) {
   std::string index_name = node.GetIndexName();
   std::string schema_name = node.GetSchemaName();
-  auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-      node.GetDatabaseName(), txn);
+  auto database_object =
+      catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(txn,
+                                                               node.GetDatabaseName());
   if (database_object == nullptr) {
     throw CatalogException("Index name " + index_name + " cannot be found");
   }
@@ -228,15 +245,18 @@ bool DropExecutor::DropIndex(const planner::DropPlan &node,
   auto pg_index = catalog::Catalog::GetInstance()
                       ->GetSystemCatalogs(database_object->GetDatabaseOid())
                       ->GetIndexCatalog();
-  auto index_object = pg_index->GetIndexObject(database_object->GetDatabaseName(),
-                                               index_name, schema_name, txn);
+  auto index_object = pg_index->GetIndexCatalogEntry(txn,
+                                                     database_object->GetDatabaseName(),
+                                                     schema_name,
+                                                     index_name);
   if (index_object == nullptr) {
     throw CatalogException("Can't find index " + schema_name + "." +
                            index_name + " to drop");
   }
   // invoke directly using oid
-  ResultType result = catalog::Catalog::GetInstance()->DropIndex(
-      database_object->GetDatabaseOid(), index_object->GetIndexOid(), txn);
+  ResultType result = catalog::Catalog::GetInstance()->DropIndex(txn,
+                                                                 database_object->GetDatabaseOid(),
+                                                                 index_object->GetIndexOid());
   txn->SetResult(result);
 
   if (txn->GetResult() == ResultType::SUCCESS) {

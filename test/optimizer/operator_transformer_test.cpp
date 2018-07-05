@@ -39,7 +39,7 @@ class OperatorTransformerTests : public PelotonTest {
     // Create test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Create table
@@ -94,7 +94,7 @@ class OperatorTransformerTests : public PelotonTest {
     // Destroy test database
     auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
     auto txn = txn_manager.BeginTransaction();
-    catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
     txn_manager.CommitTransaction(txn);
 
     // Call parent virtual function

@@ -14,6 +14,7 @@
 
 #include <mutex>
 
+#include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -35,18 +36,20 @@ class TableCatalog;
 class IndexCatalog;
 class ColumnCatalog;
 class LayoutCatalog;
+class ConstraintCatalog;
 
 class SystemCatalogs {
  public:
   SystemCatalogs() = delete;
 
-  SystemCatalogs(storage::Database *database, type::AbstractPool *pool,
-                 concurrency::TransactionContext *txn);
+  SystemCatalogs(concurrency::TransactionContext *txn,
+                 storage::Database *database,
+                 type::AbstractPool *pool);
 
   ~SystemCatalogs();
 
-  void Bootstrap(const std::string &database_name,
-                 concurrency::TransactionContext *txn);
+  void Bootstrap(concurrency::TransactionContext *txn,
+                 const std::string &database_name);
 
   //===--------------------------------------------------------------------===//
   // GET FUNCTIONS
@@ -87,6 +90,13 @@ class SystemCatalogs {
     return pg_layout_;
   }
 
+  ConstraintCatalog *GetConstraintCatalog() {
+    if (!pg_constraint_) {
+      throw CatalogException("Layout catalog has not been initialized");
+    }
+    return pg_constraint_;
+  }
+
   TriggerCatalog *GetTriggerCatalog() {
     if (!pg_trigger_) {
       throw CatalogException("Trigger catalog has not been initialized");
@@ -121,6 +131,7 @@ class SystemCatalogs {
   TableCatalog *pg_table_;
   IndexCatalog *pg_index_;
   LayoutCatalog *pg_layout_;
+  ConstraintCatalog *pg_constraint_;
 
   TriggerCatalog *pg_trigger_;
   // ProcCatalog *pg_proc;

@@ -84,7 +84,28 @@ void InputColumnDeriver::Visit(const QueryDerivedScan *op) {
           output_cols, {input_cols}};
 }
 
-void InputColumnDeriver::Visit(const PhysicalLimit *) { Passdown(); }
+void InputColumnDeriver::Visit(const PhysicalLimit *op) {
+  // All aggregate expressions and TVEs in the required columns and internal 
+  // sort columns are needed by the child node
+  ExprSet input_cols_set;
+  for (auto expr : required_cols_) {
+    if (expression::ExpressionUtil::IsAggregateExpression(expr)) {
+      input_cols_set.insert(expr);
+    } else {
+      expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
+    }
+  }
+  for (const auto& sort_column : op->sort_exprs) {
+    input_cols_set.insert(sort_column);
+  }
+  vector<AbstractExpression *> cols;
+  for (const auto &expr : input_cols_set) {
+    cols.push_back(expr);
+  }
+  output_input_cols_ =
+      pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>{
+          cols, {cols}};
+}
 
 void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   // we need to pass down both required columns and sort columns
@@ -92,10 +113,11 @@ void InputColumnDeriver::Visit(const PhysicalOrderBy *) {
   PELOTON_ASSERT(prop.get() != nullptr);
   ExprSet input_cols_set;
   for (auto expr : required_cols_) {
-    if (expression::ExpressionUtil::IsAggregateExpression(expr))
+    if (expression::ExpressionUtil::IsAggregateExpression(expr)) {
       input_cols_set.insert(expr);
-    else
+    } else {
       expression::ExpressionUtil::GetTupleValueExprs(input_cols_set, expr);
+    }
   }
   auto sort_prop = prop->As<PropertySort>();
   size_t sort_col_size = sort_prop->GetSortColumnSize();

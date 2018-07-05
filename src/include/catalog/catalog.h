@@ -20,10 +20,11 @@
 namespace peloton {
 
 namespace catalog {
+class Constraint;
 class Schema;
-class DatabaseCatalogObject;
-class TableCatalogObject;
-class IndexCatalogObject;
+class DatabaseCatalogEntry;
+class TableCatalogEntry;
+class IndexCatalogEntry;
 class SystemCatalogs;
 }  // namespace catalog
 
@@ -91,38 +92,46 @@ class Catalog {
   // CREATE FUNCTIONS
   //===--------------------------------------------------------------------===//
   // Create a database
-  ResultType CreateDatabase(const std::string &database_name,
-                            concurrency::TransactionContext *txn);
+  ResultType CreateDatabase(concurrency::TransactionContext *txn,
+                            const std::string &database_name);
 
   // Create a schema(namespace)
-  ResultType CreateSchema(const std::string &database_name,
-                          const std::string &schema_name,
-                          concurrency::TransactionContext *txn);
+  ResultType CreateSchema(concurrency::TransactionContext *txn,
+                          const std::string &database_name,
+                          const std::string &schema_name);
 
   // Create a table in a database
-  ResultType CreateTable(
-      const std::string &database_name, const std::string &schema_name,
-      const std::string &table_name, std::unique_ptr<catalog::Schema>,
-      concurrency::TransactionContext *txn, bool is_catalog = false,
-      uint32_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
-      peloton::LayoutType layout_type = LayoutType::ROW);
+  ResultType CreateTable(concurrency::TransactionContext *txn,
+                         const std::string &database_name,
+                         const std::string &schema_name,
+                         std::unique_ptr<catalog::Schema> schema,
+                         const std::string &table_name,
+                         bool is_catalog,
+                         uint32_t tuples_per_tilegroup = DEFAULT_TUPLES_PER_TILEGROUP,
+                         LayoutType layout_type = LayoutType::ROW);
 
   // Create index for a table
-  ResultType CreateIndex(const std::string &database_name,
+  ResultType CreateIndex(concurrency::TransactionContext *txn,
+                         const std::string &database_name,
                          const std::string &schema_name,
                          const std::string &table_name,
+                         const std::string &index_name,
                          const std::vector<oid_t> &key_attrs,
-                         const std::string &index_name, bool unique_keys,
-                         IndexType index_type,
-                         concurrency::TransactionContext *txn);
+                         bool unique_keys,
+                         IndexType index_type);
 
-  ResultType CreateIndex(oid_t database_oid, oid_t table_oid,
-                         const std::vector<oid_t> &key_attrs,
+  ResultType CreateIndex(concurrency::TransactionContext *txn,
+                         oid_t database_oid,
                          const std::string &schema_name,
-                         const std::string &index_name, IndexType index_type,
-                         IndexConstraintType index_constraint, bool unique_keys,
-                         concurrency::TransactionContext *txn,
-                         bool is_catalog = false);
+                         oid_t table_oid,
+                         bool is_catalog,
+                         oid_t index_oid,
+                         const std::string &index_name,
+                         const std::vector<oid_t> &key_attrs,
+                         bool unique_keys,
+                         IndexType index_type,
+                         IndexConstraintType index_constraint);
+
 
   /**
    * @brief   create a new layout for a table
@@ -133,9 +142,10 @@ class Catalog {
    * @return  shared_ptr    shared_ptr to the newly created layout in case of
    *                        success. nullptr in case of failure.
    */
-  std::shared_ptr<const storage::Layout> CreateLayout(
-      oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
-      concurrency::TransactionContext *txn);
+  std::shared_ptr<const storage::Layout> CreateLayout(concurrency::TransactionContext *txn,
+                                                      oid_t database_oid,
+                                                      oid_t table_oid,
+                                                      const column_map_type &column_map);
 
   /**
    * @brief   create a new layout for a table and make it the default if
@@ -147,37 +157,96 @@ class Catalog {
    * @return  shared_ptr    shared_ptr to the newly created layout in case of
    *                        success. nullptr in case of failure.
    */
-  std::shared_ptr<const storage::Layout> CreateDefaultLayout(
-      oid_t database_oid, oid_t table_oid, const column_map_type &column_map,
-      concurrency::TransactionContext *txn);
+  std::shared_ptr<const storage::Layout> CreateDefaultLayout(concurrency::TransactionContext *txn,
+                                                             oid_t database_oid,
+                                                             oid_t table_oid,
+                                                             const column_map_type &column_map);
+
+  //===--------------------------------------------------------------------===//
+  // SET FUNCTIONS FOR COLUMN CONSTRAINT
+  //===--------------------------------------------------------------------===//
+
+  // Set not null constraint for a column
+  ResultType SetNotNullConstraint(concurrency::TransactionContext *txn,
+                                  oid_t database_oid,
+                                  oid_t table_oid,
+                                  oid_t column_id);
+
+  // Set default constraint for a column
+  ResultType SetDefaultConstraint(concurrency::TransactionContext *txn,
+                                  oid_t database_oid,
+                                  oid_t table_oid,
+                                  oid_t column_id,
+                                  const type::Value &default_value);
+
+  //===--------------------------------------------------------------------===//
+  // ADD FUNCTIONS FOR TABLE CONSTRAINT
+  //===--------------------------------------------------------------------===//
+
+  // Add a new primary constraint for a table
+  ResultType AddPrimaryKeyConstraint(concurrency::TransactionContext *txn,
+                                     oid_t database_oid,
+                                     oid_t table_oid,
+                                     const std::vector<oid_t> &column_ids,
+                                     const std::string &constraint_name);
+
+  // Add a new unique constraint for a table
+  ResultType AddUniqueConstraint(concurrency::TransactionContext *txn,
+                                 oid_t database_oid,
+                                 oid_t table_oid,
+                                 const std::vector<oid_t> &column_ids,
+                                 const std::string &constraint_name);
+
+  // Add a new foreign key constraint for a table
+  ResultType AddForeignKeyConstraint(concurrency::TransactionContext *txn,
+                                     oid_t database_oid,
+                                     oid_t src_table_oid,
+                                     const std::vector<oid_t> &src_col_ids,
+                                     oid_t sink_table_oid,
+                                     const std::vector<oid_t> &sink_col_ids,
+                                     FKConstrActionType upd_action,
+                                     FKConstrActionType del_action,
+                                     const std::string &constraint_name);
+
+  // Add a new check constraint for a table
+  ResultType AddCheckConstraint(concurrency::TransactionContext *txn,
+                                oid_t database_oid,
+                                oid_t table_oid,
+                                const std::vector<oid_t> &column_ids,
+                                const std::pair<ExpressionType, type::Value> &exp,
+                                const std::string &constraint_name);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
   //===--------------------------------------------------------------------===//
   // Drop a database with its name
-  ResultType DropDatabaseWithName(const std::string &database_name,
-                                  concurrency::TransactionContext *txn);
+  ResultType DropDatabaseWithName(concurrency::TransactionContext *txn,
+                                  const std::string &database_name);
 
   // Drop a database with its oid
-  ResultType DropDatabaseWithOid(oid_t database_oid,
-                                 concurrency::TransactionContext *txn);
+  ResultType DropDatabaseWithOid(concurrency::TransactionContext *txn,
+                                 oid_t database_oid);
 
   // Drop a schema(namespace) using schema name
-  ResultType DropSchema(const std::string &database_name,
-                        const std::string &schema_name,
-                        concurrency::TransactionContext *txn);
+  ResultType DropSchema(concurrency::TransactionContext *txn,
+                        const std::string &database_name,
+                        const std::string &schema_name);
 
   // Drop a table using table name
-  ResultType DropTable(const std::string &database_name,
+  ResultType DropTable(concurrency::TransactionContext *txn,
+                       const std::string &database_name,
                        const std::string &schema_name,
-                       const std::string &table_name,
-                       concurrency::TransactionContext *txn);
+                       const std::string &table_name);
+
   // Drop a table, use this one in the future
-  ResultType DropTable(oid_t database_oid, oid_t table_oid,
-                       concurrency::TransactionContext *txn);
+  ResultType DropTable(concurrency::TransactionContext *txn,
+                       oid_t database_oid,
+                       oid_t table_oid);
+
   // Drop an index, using its index_oid
-  ResultType DropIndex(oid_t database_oid, oid_t index_oid,
-                       concurrency::TransactionContext *txn);
+  ResultType DropIndex(concurrency::TransactionContext *txn,
+                       oid_t database_oid,
+                       oid_t index_oid);
 
   /** @brief   Drop layout
    * tile_groups
@@ -187,8 +256,29 @@ class Catalog {
    * @param   txn             TransactionContext
    * @return  ResultType(SUCCESS or FAILURE)
    */
-  ResultType DropLayout(oid_t database_oid, oid_t table_oid, oid_t layout_oid,
-                        concurrency::TransactionContext *txn);
+  ResultType DropLayout(concurrency::TransactionContext *txn,
+                        oid_t database_oid,
+                        oid_t table_oid,
+                        oid_t layout_oid);
+
+  // Drop not null constraint for a column
+  ResultType DropNotNullConstraint(concurrency::TransactionContext *txn,
+                                   oid_t database_oid,
+                                   oid_t table_oid,
+                                   oid_t column_id);
+
+  // Drop default constraint for a column
+  ResultType DropDefaultConstraint(concurrency::TransactionContext *txn,
+                                   oid_t database_oid,
+                                   oid_t table_oid,
+                                   oid_t column_id);
+
+  // Drop constraint for a table
+  ResultType DropConstraint(concurrency::TransactionContext *txn,
+                            oid_t database_oid,
+                            oid_t table_oid,
+                            oid_t constraint_oid);
+
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
@@ -197,42 +287,45 @@ class Catalog {
    * get it from storage layer using database_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  storage::Database *GetDatabaseWithName(
-      const std::string &db_name, concurrency::TransactionContext *txn) const;
+  storage::Database *GetDatabaseWithName(concurrency::TransactionContext *txn,
+                                         const std::string &db_name) const;
 
   /* Check table from pg_table with table_name & schema_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  storage::DataTable *GetTableWithName(const std::string &database_name,
+  storage::DataTable *GetTableWithName(concurrency::TransactionContext *txn,
+                                       const std::string &database_name,
                                        const std::string &schema_name,
-                                       const std::string &table_name,
-                                       concurrency::TransactionContext *txn);
+                                       const std::string &table_name);
 
   /* Check table from pg_database with database_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      const std::string &database_name, concurrency::TransactionContext *txn);
-  std::shared_ptr<DatabaseCatalogObject> GetDatabaseObject(
-      oid_t database_oid, concurrency::TransactionContext *txn);
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                                                                const std::string &database_name);
+
+  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                                                                oid_t database_oid);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &database_name, const std::string &schema_name,
-      const std::string &table_name, concurrency::TransactionContext *txn);
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      oid_t database_oid, oid_t table_oid,
-      concurrency::TransactionContext *txn);
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          const std::string &database_name,
+                                                          const std::string &schema_name,
+                                                          const std::string &table_name);
+
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          oid_t database_oid,
+                                                          oid_t table_oid);
 
   /*
    * Using database oid to get system catalog object
    */
-  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(const oid_t database_oid);
+  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(oid_t database_oid);
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//
@@ -252,34 +345,32 @@ class Catalog {
 
   void InitializeFunctions();
 
-  void AddPlpgsqlFunction(
-      const std::string &name, const std::vector<type::TypeId> &argument_types,
-      const type::TypeId return_type, oid_t prolang,
-      const std::string &func_src,
-      std::shared_ptr<peloton::codegen::CodeContext> code_context,
-      concurrency::TransactionContext *txn);
+  void AddProcedure(concurrency::TransactionContext *txn,
+                    const std::string &name,
+                    type::TypeId return_type,
+                    const std::vector<type::TypeId> &argument_types,
+                    oid_t prolang,
+                    std::shared_ptr<peloton::codegen::CodeContext> code_context,
+                    const std::string &func_src);
 
-  void AddBuiltinFunction(const std::string &name,
-                          const std::vector<type::TypeId> &argument_types,
-                          const type::TypeId return_type, oid_t prolang,
-                          const std::string &func_name,
+  // TODO(Tianyu): Somebody should comment on what the difference between name
+  //               and func_name is. I am confused.
+  void AddBuiltinFunction(concurrency::TransactionContext *txn,
+                          const std::string &name,
                           function::BuiltInFuncType func,
-                          concurrency::TransactionContext *txn);
+                          const std::string &func_name,
+                          type::TypeId return_type,
+                          const std::vector<type::TypeId> &argument_types,
+                          oid_t prolang);
 
-  const FunctionData GetFunction(
-      const std::string &name, const std::vector<type::TypeId> &argument_types);
+  const FunctionData GetFunction(const std::string &name,
+                                 const std::vector<type::TypeId> &argument_types);
 
  private:
   Catalog();
 
-  void BootstrapSystemCatalogs(storage::Database *database,
-                               concurrency::TransactionContext *txn);
-
-  // Create the primary key index for a table, don't call this function outside
-  // catalog.cpp
-  ResultType CreatePrimaryIndex(oid_t database_oid, oid_t table_oid,
-                                const std::string &schema_name,
-                                concurrency::TransactionContext *txn);
+  void BootstrapSystemCatalogs(concurrency::TransactionContext *txn,
+                               storage::Database *database);
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;

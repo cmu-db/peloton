@@ -24,23 +24,29 @@
 namespace peloton {
 namespace catalog {
 
-SchemaCatalogObject::SchemaCatalogObject(executor::LogicalTile *tile,
-                                         concurrency::TransactionContext *txn)
-    : schema_oid(tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_OID)
+SchemaCatalogEntry::SchemaCatalogEntry(concurrency::TransactionContext *txn,
+                                       executor::LogicalTile *tile)
+    : schema_oid_(tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_OID)
                      .GetAs<oid_t>()),
-      schema_name(
+      schema_name_(
           tile->GetValue(0, SchemaCatalog::ColumnId::SCHEMA_NAME).ToString()),
-      txn(txn) {}
+      txn_(txn) {}
 
-SchemaCatalog::SchemaCatalog(
-    storage::Database *database, UNUSED_ATTRIBUTE type::AbstractPool *pool,
-    UNUSED_ATTRIBUTE concurrency::TransactionContext *txn)
-    : AbstractCatalog(SCHEMA_CATALOG_OID, SCHEMA_CATALOG_NAME,
-                      InitializeSchema().release(), database) {
+SchemaCatalog::SchemaCatalog(concurrency::TransactionContext *,
+                             storage::Database *database,
+                             type::AbstractPool *)
+    : AbstractCatalog(database,
+                      InitializeSchema().release(),
+                      SCHEMA_CATALOG_OID,
+                      SCHEMA_CATALOG_NAME) {
   // Add indexes for pg_namespace
-  AddIndex({0}, SCHEMA_CATALOG_PKEY_OID, SCHEMA_CATALOG_NAME "_pkey",
+  AddIndex(SCHEMA_CATALOG_NAME "_pkey",
+           SCHEMA_CATALOG_PKEY_OID,
+           {ColumnId::SCHEMA_OID},
            IndexConstraintType::PRIMARY_KEY);
-  AddIndex({1}, SCHEMA_CATALOG_SKEY0_OID, SCHEMA_CATALOG_NAME "_skey0",
+  AddIndex(SCHEMA_CATALOG_NAME "_skey0",
+           SCHEMA_CATALOG_SKEY0_OID,
+           {ColumnId::SCHEMA_NAME},
            IndexConstraintType::UNIQUE);
 }
 
@@ -50,31 +56,35 @@ SchemaCatalog::~SchemaCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> SchemaCatalog::InitializeSchema() {
-  const std::string not_null_constraint_name = "not_null";
-  const std::string primary_key_constraint_name = "primary_key";
-
   auto schema_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "schema_oid", true);
-  schema_id_column.AddConstraint(catalog::Constraint(
-      ConstraintType::PRIMARY, primary_key_constraint_name));
-  schema_id_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+  schema_id_column.SetNotNull();
 
   auto schema_name_column = catalog::Column(
-      type::TypeId::VARCHAR, max_name_size, "schema_name", false);
-  schema_name_column.AddConstraint(
-      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
+      type::TypeId::VARCHAR, max_name_size_, "schema_name", false);
+  schema_name_column.SetNotNull();
 
   std::unique_ptr<catalog::Schema> schema(
       new catalog::Schema({schema_id_column, schema_name_column}));
+
+  schema->AddConstraint(std::make_shared<Constraint>(
+      SCHEMA_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_OID},
+      SCHEMA_CATALOG_PKEY_OID));
+
+  schema->AddConstraint(std::make_shared<catalog::Constraint>(
+      SCHEMA_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
+      SCHEMA_CATALOG_OID, std::vector<oid_t>{ColumnId::SCHEMA_NAME},
+      SCHEMA_CATALOG_SKEY0_OID));
+
   return schema;
 }
 
-bool SchemaCatalog::InsertSchema(oid_t schema_oid,
+bool SchemaCatalog::InsertSchema(concurrency::TransactionContext *txn,
+                                 oid_t schema_oid,
                                  const std::string &schema_name,
-                                 type::AbstractPool *pool,
-                                 concurrency::TransactionContext *txn) {
+                                 type::AbstractPool *pool) {
   // Create the tuple first
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
@@ -86,37 +96,41 @@ bool SchemaCatalog::InsertSchema(oid_t schema_oid,
   tuple->SetValue(SchemaCatalog::ColumnId::SCHEMA_NAME, val1, pool);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
-bool SchemaCatalog::DeleteSchema(const std::string &schema_name,
-                                 concurrency::TransactionContext *txn) {
+bool SchemaCatalog::DeleteSchema(concurrency::TransactionContext *txn,
+                                 const std::string &schema_name) {
   oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of schema_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
-  return DeleteWithIndexScan(index_offset, values, txn);
+  return DeleteWithIndexScan(txn, index_offset, values);
 }
 
-std::shared_ptr<SchemaCatalogObject> SchemaCatalog::GetSchemaObject(
-    const std::string &schema_name, concurrency::TransactionContext *txn) {
+std::shared_ptr<SchemaCatalogEntry> SchemaCatalog::GetSchemaCatalogEntry(
+    concurrency::TransactionContext *txn,
+    const std::string &schema_name) {
   if (txn == nullptr) {
     throw CatalogException("Transaction is invalid!");
   }
   // get from pg_namespace, index scan
-  std::vector<oid_t> column_ids(all_column_ids);
+  std::vector<oid_t> column_ids(all_column_ids_);
   oid_t index_offset = IndexId::SKEY_SCHEMA_NAME;  // Index of database_name
   std::vector<type::Value> values;
   values.push_back(
       type::ValueFactory::GetVarcharValue(schema_name, nullptr).Copy());
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, txn);
+      GetResultWithIndexScan(txn,
+                             column_ids,
+                             index_offset,
+                             values);
 
   if (result_tiles->size() == 1 && (*result_tiles)[0]->GetTupleCount() == 1) {
     auto schema_object =
-        std::make_shared<SchemaCatalogObject>((*result_tiles)[0].get(), txn);
+        std::make_shared<SchemaCatalogEntry>(txn, (*result_tiles)[0].get());
     // TODO: we don't have cache for schema object right now
     return schema_object;
   }

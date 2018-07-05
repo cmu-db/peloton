@@ -87,7 +87,7 @@ void PelotonInit::Initialize() {
 
   // initialize the catalog and add the default database, so we don't do this on
   // the first query
-  pg_catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  pg_catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
 
   txn_manager.CommitTransaction(txn);
 

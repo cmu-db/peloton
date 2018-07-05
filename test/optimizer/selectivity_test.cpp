@@ -56,7 +56,7 @@ void ExpectSelectivityEqual(double actual, double expected,
 TEST_F(SelectivityTests, RangeSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -71,9 +71,11 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
 
   txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         TEST_TABLE_NAME, txn);
+  auto database = catalog->GetDatabaseWithName(txn, DEFAULT_DB_NAME);
+  auto table = catalog->GetTableWithName(txn,
+                                         DEFAULT_DB_NAME,
+                                         DEFAULT_SCHEMA_NAME,
+                                         TEST_TABLE_NAME);
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
@@ -109,7 +111,7 @@ TEST_F(SelectivityTests, RangeSelectivityTest) {
 
   // Free the database
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -165,7 +167,7 @@ TEST_F(SelectivityTests, LikeSelectivityTest) {
 TEST_F(SelectivityTests, EqualSelectivityTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   CreateAndLoadTable();
@@ -180,9 +182,11 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
-  auto database = catalog->GetDatabaseWithName(DEFAULT_DB_NAME, txn);
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         TEST_TABLE_NAME, txn);
+  auto database = catalog->GetDatabaseWithName(txn, DEFAULT_DB_NAME);
+  auto table = catalog->GetTableWithName(txn,
+                                         DEFAULT_DB_NAME,
+                                         DEFAULT_SCHEMA_NAME,
+                                         TEST_TABLE_NAME);
   txn_manager.CommitTransaction(txn);
   oid_t db_id = database->GetOid();
   oid_t table_id = table->GetOid();
@@ -258,7 +262,7 @@ TEST_F(SelectivityTests, EqualSelectivityTest) {
 
   // Free the database
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
