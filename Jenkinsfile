@@ -100,13 +100,13 @@ pipeline {
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python script/validators/source_validator.py'
-                        sh 'mkdir build && cd build'
-                        sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
-                        sh 'ASAN_OPTIONS=detect_container_overflow=0 make check -j4'
-                        sh 'make install'
-                        sh 'bash ../script/testing/psql/psql_test.sh'
-                        sh 'python ../script/validators/jdbc_validator.py'
-                        sh 'ASAN_OPTIONS=detect_container_overflow=0 python ../script/testing/junit/run_junit.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && ASAN_OPTIONS=detect_container_overflow=0 make check -j4'
+                        sh 'cd build && make install'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && ASAN_OPTIONS=detect_container_overflow=0 python ../script/testing/junit/run_junit.py'
                     }
                 }
 
