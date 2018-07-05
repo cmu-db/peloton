@@ -97,7 +97,7 @@ class TimestampCheckpointManager : public CheckpointManager {
   // execute checkpointing in a designated interval
   void PerformCheckpointing();
 
-  // checkpointing for the user tables
+  // create checkpoints for all tables
   void CreateCheckpoints(concurrency::TransactionContext *txn,
                          const cid_t begin_cid);
 
@@ -107,8 +107,7 @@ class TimestampCheckpointManager : public CheckpointManager {
                               FileHandle &file_handle);
 
   // read table data without tile group and write it down to checkpoint data
-  // file
-  // for catalog table checkpointing
+  // file for catalog table checkpointing
   void CheckpointingTableDataWithoutTileGroup(const storage::DataTable *table,
                                               const cid_t &begin_cid,
                                               FileHandle &file_handle);
@@ -160,20 +159,20 @@ class TimestampCheckpointManager : public CheckpointManager {
   // Read a checkpoint data file without tile group and recover the table
   // This function is provided for initialized catalog table not including
   // default value
-  // return: inserted tuple count into table
+  // return: Tuple count inserted into the table
   oid_t RecoverTableDataWithoutTileGroup(concurrency::TransactionContext *txn,
                                          storage::DataTable *table,
                                          FileHandle &file_handle);
 
-  // Read a checkpoint data file with duplicate check without tile group
-  // This function keeps default values of catalogs
-  // return: inserted tuple count into table without default value
+  // Read a checkpoint data file with duplicate check without tile group.
+  // This function keeps default values of catalogs.
+  // return: inserted tuple count into table without default values
   oid_t RecoverTableDataWithDuplicateCheck(concurrency::TransactionContext *txn,
                                            storage::DataTable *table,
                                            FileHandle &file_handle);
 
   // Read a checkpoint data file without tile group.
-  // If a same value is existed and its persistent flag is true,
+  // If a same key is existed and its persistent flag is true,
   // then overwrite it by recovered value.
   // This function works for only settings_catalog now.
   // return: inserted/updated tuple count into table without default value

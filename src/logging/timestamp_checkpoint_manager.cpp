@@ -52,17 +52,27 @@
 namespace peloton {
 namespace logging {
 
+/**
+ * @brief   Start checkpointing by making a background thread
+ */
 void TimestampCheckpointManager::StartCheckpointing() {
   is_running_ = true;
   central_checkpoint_thread_.reset(
       new std::thread(&TimestampCheckpointManager::PerformCheckpointing, this));
 }
 
+/**
+ * @brief   Stop checkpointing and wait for a background thread to quit
+ */
 void TimestampCheckpointManager::StopCheckpointing() {
   is_running_ = false;
   central_checkpoint_thread_->join();
 }
 
+/**
+ * @brief   Do checkpoint recovery for all tables
+ * @return  bool whether success to recover checkpoints or not
+ */
 bool TimestampCheckpointManager::DoCheckpointRecovery() {
   eid_t epoch_id = GetRecoveryCheckpointEpoch();
   if (epoch_id == INVALID_EID) {
@@ -103,6 +113,11 @@ bool TimestampCheckpointManager::DoCheckpointRecovery() {
   }
 }
 
+/**
+ * @brief   Get a recovered epoch id. If not recovered yet, then get a latest
+ *          checkpoint epoch id for recovery from checkpoint directories.
+ * @return  eid_t, or INVALID_EID if failed
+ */
 eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
   // already recovered
   if (recovered_epoch_id_ != INVALID_EID) {
@@ -146,6 +161,9 @@ eid_t TimestampCheckpointManager::GetRecoveryCheckpointEpoch() {
   }
 }
 
+/**
+ * @brief   Do checkpointing and manage checkpoint files/directories
+ */
 void TimestampCheckpointManager::PerformCheckpointing() {
   int count = checkpoint_interval_ - 1;
   while (1) {
@@ -196,6 +214,11 @@ void TimestampCheckpointManager::PerformCheckpointing() {
   }
 }
 
+/**
+ * @brief   Create checkpoints for all tables
+ * @param   txn         TransactionContext
+ * @param   begin_cid   Commit id as time stamp to get checkpoints
+ */
 void TimestampCheckpointManager::CreateCheckpoints(
     concurrency::TransactionContext *txn,
     const cid_t begin_cid) {
@@ -264,6 +287,13 @@ void TimestampCheckpointManager::CreateCheckpoints(
 
 }
 
+/**
+ * @brief   Read a table data and write it down to a checkpoint file
+ * @param   txn         TransactionContext
+ * @param   table       Table data written to the checkpoint file
+ * @param   begin_cid   Commit id as time stamp to get checkpoints
+ * @param   file_handle File handler for the checkpoint file
+ */
 void TimestampCheckpointManager::CheckpointingTableData(
     const storage::DataTable *table,
     const cid_t &begin_cid,
@@ -323,8 +353,17 @@ void TimestampCheckpointManager::CheckpointingTableData(
   LoggingUtil::FFlushFsync(file_handle);
 }
 
+/**
+ * @brief   Read a table data without tile group and write it down to
+ *          a checkpoint file. This is used for catalog tables.
+ * @param   txn         TransactionContext
+ * @param   table       Table data written to the checkpoint file
+ * @param   begin_cid   Commit id as time stamp to get checkpoints
+ * @param   file_handle File handler for the checkpoint file
+ */
 void TimestampCheckpointManager::CheckpointingTableDataWithoutTileGroup(
-    const storage::DataTable *table, const cid_t &begin_cid,
+    const storage::DataTable *table,
+    const cid_t &begin_cid,
     FileHandle &file_handle) {
   CopySerializeOutput output_buffer;
 
@@ -370,6 +409,16 @@ void TimestampCheckpointManager::CheckpointingTableDataWithoutTileGroup(
   LoggingUtil::FFlushFsync(file_handle);
 }
 
+/**
+ * @brief   Read a table data only if persistent flag is true, and write it
+ *          down to a checkpoint file. This is used for catalog tables that
+ *          checkpointing needs to choose whether writing each tuple down or
+ *          not, like pg_settings.
+ * @param   txn         TransactionContext
+ * @param   table       Table data written to the checkpoint file
+ * @param   begin_cid   Commit id as time stamp to get checkpoints
+ * @param   file_handle File handler for the checkpoint file
+ */
 void TimestampCheckpointManager::CheckpointingTableDataWithPersistentCheck(
     const storage::DataTable *table, const cid_t &begin_cid,
     oid_t flag_column_id, FileHandle &file_handle) {
@@ -419,6 +468,13 @@ void TimestampCheckpointManager::CheckpointingTableDataWithPersistentCheck(
   LoggingUtil::FFlushFsync(file_handle);
 }
 
+/**
+ * @brief   Whether a tuple is visible in terms of a time stamp
+ * @param   header      Header of a tile group that the tuple belongs to
+ * @param   tuple_id    Tuple to be checked its visibility.
+ * @param   begin_cid   Commit id as time stamp to check the tuple
+ * @return  true if the tuple's commit time is before begin_cid
+ */
 bool TimestampCheckpointManager::IsVisible(
     const storage::TileGroupHeader *header, const oid_t &tuple_id,
     const cid_t &begin_cid) {
@@ -450,6 +506,11 @@ bool TimestampCheckpointManager::IsVisible(
   }
 }
 
+/**
+ * @brief   Load all catalog table checkpoints and recover them.
+ * @param   txn         TransactionContext
+ * @param   epoch_cid   Epoch id as time stamp when checkpoints is recovered
+ */
 bool TimestampCheckpointManager::LoadCatalogTableCheckpoints(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id) {
@@ -519,7 +580,13 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoints(
   return true;
 }
 
-
+/**
+ * @brief   Load a catalog table checkpoint and recover it.
+ * @param   txn         TransactionContext
+ * @param   epoch_cid   Epoch id as time stamp when checkpoints is recovered
+ * @param   db_oid      Database in which the recovered table is
+ * @param   table_oid   Catalog table recovered
+ */
 bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id,
@@ -530,6 +597,7 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   auto table_catalog_entry = db_catalog_entry->GetTableCatalogEntry(table_oid);
   auto &table_name = table_catalog_entry->GetTableName();
   auto system_catalogs = catalog->GetSystemCatalogs(db_oid);
+  PELOTON_ASSERT(table_catalog_entry->GetSchemaName() == CATALOG_SCHEMA_NAME);
 
   auto storage_manager = storage::StorageManager::GetInstance();
   auto table = storage_manager->GetTableWithOid(db_oid, table_oid);
@@ -640,6 +708,11 @@ bool TimestampCheckpointManager::LoadCatalogTableCheckpoint(
   return true;
 }
 
+/**
+ * @brief   Load all user table checkpoints and recover them.
+ * @param   txn         TransactionContext
+ * @param   epoch_cid   Epoch id as time stamp when checkpoints is recovered
+ */
 bool TimestampCheckpointManager::LoadUserTableCheckpoints(
     concurrency::TransactionContext *txn,
     const eid_t &epoch_id) {
@@ -709,6 +782,14 @@ bool TimestampCheckpointManager::LoadUserTableCheckpoints(
   return true;
 }
 
+/**
+ * @brief   Recover a table storage object from related catalogs.
+ * @param   txn         TransactionContext
+ * @param   db_oid      Database in which the recovered table is
+ * @param   table_oid   Table which storage object is recovered
+ *   Note: Foreign key constraint is recovered just for the source table.
+ *         Caller has to register its constraint in the sink table.
+ */
 bool TimestampCheckpointManager::RecoverTableStorageObject(
     concurrency::TransactionContext *txn,
     const oid_t db_oid,
@@ -918,6 +999,12 @@ bool TimestampCheckpointManager::RecoverTableStorageObject(
   return true;
 }
 
+/**
+ * @brief   Recover a table data from its checkpoint file.
+ * @param   txn         TransactionContext
+ * @param   table       Table storage object which data is recovered
+ * @param   file_handle File handler for the checkpoint file
+ */
 void TimestampCheckpointManager::RecoverTableData(
     concurrency::TransactionContext *txn,
     storage::DataTable *table,
@@ -1029,6 +1116,15 @@ void TimestampCheckpointManager::RecoverTableData(
   }
 }
 
+/**
+ * @brief   Recover a table data without tile group from its checkpoint file.
+ *          This function is provided for catalog tables initialized without
+ *          default values, like pg_trigger.
+ * @param   txn         TransactionContext
+ * @param   table       Table storage object which data is recovered
+ * @param   file_handle File handler for the checkpoint file
+ * @return  Tuple count inserted into the table
+ */
 oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
     concurrency::TransactionContext *txn,
     storage::DataTable *table,
@@ -1077,6 +1173,15 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithoutTileGroup(
   return insert_tuple_count;
 }
 
+/**
+ * @brief   Recover a table data without tile group from its checkpoint file,
+ *          and keep values already inserted. This is provided for catalogs
+ *          which has default values inserted in Peloton initialization.
+ * @param   txn         TransactionContext
+ * @param   table       Table storage object which data is recovered
+ * @param   file_handle File handler for the checkpoint file
+ * @return  Tuple count inserted into the table
+ */
 oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
     concurrency::TransactionContext *txn,
     storage::DataTable *table,
@@ -1163,6 +1268,18 @@ oid_t TimestampCheckpointManager::RecoverTableDataWithDuplicateCheck(
   return insert_tuple_count;
 }
 
+/**
+ * @brief   Recover a table data without tile group from its checkpoint file.
+ *          If a recovered tuple's key equals to already inserted tuple's key
+ *          and its tuple's persistent flag is true, then overwrite the inserted
+ *          tuple by the recovered tuple. This is now provided for pg_settings.
+ * @param   txn         TransactionContext
+ * @param   table       Table storage object which data is recovered
+ * @param   file_handle File handler for the checkpoint file
+ * @param   key_column_ids  Column for key matching to overwrite the tuple
+ * @param   flag_column_id  Column for checking persistency of the tuple
+ * @return  Tuple count inserted into the table
+ */
 oid_t TimestampCheckpointManager::RecoverTableDataWithPersistentCheck(
     concurrency::TransactionContext *txn,
     storage::DataTable *table,

@@ -54,6 +54,7 @@ TEST_F(TimestampCheckpointRecoveryTests, CheckpointRecoveryTest) {
 
   // check an specific catalog: SettingCatalog
   auto &setting_manager = settings::SettingsManager::GetInstance();
+  (void)setting_manager;
   LOG_DEBUG("Setting info\n%s", setting_manager.GetInfo().c_str());
 
   // make sure data structure created in checkpointing test
