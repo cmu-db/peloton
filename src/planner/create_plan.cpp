@@ -53,9 +53,15 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
       schema_name = std::string(parse_tree->GetSchemaName());
       database_name = std::string(parse_tree->GetDatabaseName());
       std::vector<catalog::Column> columns;
-      std::vector<std::string> pri_cols;
+      std::vector<catalog::Constraint> column_constraints;
 
       create_type = CreateType::TABLE;
+
+      // The parser puts the Foreign Key information into an artificial
+      // ColumnDefinition.
+      for (auto &fk : parse_tree->foreign_keys) {
+        this->ProcessForeignKeyConstraint(table_name, fk.get());
+      }
 
       for (auto &col : parse_tree->columns) {
         type::TypeId val = col->GetValueType(col->type);
@@ -63,21 +69,33 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
         LOG_TRACE("Column name: %s.%s; Is primary key: %d", table_name.c_str(),
                   col->name.c_str(), col->primary);
 
-        // Create column
-        auto column = catalog::Column(val, type::Type::GetTypeSize(val),
-                                      std::string(col->name), false);
-        if (!column.IsInlined()) {
-          column.SetLength(col->varlen);
+        // Check main constraints
+        if (col->primary) {
+          catalog::Constraint constraint(ConstraintType::PRIMARY,
+                                         "con_primary");
+          column_constraints.push_back(constraint);
+          LOG_TRACE("Added a primary key constraint on column \"%s.%s\"",
+                    table_name.c_str(), col->name.c_str());
         }
 
-        // Add NOT NULL constraints to the column
         if (col->not_null) {
-          column.SetNotNull();
+          catalog::Constraint constraint(ConstraintType::NOTNULL,
+                                         "con_not_null");
+          column_constraints.push_back(constraint);
           LOG_TRACE("Added a not-null constraint on column \"%s.%s\"",
                     table_name.c_str(), col->name.c_str());
         }
 
-        // Add DEFAULT constraints to the column
+        if (col->unique) {
+          catalog::Constraint constraint(ConstraintType::UNIQUE, "con_unique");
+          column_constraints.push_back(constraint);
+          LOG_TRACE("Added a unique constraint on column \"%s.%s\"",
+                    table_name.c_str(), col->name.c_str());
+        }
+
+        /* **************** */
+
+        // Add the default value
         if (col->default_value != nullptr) {
           // Referenced from insert_plan.cpp
           if (col->default_value->GetExpressionType() !=
@@ -85,58 +103,53 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
             expression::ConstantValueExpression *const_expr_elem =
                 dynamic_cast<expression::ConstantValueExpression *>(
                     col->default_value.get());
-            column.SetDefaultValue(const_expr_elem->GetValue());
+
+            catalog::Constraint constraint(ConstraintType::DEFAULT,
+                                           "con_default");
+            type::Value v = const_expr_elem->GetValue();
+            constraint.addDefaultValue(v);
+            column_constraints.push_back(constraint);
             LOG_TRACE("Added a default constraint %s on column \"%s.%s\"",
-                      const_expr_elem->GetValue().ToString().c_str(),
-                      table_name.c_str(), col->name.c_str());
+                      v.ToString().c_str(), table_name.c_str(),
+                      col->name.c_str());
           }
-        }
-
-        columns.push_back(column);
-
-        // Collect Multi-column constraints information
-        // TODO: Following constraints info in ColumnDefinition should be
-        // independent
-        //       for multi-column constraints like foreign key.
-
-        // Primary key
-        if (col->primary) {
-          pri_cols.push_back(col->name);
-        }
-
-        // Unique constraint
-        // Currently only supports for single column
-        if (col->unique) {
-          ProcessUniqueConstraint(col.get());
         }
 
         // Check expression constraint
         // Currently only supports simple boolean forms like (a > 0)
         if (col->check_expression != nullptr) {
-          ProcessCheckConstraint(col.get());
+          // TODO: more expression types need to be supported
+          if (col->check_expression->GetValueType() == type::TypeId::BOOLEAN) {
+            catalog::Constraint constraint(ConstraintType::CHECK, "con_check");
+
+            const expression::ConstantValueExpression *const_expr_elem =
+                dynamic_cast<const expression::ConstantValueExpression *>(
+                    col->check_expression->GetChild(1));
+
+            type::Value tmp_value = const_expr_elem->GetValue();
+            constraint.AddCheck(
+                std::move(col->check_expression->GetExpressionType()),
+                std::move(tmp_value));
+            column_constraints.push_back(constraint);
+            LOG_TRACE("Added a check constraint on column \"%s.%s\"",
+                      table_name.c_str(), col->name.c_str());
+          }
         }
-      }
 
+        auto column = catalog::Column(val, type::Type::GetTypeSize(val),
+                                      std::string(col->name), false);
+        if (!column.IsInlined()) {
+          column.SetLength(col->varlen);
+        }
+
+        for (auto con : column_constraints) {
+          column.AddConstraint(con);
+        }
+
+        column_constraints.clear();
+        columns.push_back(column);
+      }
       catalog::Schema *schema = new catalog::Schema(columns);
-
-      // The parser puts the multi-column constraint information
-      // into an artificial ColumnDefinition.
-      // primary key constraint
-      if (pri_cols.size() > 0) {
-        primary_key.primary_key_cols = pri_cols;
-        primary_key.constraint_name = "con_primary";
-        has_primary_key = true;
-        LOG_TRACE("Added a primary key constraint on column \"%s\"",
-                  table_name.c_str());
-      }
-
-      // foreign key
-      for (auto &fk : parse_tree->foreign_keys) {
-        ProcessForeignKeyConstraint(table_name, fk.get());
-      }
-
-      // TODO: UNIQUE and CHECK constraints
-
       table_schema = schema;
       break;
     }
@@ -226,40 +239,6 @@ void CreatePlan::ProcessForeignKeyConstraint(
   LOG_DEBUG("Added a foreign key constraint toward sink table %s",
             fkey_info.sink_table_name.c_str());
   foreign_keys.push_back(fkey_info);
-}
-
-void CreatePlan::ProcessUniqueConstraint(const parser::ColumnDefinition *col) {
-  UniqueInfo unique_info;
-
-  unique_info.unique_cols = {col->name};
-  unique_info.constraint_name = "con_unique";
-
-  LOG_TRACE("Added a unique constraint on column \"%s.%s\"", table_name.c_str(),
-            col->name.c_str());
-  con_uniques.push_back(unique_info);
-}
-
-void CreatePlan::ProcessCheckConstraint(const parser::ColumnDefinition *col) {
-  CheckInfo check_info;
-
-  // TODO: more expression types need to be supported
-  if (col->check_expression->GetValueType() == type::TypeId::BOOLEAN) {
-    check_info.check_cols.push_back(col->name);
-
-    const expression::ConstantValueExpression *const_expr_elem =
-        dynamic_cast<const expression::ConstantValueExpression *>(
-            col->check_expression->GetChild(1));
-    type::Value tmp_value = const_expr_elem->GetValue();
-
-    check_info.exp =
-        std::make_pair(std::move(col->check_expression->GetExpressionType()),
-                       std::move(tmp_value));
-
-    check_info.constraint_name = "con_check";
-
-    LOG_TRACE("Added a check constraint on column \"%s\"", table_name.c_str());
-    con_checks.push_back(check_info);
-  }
 }
 
 expression::AbstractExpression *CreatePlan::GetTriggerWhen() const {

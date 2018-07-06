@@ -296,7 +296,7 @@ ResultType StatsStorage::AnalyzeStatsForAllTables(
     oid_t table_count = database->GetTableCount();
     for (oid_t table_offset = 0; table_offset < table_count; table_offset++) {
       auto table = database->GetTable(table_offset);
-      LOG_DEBUG("Analyzing table: %s", table->GetName().c_str());
+      LOG_TRACE("Analyzing table: %s", table->GetName().c_str());
       std::unique_ptr<TableStatsCollector> table_stats_collector(
           new TableStatsCollector(table));
       table_stats_collector->CollectColumnStats();

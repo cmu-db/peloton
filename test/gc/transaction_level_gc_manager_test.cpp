@@ -97,14 +97,12 @@ TEST_F(TransactionLevelGCManagerTests, UpdateDeleteTest) {
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
-  auto prev_tc = gc_manager.GetTableCount();
-
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "TABLE0", db_id, 12345, 1234, true));
+      num_key, "TABLE0", db_id, INVALID_OID, 1234, true));
 
-  EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
   //===========================
   // update a version here.
@@ -230,14 +228,12 @@ TEST_F(TransactionLevelGCManagerTests, ReInsertTest) {
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
-  auto prev_tc = gc_manager.GetTableCount();
-
   // create a table with only one key
   const int num_key = 1;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "TABLE1", db_id, 12346, 1234, true));
+      num_key, "TABLE1", db_id, INVALID_OID, 1234, true));
 
-  EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
   //===========================
   // insert a tuple here.
@@ -401,15 +397,13 @@ TEST_F(TransactionLevelGCManagerTests, ImmutabilityTest) {
   oid_t db_id = database->GetOid();
   EXPECT_TRUE(storage_manager->HasDatabase(db_id));
 
-  auto prev_tc = gc_manager.GetTableCount();
-
   // create a table with only one key
   const int num_key = 25;
   const size_t tuples_per_tilegroup = 5;
   std::unique_ptr<storage::DataTable> table(TestingTransactionUtil::CreateTable(
-      num_key, "TABLE1", db_id, 12347, 1234, true, tuples_per_tilegroup));
+      num_key, "TABLE1", db_id, INVALID_OID, 1234, true, tuples_per_tilegroup));
 
-  EXPECT_EQ(1, gc_manager.GetTableCount() - prev_tc);
+  EXPECT_TRUE(gc_manager.GetTableCount() == 1);
 
   oid_t num_tile_groups = (table.get())->GetTileGroupCount();
   EXPECT_EQ(num_tile_groups, (num_key / tuples_per_tilegroup) + 1);
