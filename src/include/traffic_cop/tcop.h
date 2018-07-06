@@ -69,7 +69,7 @@ struct ClientProcessState {
     db_name_ = DEFAULT_DB_NAME;
     param_values_.clear();
     statement_.reset();
-    optimizer_.reset(new optimizer::Optimizer());
+    optimizer_->Reset();
     single_statement_txn_ = false;
     result_format_.clear();
     result_.clear();
