@@ -50,36 +50,42 @@ LayoutCatalog::~LayoutCatalog() {}
  *  @return  unique_ptr of the schema for pg_layout.
  */
 std::unique_ptr<catalog::Schema> LayoutCatalog::InitializeSchema() {
+  const std::string primary_key_constraint_name = "primary_key";
+  const std::string not_null_constraint_name = "not_null";
+
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.SetNotNull();
+  table_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
+  table_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto layout_oid_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "layout_oid", true);
-  layout_oid_column.SetNotNull();
+  layout_oid_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
+  layout_oid_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto num_columns_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "num_columns", true);
-  num_columns_column.SetNotNull();
+  num_columns_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto column_map_column = catalog::Column(
       type::TypeId::VARCHAR, type::Type::GetTypeSize(type::TypeId::VARCHAR),
       "column_map", false);
-  column_map_column.SetNotNull();
+  column_map_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
-  std::unique_ptr<catalog::Schema> layout_catalog_schema(
+  std::unique_ptr<catalog::Schema> column_catalog_schema(
       new catalog::Schema({table_id_column, layout_oid_column,
                            num_columns_column, column_map_column}));
 
-  layout_catalog_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-      LAYOUT_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-      LAYOUT_CATALOG_OID, std::vector<oid_t>{ColumnId::TABLE_OID, ColumnId::LAYOUT_OID},
-      LAYOUT_CATALOG_PKEY_OID));
-
-  return layout_catalog_schema;
+  return column_catalog_schema;
 }
 
 /** @brief      Insert a layout into the pg_layout table.

@@ -35,47 +35,39 @@ SystemCatalogs::SystemCatalogs(concurrency::TransactionContext *txn,
       pg_index_metrics_(nullptr),
       pg_query_metrics_(nullptr) {
   oid_t database_oid = database->GetOid();
-
   pg_attribute_ = new ColumnCatalog(txn, database, pool);
   pg_namespace_ = new SchemaCatalog(txn, database, pool);
   pg_table_ = new TableCatalog(txn, database, pool);
   pg_index_ = new IndexCatalog(txn, database, pool);
   pg_layout_ = new LayoutCatalog(txn, database, pool);
-  pg_constraint_ = new ConstraintCatalog(txn, database, pool);
 
   // TODO: can we move this to BootstrapSystemCatalogs()?
   // insert column information into pg_attribute
-  // and insert constraint information into pg_constraint
   std::vector<std::pair<oid_t, oid_t>> shared_tables = {
       {CATALOG_DATABASE_OID, DATABASE_CATALOG_OID},
       {database_oid, TABLE_CATALOG_OID},
       {database_oid, SCHEMA_CATALOG_OID},
       {database_oid, INDEX_CATALOG_OID},
-      {database_oid, LAYOUT_CATALOG_OID},
-      {database_oid, CONSTRAINT_CATALOG_OID}};
+      {database_oid, LAYOUT_CATALOG_OID}};
 
   for (int i = 0; i < (int)shared_tables.size(); i++) {
-    auto schema = storage::StorageManager::GetInstance()
-       ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
-       ->GetSchema();
     oid_t column_id = 0;
-    for (auto column : schema->GetColumns()) {
+    for (auto column :
+         storage::StorageManager::GetInstance()
+             ->GetTableWithOid(shared_tables[i].first, shared_tables[i].second)
+             ->GetSchema()
+             ->GetColumns()) {
       pg_attribute_->InsertColumn(txn,
                                   shared_tables[i].second,
-                                  column.GetName(),
                                   column_id,
+                                  column.GetName(),
                                   column.GetOffset(),
                                   column.GetType(),
                                   column.GetLength(),
+                                  column.GetConstraints(),
                                   column.IsInlined(),
-                                  column.IsNotNull(),
-                                  column.HasDefault(),
-                                  column.GetDefaultValue(),
                                   pool);
       column_id++;
-    }
-    for (auto constraint : schema->GetConstraints()) {
-      pg_constraint_->InsertConstraint(txn, constraint.second, pool);
     }
   }
 }
@@ -86,7 +78,6 @@ SystemCatalogs::~SystemCatalogs() {
   delete pg_table_;
   delete pg_attribute_;
   delete pg_namespace_;
-  delete pg_constraint_;
   if (pg_trigger_) delete pg_trigger_;
   // if (pg_proc) delete pg_proc;
   if (pg_table_metrics_) delete pg_table_metrics_;
@@ -128,7 +119,6 @@ void SystemCatalogs::Bootstrap(concurrency::TransactionContext *txn,
   pg_namespace_->UpdateOid(OID_FOR_USER_OFFSET);
   pg_table_->UpdateOid(OID_FOR_USER_OFFSET);
   pg_index_->UpdateOid(OID_FOR_USER_OFFSET);
-  pg_constraint_->UpdateOid(OID_FOR_USER_OFFSET);
   pg_trigger_->UpdateOid(OID_FOR_USER_OFFSET);
   // pg_proc->UpdateOid(OID_FOR_USER_OFFSET);
 }

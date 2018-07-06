@@ -286,7 +286,7 @@ TEST_F(DropTests, DroppingIndexByName) {
                                                 TEST_DB_NAME,
                                                 DEFAULT_SCHEMA_NAME,
                                                 "department_table_01");
-  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.GetName());
+  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
   std::string index_name1 = "Testing_Drop_Index_By_Name";

@@ -81,6 +81,7 @@ void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
  */
 catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
+  std::string not_null_constraint_name = "not_null";
   catalog::Column dummy_column;
 
   switch (index) {
@@ -89,7 +90,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_A", is_inlined);
 
-      column.SetNotNull();
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -98,7 +100,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_B", is_inlined);
 
-      column.SetNotNull();
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -107,7 +110,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
           "COL_C", is_inlined);
 
-      column.SetNotNull();
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -116,7 +120,8 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
                           "COL_D", !is_inlined);      // inlined.
 
-      column.SetNotNull();
+      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
+                                               not_null_constraint_name));
       return column;
     } break;
 
@@ -385,7 +390,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, table_oid, INVALID_OID, IndexType::BWTREE,
+        "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
@@ -393,12 +398,6 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
         index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(pkey_index);
-
-    // Create constraint on the table
-    std::shared_ptr<catalog::Constraint> constraint(
-        new catalog::Constraint(1000, ConstraintType::PRIMARY,
-            "con_primary", table_oid, key_attrs, 123));
-    table->GetSchema()->AddConstraint(constraint);
 
     /////////////////////////////////////////////////////////////////
     // Add index on table column 0 and 1

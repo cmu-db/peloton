@@ -91,10 +91,26 @@ namespace test {
 
 class TestingConstraintsUtil {
  public:
+  /** @brief Creates a basic table with allocated and populated tuples */
+  static storage::DataTable *CreateAndPopulateTable(
+      std::vector<std::vector<catalog::Constraint>> constraints,
+      std::vector<catalog::MultiConstraint> multi_constraints) {
+    const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
+    storage::DataTable *table =
+        TestingConstraintsUtil::CreateTable(constraints, multi_constraints);
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    TestingConstraintsUtil::PopulateTable(
+        txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT);
+    txn_manager.CommitTransaction(txn);
+
+    return table;
+  };
+
   /** @brief Creates a basic table with allocated but not populated tuples */
   static storage::DataTable *CreateTable(
-      std::vector<oid_t> notnull_col_ids,
-      std::unordered_map<oid_t, type::Value> default_values,
+      std::vector<std::vector<catalog::Constraint>> constraints,
+      UNUSED_ATTRIBUTE std::vector<catalog::MultiConstraint> multi_constraints,
       UNUSED_ATTRIBUTE bool indexes = true) {
     // Create the database
     auto catalog = catalog::Catalog::GetInstance();
@@ -108,24 +124,13 @@ class TestingConstraintsUtil {
     std::vector<catalog::Column> columns;
     for (int i = 0; i < CONSTRAINTS_NUM_COLS; i++) {
       columns.push_back(
-          TestingConstraintsUtil::GetColumnInfo(i));
+          TestingConstraintsUtil::GetColumnInfo(i, constraints[i]));
     }
-
-    // set single column constraints
-    for (auto col_oid : notnull_col_ids) {
-      PELOTON_ASSERT(col_oid < CONSTRAINTS_NUM_COLS);
-      columns[col_oid].SetNotNull();
-    }
-    for (auto dv : default_values) {
-      PELOTON_ASSERT(dv.first < CONSTRAINTS_NUM_COLS);
-      columns[dv.first].SetDefaultValue(dv.second);
-    }
-
     std::unique_ptr<catalog::Schema> table_schema(new catalog::Schema(columns));
+    std::string table_name(CONSTRAINTS_TEST_TABLE);
 
     // Create table.
     txn = txn_manager.BeginTransaction();
-    std::string table_name(CONSTRAINTS_TEST_TABLE);
     auto result =
         catalog->CreateTable(txn, DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
                              std::move(table_schema), table_name, false);
@@ -323,18 +328,6 @@ class TestingConstraintsUtil {
     return executor.Execute();
   };
 
-  /** @brief Allocated and populated tuples */
-  static storage::DataTable *PopulateTable(storage::DataTable *table) {
-    const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-    auto txn = txn_manager.BeginTransaction();
-    TestingConstraintsUtil::PopulateTable(
-        txn, table, tuple_count * DEFAULT_TILEGROUP_COUNT);
-    txn_manager.CommitTransaction(txn);
-
-    return table;
-  };
-
   static void PopulateTable(concurrency::TransactionContext *transaction,
                             storage::DataTable *table, int num_rows) {
     // Ensure that the tile group is as expected.
@@ -364,7 +357,8 @@ class TestingConstraintsUtil {
     }
   };
 
-  static catalog::Column GetColumnInfo(int index) {
+  static catalog::Column GetColumnInfo(
+      int index, std::vector<catalog::Constraint> constraints) {
     catalog::Column column;
     switch (index) {
       // COL_A
@@ -399,6 +393,11 @@ class TestingConstraintsUtil {
         throw ExecutorException("Invalid column index : " +
                                 std::to_string(index));
       }
+    }
+
+    // Add any constraints that we have for this mofo
+    for (auto col_const : constraints) {
+      column.AddConstraint(col_const);
     }
     return (column);
   };
