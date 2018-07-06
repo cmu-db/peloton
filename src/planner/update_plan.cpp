@@ -23,8 +23,17 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
                        std::unique_ptr<const planner::ProjectInfo> project_info)
     : target_table_(table),
       project_info_(std::move(project_info)),
-      update_primary_key_(table->GetSchema()->HasPrimary()) {
+      update_primary_key_(false) {
   LOG_TRACE("Creating an Update Plan");
+
+  if (project_info_ != nullptr && table->GetSchema()->HasPrimary()) {
+    for (const auto target : project_info_->GetTargetList()) {
+      auto col_id = target.first;
+      update_primary_key_ = target_table_->GetSchema()->IsPrimary(col_id);
+      if (update_primary_key_)
+        break;
+    }
+  }
 }
 
 void UpdatePlan::SetParameterValues(std::vector<type::Value> *values) {
