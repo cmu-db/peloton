@@ -28,7 +28,8 @@ namespace test {
 
 class TensorflowTests : public PelotonTest {};
 
-TEST_F(TensorflowTests, BasicTFTest) {
+// TODO: Enable this test once tensorflow package supports Python 3.7 (#1448)
+TEST_F(TensorflowTests, DISABLED_BasicTFTest) {
   // Check that the tensorflow library imports and prints version info correctly
   EXPECT_TRUE(brain::TFUtil::GetTFVersion());
 }
@@ -40,7 +41,8 @@ TEST_F(TensorflowTests, BasicEigenTest) {
   EXPECT_TRUE(m.IsRowMajor);
 }
 
-TEST_F(TensorflowTests, SineWavePredictionTest) {
+// TODO: Enable this test once tensorflow package supports Python 3.7 (#1448)
+TEST_F(TensorflowTests, DISABLED_SineWavePredictionTest) {
   // Sine Wave prediction test works here
   int NUM_SAMPLES = 1000;
   int NUM_WAVES = 3;
