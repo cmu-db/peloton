@@ -15,7 +15,7 @@
 
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 #include "network/peloton_server.h"
 
 #include "common/utility.h"
@@ -167,8 +167,9 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
 // TODO(Tianyu): Maybe use a factory to initialize protocol_interpreter here
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
     : conn_handler_(handler),
-      io_wrapper_(NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd)),
+      io_wrapper_{new PosixSocketIoWrapper(sock_fd)},
       protocol_interpreter_{new PostgresProtocolInterpreter(conn_handler_->Id())} {}
+
 
 Transition ConnectionHandle::GetResult() {
   EventUtil::EventAdd(network_event_, nullptr);
@@ -180,8 +181,33 @@ Transition ConnectionHandle::TrySslHandshake() {
   // TODO(Tianyu): Do we really need to flush here?
   auto ret = io_wrapper_->FlushAllWrites();
   if (ret != Transition::PROCEED) return ret;
-  return NetworkIoWrapperFactory::GetInstance().TryUseSsl(
-      io_wrapper_);
+  SSL *context;
+  if (!io_wrapper_->SslAble()) {
+    context = SSL_new(PelotonServer::ssl_context);
+    if (context == nullptr)
+      throw NetworkProcessException("ssl context for conn failed");
+    SSL_set_session_id_context(context, nullptr, 0);
+    if (SSL_set_fd(context, io_wrapper_->sock_fd_) == 0)
+      throw NetworkProcessException("Failed to set ssl fd");
+    io_wrapper_.reset(new SslSocketIoWrapper(std::move(*io_wrapper_), context));
+  } else
+    context = dynamic_cast<SslSocketIoWrapper *>(io_wrapper_.get())->conn_ssl_context_;
+
+  // The wrapper already uses SSL methods.
+  // Yuchen: "Post-connection verification?"
+  ERR_clear_error();
+  int ssl_accept_ret = SSL_accept(context);
+  if (ssl_accept_ret > 0) return Transition::PROCEED;
+
+  int err = SSL_get_error(context, ssl_accept_ret);
+  switch (err) {
+    case SSL_ERROR_WANT_READ:
+      return Transition::NEED_READ;
+    case SSL_ERROR_WANT_WRITE:
+      return Transition::NEED_WRITE;
+    default:
+      throw NetworkProcessException("SSL Error, error code" + std::to_string(err));
+  }
 }
 
 Transition ConnectionHandle::TryCloseConnection() {
@@ -195,10 +221,6 @@ Transition ConnectionHandle::TryCloseConnection() {
   // connection handle and we will need to destruct and exit.
   conn_handler_->UnregisterEvent(network_event_);
   conn_handler_->UnregisterEvent(workpool_event_);
-  // This object is essentially managed by libevent (which unfortunately does
-  // not accept shared_ptrs.) and thus as we shut down we need to manually
-  // deallocate this object.
-  delete this;
   return Transition::NONE;
 }
 }  // namespace network

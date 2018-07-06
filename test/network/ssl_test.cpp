@@ -14,7 +14,7 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 #include "network/peloton_server.h"
 #include "peloton_config.h"
 #include "util/string_util.h"

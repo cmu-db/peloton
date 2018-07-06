@@ -51,12 +51,15 @@ namespace network {
  */
 class ConnectionHandle {
  public:
+
   /**
    * Constructs a new ConnectionHandle
    * @param sock_fd Client's connection fd
    * @param handler The handler responsible for this handle
    */
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
+
+  DISALLOW_COPY_AND_MOVE(ConnectionHandle);
 
   /**
    * @brief Signal to libevent that this ConnectionHandle is ready to handle
@@ -179,15 +182,15 @@ class ConnectionHandle {
   };
 
   friend class StateMachine;
-  friend class NetworkIoWrapperFactory;
+  friend class ConnectionHandleFactory;
 
+  // A raw pointer is used here because references cannot be rebound.
   ConnectionHandlerTask *conn_handler_;
-  std::shared_ptr<NetworkIoWrapper> io_wrapper_;
-  StateMachine state_machine_;
-  struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
-
+  std::unique_ptr<NetworkIoWrapper> io_wrapper_;
   // TODO(Tianyu): Probably use a factory for this
   std::unique_ptr<ProtocolInterpreter> protocol_interpreter_;
+  StateMachine state_machine_{};
+  struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
 };
 }  // namespace network
 }  // namespace peloton

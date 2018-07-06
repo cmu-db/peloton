@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 #include "network/peloton_server.h"
 #include "util/string_util.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 
 namespace peloton {
 namespace test {

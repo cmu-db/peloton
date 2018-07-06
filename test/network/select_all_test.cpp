@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
 

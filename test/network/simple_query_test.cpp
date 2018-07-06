@@ -16,7 +16,7 @@
 #include "network/peloton_server.h"
 #include "util/string_util.h"
 #include <pqxx/pqxx> /* libpqxx is used to instantiate C++ client */
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 
 #define NUM_THREADS 1
 

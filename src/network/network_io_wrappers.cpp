@@ -31,7 +31,7 @@ Transition NetworkIoWrapper::FlushAllWrites() {
 PosixSocketIoWrapper::PosixSocketIoWrapper(int sock_fd,
                                            std::shared_ptr<ReadBuffer> in,
                                            std::shared_ptr<WriteQueue> out)
-    : NetworkIoWrapper(sock_fd, in, out) {
+    : NetworkIoWrapper(sock_fd, std::move(in), std::move(out)) {
 
   // Set Non Blocking
   auto flags = fcntl(sock_fd_, F_GETFL);

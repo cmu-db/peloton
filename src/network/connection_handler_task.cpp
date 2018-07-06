@@ -12,7 +12,7 @@
 
 #include "network/connection_handler_task.h"
 #include "network/connection_handle.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 
 namespace peloton {
 namespace network {
@@ -52,14 +52,9 @@ void ConnectionHandlerTask::HandleDispatch(int new_conn_recv_fd, short) {
     }
     bytes_read += (size_t)result;
   }
-
-  // Smart pointers are not used here because libevent does not take smart
-  // pointers. During the life time of this object, the pointer to it will be
-  // maintained by libevent rather than by our own code. The object will have to
-  // be cleaned up by one of its methods (i.e. we call a method with "delete
-  // this" and have the object commit suicide from libevent. )
-  (new ConnectionHandle(*reinterpret_cast<int *>(client_fd), this))
-      ->RegisterToReceiveEvents();
+  ConnectionHandleFactory::GetInstance()
+      .NewConnectionHandle(*reinterpret_cast<int *>(client_fd), this)
+      .RegisterToReceiveEvents();
 }
 
 }  // namespace network
