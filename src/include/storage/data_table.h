@@ -134,8 +134,8 @@ class DataTable : public AbstractTable {
 
   // Insert tuple with ItemPointer provided explicitly
   bool InsertTuple(const AbstractTuple *tuple, ItemPointer location,
-                   concurrency::TransactionContext *transaction,
-                   ItemPointer **index_entry_ptr, bool check_fk = true);
+      concurrency::TransactionContext *transaction, ItemPointer **index_entry_ptr,
+      bool check_fk = true);
 
   //===--------------------------------------------------------------------===//
   // TILE GROUP
@@ -167,11 +167,12 @@ class DataTable : public AbstractTable {
 
   int GetTriggerNumber();
 
-  trigger::Trigger *GetTriggerByIndex(int n);
+  trigger::Trigger* GetTriggerByIndex(int n);
 
-  trigger::TriggerList *GetTriggerList();
+  trigger::TriggerList* GetTriggerList();
 
   void UpdateTriggerListFromCatalog(concurrency::TransactionContext *txn);
+
 
   //===--------------------------------------------------------------------===//
   // INDEX
@@ -197,15 +198,29 @@ class DataTable : public AbstractTable {
   const std::vector<std::set<oid_t>> &GetIndexColumns() const {
     return indexes_columns_;
   }
-
   //===--------------------------------------------------------------------===//
   // FOREIGN KEYS
   //===--------------------------------------------------------------------===//
 
-  bool CheckForeignKeySrcAndCascade(
-      storage::Tuple *prev_tuple, storage::Tuple *new_tuple,
-      concurrency::TransactionContext *transaction,
-      executor::ExecutorContext *context, bool is_update);
+  bool CheckForeignKeySrcAndCascade(storage::Tuple *prev_tuple, 
+                                    storage::Tuple *new_tuple,
+                                    concurrency::TransactionContext *transaction,
+                                    executor::ExecutorContext *context,
+                                    bool is_update);
+
+  void AddForeignKey(catalog::ForeignKey *key);
+
+  catalog::ForeignKey *GetForeignKey(const oid_t &key_offset) const;
+
+  void DropForeignKey(const oid_t &key_offset);
+
+  size_t GetForeignKeyCount() const;
+
+  void RegisterForeignKeySource(catalog::ForeignKey *key);
+
+  size_t GetForeignKeySrcCount() const;
+
+  catalog::ForeignKey *GetForeignKeySrc(const size_t) const;
 
   //===--------------------------------------------------------------------===//
   // TRANSFORMERS
@@ -275,6 +290,12 @@ class DataTable : public AbstractTable {
   // deprecated, use catalog::TableCatalog::GetInstance()->GetDatabaseOid()
   inline oid_t GetDatabaseOid() const { return (database_oid); }
 
+  bool HasPrimaryKey() const { return (has_primary_key_); }
+
+  bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
+
+  bool HasForeignKeys() const { return (foreign_keys_.empty() == false); }
+
   // try to insert into all indexes.
   // the last argument is the index entry in primary index holding the new
   // tuple.
@@ -314,8 +335,8 @@ class DataTable : public AbstractTable {
   //===--------------------------------------------------------------------===//
 
   bool CheckNotNulls(const AbstractTuple *tuple, oid_t column_idx) const;
-  //  bool MultiCheckNotNulls(const storage::Tuple *tuple,
-  //                          std::vector<oid_t> cols) const;
+//  bool MultiCheckNotNulls(const storage::Tuple *tuple,
+//                          std::vector<oid_t> cols) const;
 
   // bool CheckExp(const storage::Tuple *tuple, oid_t column_idx,
   //              std::pair<ExpressionType, type::Value> exp) const;
@@ -403,6 +424,20 @@ class DataTable : public AbstractTable {
 
   // columns present in the indexes
   std::vector<std::set<oid_t>> indexes_columns_;
+
+  // CONSTRAINTS
+  // fk constraints for which this table is the source
+  std::vector<catalog::ForeignKey *> foreign_keys_;
+  // fk constraints for which this table is the sink
+  // The complete information is stored so no need to lookup the table
+  // everytime there is a constraint check
+  std::vector<catalog::ForeignKey *> foreign_key_sources_;
+
+  // has a primary key ?
+  std::atomic<bool> has_primary_key_ = ATOMIC_VAR_INIT(false);
+
+  // # of unique constraints
+  std::atomic<oid_t> unique_constraint_count_ = ATOMIC_VAR_INIT(START_OID);
 
   // # of tuples. must be atomic as multiple transactions can perform insert
   // concurrently.

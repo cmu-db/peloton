@@ -13,6 +13,7 @@
 #include "common/exception.h"
 #include "common/logger.h"
 #include "catalog/manager.h"
+#include "catalog/foreign_key.h"
 #include "storage/database.h"
 #include "storage/data_table.h"
 #include "concurrency/transaction_manager_factory.h"
