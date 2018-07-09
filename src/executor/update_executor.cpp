@@ -23,6 +23,7 @@
 #include "storage/tile_group_header.h"
 #include "storage/tile.h"
 #include "storage/storage_manager.h"
+#include "catalog/foreign_key.h"
 
 namespace peloton {
 namespace executor {
@@ -118,7 +119,7 @@ bool UpdateExecutor::PerformUpdatePrimaryKey(
   }
 
   // Check the source table of any foreign key constraint
-  if (target_table_->GetSchema()->HasForeignKeySources()) {
+  if (target_table_->GetForeignKeySrcCount() > 0) {
     storage::Tuple prev_tuple(target_table_schema, true);
     // Get a copy of the old tuple
     for (oid_t column_itr = 0; column_itr < target_table_schema->GetColumnCount(); column_itr++) {

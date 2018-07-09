@@ -64,15 +64,15 @@ IndexCatalog::IndexCatalog(concurrency::TransactionContext *,
   // Add indexes for pg_index
   AddIndex(INDEX_CATALOG_NAME "_pkey",
            INDEX_CATALOG_PKEY_OID,
-           {ColumnId::INDEX_OID},
+           {0},
            IndexConstraintType::PRIMARY_KEY);
   AddIndex(INDEX_CATALOG_NAME "_skey0",
            INDEX_CATALOG_SKEY0_OID,
-           {ColumnId::INDEX_NAME, ColumnId::SCHEMA_NAME},
+           {1, 3},
            IndexConstraintType::UNIQUE);
   AddIndex(INDEX_CATALOG_NAME "_skey1",
            INDEX_CATALOG_SKEY1_OID,
-           {ColumnId::TABLE_OID},
+           {2},
            IndexConstraintType::DEFAULT);
 }
 
@@ -82,60 +82,59 @@ IndexCatalog::~IndexCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> IndexCatalog::InitializeSchema() {
+  const std::string not_null_constraint_name = "not_null";
+  const std::string primary_key_constraint_name = "primary_key";
+
   auto index_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_oid", true);
-  index_id_column.SetNotNull();
+  index_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
+  index_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_name_column = catalog::Column(type::TypeId::VARCHAR, max_name_size_,
                                            "index_name", false);
-  index_name_column.SetNotNull();
+  index_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto table_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "table_oid", true);
-  table_id_column.SetNotNull();
+  table_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto schema_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size_, "schema_name", false);
-  schema_name_column.SetNotNull();
-
+  schema_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_type_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_type", true);
-  index_type_column.SetNotNull();
+  index_type_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto index_constraint_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "index_constraint", true);
-  index_constraint_column.SetNotNull();
+  index_constraint_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto unique_keys = catalog::Column(
       type::TypeId::BOOLEAN, type::Type::GetTypeSize(type::TypeId::BOOLEAN),
       "unique_keys", true);
-  unique_keys.SetNotNull();
+  unique_keys.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto indexed_attributes_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size_, "indexed_attributes", false);
-  indexed_attributes_column.SetNotNull();
-
-
+  indexed_attributes_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
   std::unique_ptr<catalog::Schema> index_schema(new catalog::Schema(
       {index_id_column, index_name_column, table_id_column, schema_name_column,
        index_type_column, index_constraint_column, unique_keys,
        indexed_attributes_column}));
-
-  index_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-      INDEX_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-      INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_OID},
-      INDEX_CATALOG_PKEY_OID));
-
-  index_schema->AddConstraint(std::make_shared<catalog::Constraint>(
-      INDEX_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-      INDEX_CATALOG_OID, std::vector<oid_t>{ColumnId::INDEX_NAME, ColumnId::SCHEMA_NAME},
-      INDEX_CATALOG_SKEY0_OID));
-
   return index_schema;
 }
 

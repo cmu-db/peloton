@@ -53,7 +53,7 @@ class QueryLoggerTests : public PelotonTest {
     sleep(wait_time_);
 
     TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query_.c_str(),
-                                                  expected_result);
+                                                  expected_result, true);
 
     // the select query we used will also be logged for next time
     expected_result.push_back(select_query_ + "|" + select_query_fingerprint_);
@@ -88,7 +88,7 @@ class QueryLoggerTests : public PelotonTest {
                              temporary_expected_result.end());
       temporary_expected_result.clear();
       TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query_.c_str(),
-                                                    expected_result);
+                                                    expected_result, true);
 
       // the select query we used will also be logged for next time
       expected_result.push_back(select_query_ + "|" +
@@ -97,7 +97,7 @@ class QueryLoggerTests : public PelotonTest {
     } else {
       // verify that the logging does not happen before the txn commit
       TestingSQLUtil::ExecuteSQLQueryAndCheckResult(select_query_.c_str(),
-                                                    expected_result);
+                                                    expected_result, true);
       // the select query we used will also be logged for next time
       temporary_expected_result.push_back(select_query_ + "|" +
                                           select_query_fingerprint_);

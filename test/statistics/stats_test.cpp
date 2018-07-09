@@ -128,6 +128,8 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "dept_id", true);
+  catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
+  id_column.AddConstraint(constraint);
   auto name_column =
       catalog::Column(type::TypeId::VARCHAR, 32, "dept_name", false);
 
@@ -146,16 +148,9 @@ TEST_F(StatsTests, MultiThreadStatsTest) {
   storage::Database *database =
       catalog->GetDatabaseWithName(txn, "emp_db");
   storage::DataTable *table = catalog->GetTableWithName(txn,
-                                                  "emp_db",
-                                                  DEFAULT_SCHEMA_NAME,
-                                                  "department_table");
-
-  catalog->AddPrimaryKeyConstraint(txn,
-                                   database->GetOid(),
-                                   table->GetOid(),
-                                   {0},
-                                   "con_primary");
-
+                                                        "emp_db",
+                                                        DEFAULT_SCHEMA_NAME,
+                                                        "department_table");
   txn_manager.CommitTransaction(txn);
   LaunchParallelTest(num_threads, TransactionTest, database, table);
   // Wait for aggregation to finish

@@ -339,7 +339,7 @@ TEST_F(OptimizerSQLTests, DDLSqlTest) {
   auto cols = table->GetSchema()->GetColumns();
   EXPECT_EQ(3, cols.size());
   EXPECT_EQ("a", cols[0].GetName());
-  EXPECT_EQ(true, table->GetSchema()->HasPrimary());
+  EXPECT_EQ(true, cols[0].IsPrimary());
   EXPECT_EQ(type::TypeId::INTEGER, cols[0].GetType());
   EXPECT_EQ("b", cols[1].GetName());
   EXPECT_EQ(type::TypeId::INTEGER, cols[1].GetType());

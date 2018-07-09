@@ -193,10 +193,10 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
       ExpressionType::COMPARE_EQUAL, tuple_expr, parameter_expr);
 
   auto &schema_columns = schema->GetColumns();
-  for (oid_t i = 0; i < schema_columns.size(); i++) {
+  for (uint i = 0; i < schema_columns.size(); i++) {
     bool is_in_target_list = false;
     for (auto col_id : column_ids) {
-      if (schema_columns[i].GetName() == schema_columns[col_id].GetName()) {
+      if (schema_columns[i].column_name == schema_columns[col_id].column_name) {
         is_in_target_list = true;
         break;
       }
@@ -206,7 +206,7 @@ TEST_F(PlannerTest, UpdatePlanTestParameter) {
   }
 
   column_ids.clear();
-  for (oid_t i = 0; i < schema_columns.size(); i++) {
+  for (uint i = 0; i < schema_columns.size(); i++) {
     column_ids.emplace_back(i);
   }
 

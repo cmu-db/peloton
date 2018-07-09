@@ -76,14 +76,10 @@ Schema::Schema(const std::vector<Column> &columns)
 
   CreateTupleSchema(column_types, column_lengths, column_names, is_inlined);
 
-  // Set constraints
+  // Add constraints
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    if (columns[column_itr].IsNotNull()) {
-      SetNotNull(column_itr);
-    }
-    if (columns[column_itr].HasDefault()) {
-      SetDefaultValue(column_itr, *(columns[column_itr].GetDefaultValue()));
-    }
+    for (auto constraint : columns[column_itr].GetConstraints())
+      AddConstraint(column_itr, constraint);
   }
 }
 
@@ -295,20 +291,6 @@ const std::string Schema::GetInfo() const {
     os << columns_[i].GetInfo();
   }
   os << ")";
-
-  if (constraints.empty() == false) {
-    os << ", {";
-    bool first = true;
-    for (auto constraint : constraints) {
-      if (first) {
-        first = false;
-      } else {
-        os << ", ";
-      }
-      os << constraint.second->GetInfo();
-    }
-    os << "}";
-  }
 
   return os.str();
 }

@@ -276,28 +276,24 @@ DatabaseCatalog::~DatabaseCatalog() {}
  * @return  unqiue pointer to schema
  */
 std::unique_ptr<catalog::Schema> DatabaseCatalog::InitializeSchema() {
+  const std::string not_null_constraint_name = "not_null";
+  const std::string primary_key_constraint_name = "primary_key";
+
   auto database_id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
       "database_oid", true);
-  database_id_column.SetNotNull();
+  database_id_column.AddConstraint(catalog::Constraint(
+      ConstraintType::PRIMARY, primary_key_constraint_name));
+  database_id_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   auto database_name_column = catalog::Column(
       type::TypeId::VARCHAR, max_name_size_, "database_name", false);
-  database_name_column.SetNotNull();
+  database_name_column.AddConstraint(
+      catalog::Constraint(ConstraintType::NOTNULL, not_null_constraint_name));
 
   std::unique_ptr<catalog::Schema> database_catalog_schema(
       new catalog::Schema({database_id_column, database_name_column}));
-
-  database_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-      DATABASE_CATALOG_CON_PKEY_OID, ConstraintType::PRIMARY, "con_primary",
-      DATABASE_CATALOG_OID, std::vector<oid_t>{ColumnId::DATABASE_OID},
-      DATABASE_CATALOG_PKEY_OID));
-
-  database_catalog_schema->AddConstraint(std::make_shared<Constraint>(
-      DATABASE_CATALOG_CON_UNI0_OID, ConstraintType::UNIQUE, "con_unique",
-      DATABASE_CATALOG_OID, std::vector<oid_t>{ColumnId::DATABASE_NAME},
-      DATABASE_CATALOG_SKEY0_OID));
-
   return database_catalog_schema;
 }
 
