@@ -59,7 +59,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     // Drop index. Fail if it doesn't exist.
     auto catalog = catalog::Catalog::GetInstance();
     try {
-      catalog->DropIndex(database_oid, index_oid, txn);
+      catalog->DropIndex(txn, database_oid, index_oid);
     } catch (CatalogException e) {
       LOG_ERROR("Drop Index Failed");
       txn_manager.AbortTransaction(txn);
@@ -115,10 +115,10 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     auto txn = txn_manager.BeginTransaction();
 
     // Get the existing table so that we can find its oid and the cols oids.
-    std::shared_ptr<catalog::TableCatalogObject> table_object;
+    std::shared_ptr<catalog::TableCatalogEntry> table_object;
     try {
-      table_object = catalog::Catalog::GetInstance()->GetTableObject(
-          database_oid, table_oid, txn);
+      table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+          txn, database_oid, table_oid);
     } catch (CatalogException e) {
       LOG_ERROR("Exception ocurred while getting table: %s",
                 e.GetMessage().c_str());
@@ -126,7 +126,7 @@ class PelotonRpcServerImpl final : public PelotonService::Server {
     }
 
     auto table_name = table_object->GetTableName();
-    auto col_obj_pairs = table_object->GetColumnObjects();
+    auto col_obj_pairs = table_object->GetColumnCatalogEntries();
 
     // Done with the transaction.
     txn_manager.CommitTransaction(txn);

@@ -1,7 +1,19 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// README
+//
+// Identification: src/network/README
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 #####################################################
-#													#
-#	PELOTON WIRE									#
-#													#
+# #
+#PELOTON WIRE #
+# #
 #####################################################
 
 Description
@@ -55,4 +67,3 @@ Packets supported
  	* RowDescription (T)
 	* DataRow (D)
 	* CommandComplete (C)
-

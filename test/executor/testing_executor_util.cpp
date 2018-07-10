@@ -52,9 +52,9 @@ storage::Database *TestingExecutorUtil::InitializeDatabase(
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->CreateDatabase(db_name, txn);
+  auto result = catalog->CreateDatabase(txn, db_name);
   EXPECT_EQ(ResultType::SUCCESS, result);
-  auto database = catalog->GetDatabaseWithName(db_name, txn);
+  auto database = catalog->GetDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
   return (database);
 }
@@ -63,7 +63,7 @@ void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  auto result = catalog->DropDatabaseWithName(db_name, txn);
+  auto result = catalog->DropDatabaseWithName(txn, db_name);
   txn_manager.CommitTransaction(txn);
   EXPECT_EQ(ResultType::SUCCESS, result);
 }
@@ -81,7 +81,6 @@ void TestingExecutorUtil::DeleteDatabase(const std::string &db_name) {
  */
 catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
   const bool is_inlined = true;
-  std::string not_null_constraint_name = "not_null";
   catalog::Column dummy_column;
 
   switch (index) {
@@ -90,8 +89,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_A", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.SetNotNull();
       return column;
     } break;
 
@@ -100,8 +98,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
           "COL_B", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.SetNotNull();
       return column;
     } break;
 
@@ -110,8 +107,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           type::TypeId::DECIMAL, type::Type::GetTypeSize(type::TypeId::DECIMAL),
           "COL_C", is_inlined);
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.SetNotNull();
       return column;
     } break;
 
@@ -120,8 +116,7 @@ catalog::Column TestingExecutorUtil::GetColumnInfo(int index) {
           catalog::Column(type::TypeId::VARCHAR, 25,  // Column length.
                           "COL_D", !is_inlined);      // inlined.
 
-      column.AddConstraint(catalog::Constraint(ConstraintType::NOTNULL,
-                                               not_null_constraint_name));
+      column.SetNotNull();
       return column;
     } break;
 
@@ -390,7 +385,7 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
     unique = true;
 
     index_metadata = new index::IndexMetadata(
-        "primary_btree_index", 123, INVALID_OID, INVALID_OID, IndexType::BWTREE,
+        "primary_btree_index", 123, table_oid, INVALID_OID, IndexType::BWTREE,
         IndexConstraintType::PRIMARY_KEY, tuple_schema, key_schema, key_attrs,
         unique);
 
@@ -398,6 +393,12 @@ storage::DataTable *TestingExecutorUtil::CreateTable(
         index::IndexFactory::GetIndex(index_metadata));
 
     table->AddIndex(pkey_index);
+
+    // Create constraint on the table
+    std::shared_ptr<catalog::Constraint> constraint(
+        new catalog::Constraint(1000, ConstraintType::PRIMARY,
+            "con_primary", table_oid, key_attrs, 123));
+    table->GetSchema()->AddConstraint(constraint);
 
     /////////////////////////////////////////////////////////////////
     // Add index on table column 0 and 1
@@ -433,14 +434,18 @@ storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   // Insert table in catalog
-  catalog->CreateTable(db_name, DEFAULT_SCHEMA_NAME, table_name,
-                       std::move(table_schema), txn, is_catalog,
+  catalog->CreateTable(txn,
+                       db_name,
+                       DEFAULT_SCHEMA_NAME,
+                       std::move(table_schema),
+                       table_name,
+                       is_catalog,
                        tuples_per_tilegroup_count);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
   auto table =
-      catalog->GetTableWithName(db_name, DEFAULT_SCHEMA_NAME, table_name, txn);
+      catalog->GetTableWithName(txn, db_name, DEFAULT_SCHEMA_NAME, table_name);
   txn_manager.CommitTransaction(txn);
 
   return table;

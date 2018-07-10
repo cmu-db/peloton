@@ -351,9 +351,9 @@ TestingIndexSelectionUtil::CreateHypotheticalIndex(
   auto txn = txn_manager.BeginTransaction();
 
   // Get the existing table so that we can find its oid and the cols oids.
-  auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-      database_name_, "public", table_name, txn);
-  auto col_obj_pairs = table_object->GetColumnObjects();
+  auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(txn,
+      database_name_, "public", table_name);
+  auto col_obj_pairs = table_object->GetColumnCatalogEntries();
 
   std::vector<oid_t> col_ids;
   auto database_oid = table_object->GetDatabaseOid();
@@ -408,11 +408,11 @@ void TestingIndexSelectionUtil::CreateIndex(std::shared_ptr<brain::HypotheticalI
   auto txn = txn_manager.BeginTransaction();
   auto catalog = catalog::Catalog::GetInstance();
   std::string table_name =
-      catalog->GetTableObject(index_obj->db_oid, index_obj->table_oid, txn)->GetTableName();
+      catalog->GetTableCatalogEntry(txn, index_obj->db_oid, index_obj->table_oid)->GetTableName();
 
-  catalog->CreateIndex(database_name_, DEFAULT_SCHEMA_NAME, table_name,
-                       index_obj->column_oids, index_obj->ToString(), false,
-                       IndexType::BWTREE, txn);
+  catalog->CreateIndex(txn, database_name_, DEFAULT_SCHEMA_NAME, table_name,
+                       index_obj->ToString(), index_obj->column_oids, false,
+                       IndexType::BWTREE);
   txn_manager.CommitTransaction(txn);
 }
 

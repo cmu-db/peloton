@@ -36,9 +36,9 @@ class LogicalTile;
 
 namespace catalog {
 
-class LanguageCatalogObject {
+class LanguageCatalogEntry {
  public:
-  LanguageCatalogObject(executor::LogicalTile *tuple);
+  LanguageCatalogEntry(executor::LogicalTile *tuple);
 
   oid_t GetOid() const { return lang_oid_; }
 
@@ -56,36 +56,39 @@ class LanguageCatalog : public AbstractCatalog {
   // Global Singleton
   static LanguageCatalog &GetInstance(concurrency::TransactionContext *txn = nullptr);
 
+  oid_t GetNextOid() { return oid_++ | LANGUAGE_OID_MASK; }
+
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertLanguage(const std::string &lanname, type::AbstractPool *pool,
-                      concurrency::TransactionContext *txn);
+  bool InsertLanguage(concurrency::TransactionContext *txn,
+                      const std::string &lanname,
+                      type::AbstractPool *pool);
 
-  bool DeleteLanguage(const std::string &lanname,
-                      concurrency::TransactionContext *txn);
+  bool DeleteLanguage(concurrency::TransactionContext *txn,
+                      const std::string &lanname);
 
   //===--------------------------------------------------------------------===//
   // Read-only Related API
   //===--------------------------------------------------------------------===//
 
-  std::unique_ptr<LanguageCatalogObject> GetLanguageByOid(
-      oid_t lang_oid, concurrency::TransactionContext *txn) const;
+  std::unique_ptr<LanguageCatalogEntry> GetLanguageByOid(concurrency::TransactionContext *txn,
+                                                         oid_t lang_oid) const;
 
-  std::unique_ptr<LanguageCatalogObject> GetLanguageByName(
-      const std::string &lang_name, concurrency::TransactionContext *txn) const;
+  std::unique_ptr<LanguageCatalogEntry> GetLanguageByName(concurrency::TransactionContext *txn,
+                                                          const std::string &lang_name) const;
 
   enum ColumnId {
     OID = 0,
     LANNAME = 1,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1};
+  std::vector<oid_t> all_column_ids_ = {0, 1};
 
  private:
   LanguageCatalog(concurrency::TransactionContext *txn);
-
-  oid_t GetNextOid() { return oid_++ | LANGUAGE_OID_MASK; }
 
   enum IndexId {
     PRIMARY_KEY = 0,

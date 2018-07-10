@@ -35,9 +35,9 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
 
   auto txn = txn_manager_->BeginTransaction();
 
-  const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
+  const auto db_obj = catalog_->GetDatabaseCatalogEntry(txn, database_name_);
   database_oid_ = db_obj->GetDatabaseOid();
-  const auto table_objs = db_obj->GetTableObjects();
+  const auto table_objs = db_obj->GetTableCatalogEntries();
 
   // Uniq identifier per index config
   size_t next_index_id = 0;
@@ -54,7 +54,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     indexid_table_map_[table_oid] = {};
     auto &indexconf_id_map = table_indexid_map_[table_oid];
     auto &id_indexconf_map = indexid_table_map_[table_oid];
-    const auto col_objs = table_obj.second->GetColumnObjects();
+    const auto col_objs = table_obj.second->GetColumnCatalogEntries();
     std::vector<oid_t> null_conf;
     std::vector<oid_t> cols;
     for (const auto &col_obj : col_objs) {
@@ -79,7 +79,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
       continue;
     }
 
-    const auto index_objs = table_obj.second->GetIndexObjects();
+    const auto index_objs = table_obj.second->GetIndexCatalogEntries();
     if (index_objs.empty()) {
       SetBit(table_offset_map_.at(table_oid));
     } else {

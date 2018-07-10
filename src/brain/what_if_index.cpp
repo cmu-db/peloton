@@ -44,24 +44,24 @@ WhatIfIndex::GetCostAndBestPlanTree(
     // Load the tables into cache.
 
     // TODO: Hard coding the schema name for build to pass.
-    auto table_object = catalog::Catalog::GetInstance()->GetTableObject(
-        database_name, "public", table_name, txn);
+    auto table_object = catalog::Catalog::GetInstance()->GetTableCatalogEntry(
+        txn, database_name, "public", table_name);
 
     // Evict all the existing real indexes and
     // insert the what-if indexes into the cache.
-    table_object->EvictAllIndexObjects();
+    table_object->EvictAllIndexCatalogEntries();
 
     // Upon evict index objects, the index set becomes
     // invalid. Set it to valid so that we don't query
     // the catalog again while doing query optimization later.
-    table_object->SetValidIndexObjects(true);
+    table_object->SetValidIndexCatalogEntries(true);
 
     auto index_set = config.GetIndexes();
     for (auto it = index_set.begin(); it != index_set.end(); it++) {
       auto index = *it;
       if (index->table_oid == table_object->GetTableOid()) {
-        auto index_catalog_obj = CreateIndexCatalogObject(index.get());
-        table_object->InsertIndexObject(index_catalog_obj);
+        auto index_catalog_obj = CreateIndexCatalogEntry(index.get());
+        table_object->InsertIndexCatalogEntry(index_catalog_obj);
         LOG_TRACE("Created a new hypothetical index %d on table: %d",
                   index_catalog_obj->GetIndexOid(),
                   index_catalog_obj->GetTableOid());
@@ -84,8 +84,8 @@ WhatIfIndex::GetCostAndBestPlanTree(
   return opt_info_obj;
 }
 
-std::shared_ptr<catalog::IndexCatalogObject>
-WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
+std::shared_ptr<catalog::IndexCatalogEntry>
+WhatIfIndex::CreateIndexCatalogEntry(HypotheticalIndexObject *index_obj) {
   // Create an index name:
   // index_<database_name>_<table_name>_<col_oid1>_<col_oid2>_...
   std::ostringstream index_name_oss;
@@ -101,8 +101,8 @@ WhatIfIndex::CreateIndexCatalogObject(HypotheticalIndexObject *index_obj) {
   // Create a dummy catalog object.
   auto col_oids = std::vector<oid_t>(index_obj->column_oids.begin(),
                                      index_obj->column_oids.end());
-  auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogObject>(
-      new catalog::IndexCatalogObject(
+  auto index_cat_obj = std::shared_ptr<catalog::IndexCatalogEntry>(
+      new catalog::IndexCatalogEntry(
           index_seq_no++, index_name_oss.str(), index_obj->table_oid,
           IndexType::BWTREE, IndexConstraintType::DEFAULT, false, col_oids));
   return index_cat_obj;

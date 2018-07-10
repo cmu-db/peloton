@@ -58,7 +58,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
     output_cost_ = 0.f;
     return;
   }
-  auto index_object = op->table_->GetIndexObject(op->index_id);
+  auto index_object = op->table_->GetIndexCatalogEntries(op->index_id);
   const auto &key_attr_list = index_object->GetKeyAttrs();
   // Loop over index to retrieve helpful index columns
   // Consider all predicates that could be accelerated by the index,
@@ -104,7 +104,7 @@ void CostCalculator::Visit(UNUSED_ATTRIBUTE const PhysicalIndexScan *op) {
       }
       auto column_ref =
           reinterpret_cast<expression::TupleValueExpression *>(tv_expr);
-      auto column_id = op->table_->GetColumnObject(column_ref->GetColumnName())
+      auto column_id = op->table_->GetColumnCatalogEntry(column_ref->GetColumnName())
                            ->GetColumnId();
       if (column_id != index_col_id) {
         continue;

@@ -26,45 +26,49 @@ class Layout;
 
 namespace catalog {
 
-class IndexCatalogObject;
-class ColumnCatalogObject;
+class IndexCatalogEntry;
+class ColumnCatalogEntry;
+class ConstraintCatalogEntry;
 
-class TableCatalogObject {
+class TableCatalogEntry {
   friend class TableCatalog;
   friend class IndexCatalog;
   friend class ColumnCatalog;
   friend class LayoutCatalog;
+  friend class ConstraintCatalog;
 
  public:
-  TableCatalogObject(executor::LogicalTile *tile,
-                     concurrency::TransactionContext *txn, int tupleId = 0);
+  TableCatalogEntry(concurrency::TransactionContext *txn,
+                    executor::LogicalTile *tile,
+                    int tupleId = 0);
 
  public:
   // Get indexes
-  void EvictAllIndexObjects();
-  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>>
-  GetIndexObjects(bool cached_only = false);
-  std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
-  GetIndexNames(bool cached_only = false);
-  std::shared_ptr<IndexCatalogObject> GetIndexObject(oid_t index_oid,
-                                                     bool cached_only = false);
-  std::shared_ptr<IndexCatalogObject> GetIndexObject(
+  void EvictAllIndexCatalogEntries();
+
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogEntry>>
+  GetIndexCatalogEntries(bool cached_only = false);
+
+
+  std::shared_ptr<IndexCatalogEntry> GetIndexCatalogEntries(oid_t index_oid,
+                                                            bool cached_only = false);
+
+  std::shared_ptr<IndexCatalogEntry> GetIndexCatalogEntry(
       const std::string &index_name, bool cached_only = false);
 
-  // Get index objects
-  bool InsertIndexObject(std::shared_ptr<IndexCatalogObject> index_object);
-  bool EvictIndexObject(oid_t index_oid);
-  bool EvictIndexObject(const std::string &index_name);
-
   // Get columns
-  void EvictAllColumnObjects();
-  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-  GetColumnObjects(bool cached_only = false);
-  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
-  GetColumnNames(bool cached_only = false);
-  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+  void EvictAllColumnCatalogEntries();
+
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogEntry>>
+  GetColumnCatalogEntries(bool cached_only = false);
+
+  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogEntry>>
+  GetColumnCatalogEntriesByName(bool cached_only = false);
+
+  std::shared_ptr<ColumnCatalogEntry> GetColumnCatalogEntry(
       oid_t column_id, bool cached_only = false);
-  std::shared_ptr<ColumnCatalogObject> GetColumnObject(
+
+  std::shared_ptr<ColumnCatalogEntry> GetColumnCatalogEntry(
       const std::string &column_name, bool cached_only = false);
 
   // Evict all layouts from the cache
@@ -76,14 +80,34 @@ class TableCatalogObject {
   std::shared_ptr<const storage::Layout> GetLayout(oid_t layout_id,
                                                    bool cached_entry = false);
 
+  // Evict all constraints from the cache
+  void EvictAllConstraintCatalogEntries();
+
+  // Get constraints
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+	GetConstraintCatalogEntries(bool cached_only = false);
+  std::shared_ptr<ConstraintCatalogEntry>
+  GetConstraintCatalogEntry(oid_t constraint_oid, bool cached_entry = false);
+
   inline oid_t GetTableOid() { return table_oid; }
   inline const std::string &GetTableName() { return table_name; }
   inline const std::string &GetSchemaName() { return schema_name; }
   inline oid_t GetDatabaseOid() { return database_oid; }
   inline uint32_t GetVersionId() { return version_id; }
+  inline oid_t GetDefaultLayoutOid() { return default_layout_oid; }
 
   // NOTE: should be only used by What-if API.
-  void SetValidIndexObjects(bool is_valid);
+  void SetValidIndexCatalogEntries(bool is_valid);
+
+  // Insert/Evict index catalog entries
+  bool InsertIndexCatalogEntry(std::shared_ptr<IndexCatalogEntry> index_catalog_entry);
+  bool EvictIndexCatalogEntry(oid_t index_oid);
+  bool EvictIndexCatalogEntry(const std::string &index_name);
+
+  // Insert/Evict column catalog entries
+  bool InsertColumnCatalogEntry(std::shared_ptr<ColumnCatalogEntry> column_catalog_entry);
+  bool EvictColumnCatalogEntry(oid_t column_id);
+  bool EvictColumnCatalogEntry(const std::string &column_name);
 
  private:
   // member variables
@@ -92,78 +116,104 @@ class TableCatalogObject {
   std::string schema_name;
   oid_t database_oid;
   uint32_t version_id;
+  oid_t default_layout_oid;
+  bool valid_index_entries;
 
-  // Get column objects
-  bool InsertColumnObject(std::shared_ptr<ColumnCatalogObject> column_object);
-  bool EvictColumnObject(oid_t column_id);
-  bool EvictColumnObject(const std::string &column_name);
-
-  // Insert layout into table object
+  // Insert layout catalog entry into table catalog entry
   bool InsertLayout(std::shared_ptr<const storage::Layout> layout);
-  // Evict layout_id from the table object
+  // Evict layout_id from the table catalog entry
   bool EvictLayout(oid_t layout_id);
 
-  // cache for *all* index catalog objects in this table
-  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogObject>> index_objects;
-  std::unordered_map<std::string, std::shared_ptr<IndexCatalogObject>>
-      index_names;
-  bool valid_index_objects;
+  // Insert constraint catalog entry into table catalog entry
+  bool InsertConstraintCatalogEntry(
+  		std::shared_ptr<ConstraintCatalogEntry> constraint_catalog_entry);
+  // Evict constraint_oid from the table catalog entry
+  bool EvictConstraintCatalogEntry(oid_t constraint_oid);
+  void SetValidConstraintCatalogEntries(bool valid = true) {
+    valid_constraint_catalog_entries_ = valid;
+  }
 
-  // cache for *all* column catalog objects in this table
-  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogObject>>
-      column_objects;
-  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogObject>>
-      column_names;
-  bool valid_column_objects;
+  // cache for *all* index catalog entries in this table
+  std::unordered_map<oid_t, std::shared_ptr<IndexCatalogEntry>> index_catalog_entries;
+  std::unordered_map<std::string, std::shared_ptr<IndexCatalogEntry>>
+      index_catalog_entries_by_name_;
+  bool valid_index_catalog_entries_;
 
-  // cache for *all* layout objects in the table
+  // cache for *all* column catalog entries in this table
+  std::unordered_map<oid_t, std::shared_ptr<ColumnCatalogEntry>>
+      column_catalog_entries_;
+  std::unordered_map<std::string, std::shared_ptr<ColumnCatalogEntry>>
+      column_names_;
+  bool valid_column_catalog_entries_;
+
+  // cache for *all* layout catalog entries in the table
   std::unordered_map<oid_t, std::shared_ptr<const storage::Layout>>
-      layout_objects_;
-  bool valid_layout_objects_;
+      layout_catalog_entries_;
+  bool valid_layout_catalog_entries_;
+
+  // cache for *all* constraint catalog entries in the table
+  std::unordered_map<oid_t, std::shared_ptr<ConstraintCatalogEntry>>
+      constraint_catalog_entries_;
+  bool valid_constraint_catalog_entries_;
 
   // Pointer to its corresponding transaction
-  concurrency::TransactionContext *txn;
+  concurrency::TransactionContext *txn_;
 };
 
 class TableCatalog : public AbstractCatalog {
-  friend class TableCatalogObject;
-  friend class DatabaseCatalogObject;
+  friend class TableCatalogEntry;
+  friend class DatabaseCatalogEntry;
   friend class ColumnCatalog;
   friend class IndexCatalog;
   friend class LayoutCatalog;
+  friend class ConstraintCatalog;
   friend class Catalog;
 
  public:
-  TableCatalog(storage::Database *pg_catalog, type::AbstractPool *pool,
-               concurrency::TransactionContext *txn);
+  TableCatalog(concurrency::TransactionContext *txn,
+               storage::Database *pg_catalog,
+               type::AbstractPool *pool);
 
   ~TableCatalog();
 
   inline oid_t GetNextOid() { return oid_++ | TABLE_OID_MASK; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertTable(oid_t table_oid, const std::string &table_name,
-                   const std::string &schema_name, oid_t database_oid,
-                   type::AbstractPool *pool,
-                   concurrency::TransactionContext *txn);
-  bool DeleteTable(oid_t table_oid, concurrency::TransactionContext *txn);
+  bool InsertTable(concurrency::TransactionContext *txn,
+                   oid_t database_oid,
+                   const std::string &schema_name,
+                   oid_t table_oid,
+                   const std::string &table_name,
+                   oid_t layout_oid,
+                   type::AbstractPool *pool);
 
-  bool UpdateVersionId(oid_t update_val, oid_t table_oid,
-                       concurrency::TransactionContext *txn);
+  bool DeleteTable(concurrency::TransactionContext *txn, oid_t table_oid);
+
+  bool UpdateVersionId(concurrency::TransactionContext *txn,
+                       oid_t table_oid,
+                       oid_t update_val);
+
+  bool UpdateDefaultLayoutOid(concurrency::TransactionContext *txn,
+                              oid_t table_oid,
+                              oid_t update_val);
 
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
  private:
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      oid_t table_oid, concurrency::TransactionContext *txn);
-  std::shared_ptr<TableCatalogObject> GetTableObject(
-      const std::string &table_name, const std::string &schema_name,
-      concurrency::TransactionContext *txn);
-  std::unordered_map<oid_t, std::shared_ptr<TableCatalogObject>>
-  GetTableObjects(concurrency::TransactionContext *txn);
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          oid_t table_oid);
+
+  std::shared_ptr<TableCatalogEntry> GetTableCatalogEntry(concurrency::TransactionContext *txn,
+                                                          const std::string &schema_name,
+                                                          const std::string &table_name);
+
+  std::unordered_map<oid_t, std::shared_ptr<TableCatalogEntry>>
+  GetTableCatalogEntries(concurrency::TransactionContext *txn);
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 
@@ -173,9 +223,10 @@ class TableCatalog : public AbstractCatalog {
     SCHEMA_NAME = 2,
     DATABASE_OID = 3,
     VERSION_ID = 4,
+    DEFAULT_LAYOUT_OID = 5,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1, 2, 3, 4};
+  std::vector<oid_t> all_column_ids_ = {0, 1, 2, 3, 4, 5};
 
   enum IndexId {
     PRIMARY_KEY = 0,

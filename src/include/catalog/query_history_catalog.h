@@ -31,10 +31,11 @@ class QueryHistoryCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertQueryHistory(const std::string &query_string,
-                          const std::string &fingerprint, uint64_t timestamp,
-                          type::AbstractPool *pool,
-                          concurrency::TransactionContext *txn);
+  bool InsertQueryHistory(concurrency::TransactionContext *txn,
+                          const std::string &query_string,
+                          const std::string &fingerprint,
+                          uint64_t timestamp,
+                          type::AbstractPool *pool);
 
   std::unique_ptr<std::vector<std::pair<uint64_t, std::string>>>
   GetQueryStringsAfterTimestamp(const uint64_t start_timestamp,

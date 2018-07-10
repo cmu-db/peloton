@@ -41,7 +41,7 @@ void CompressedIndexConfigUtil::AddCandidates(
   } else if (cand_sel_type == CandidateSelectionType::Simple || cand_sel_type == CandidateSelectionType::Exhaustive) {
     auto sql_stmt_list = ToBindedSqlStmtList(container, query);
     auto txn = container.GetTransactionManager()->BeginTransaction();
-    container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
+    container.GetCatalog()->GetDatabaseCatalogEntry(txn, container.GetDatabaseName());
 
     std::vector<planner::col_triplet> indexable_cols_vector =
         planner::PlanUtil::GetIndexableColumns(txn->catalog_cache,
@@ -106,7 +106,7 @@ void CompressedIndexConfigUtil::DropCandidates(
   auto sql_stmt = sql_stmt_list->GetStatement(0);
 
   auto txn = container.GetTransactionManager()->BeginTransaction();
-  container.GetCatalog()->GetDatabaseObject(container.GetDatabaseName(), txn);
+  container.GetCatalog()->GetDatabaseCatalogEntry(txn, container.GetDatabaseName());
   std::vector<planner::col_triplet> affected_indexes =
       planner::PlanUtil::GetAffectedIndexes(txn->catalog_cache, *sql_stmt,
                                             true);
@@ -126,9 +126,9 @@ CompressedIndexConfigUtil::ConvertIndexTriplet(
   const auto idx_oid = std::get<2>(idx_triplet);
 
   auto txn = container.GetTransactionManager()->BeginTransaction();
-  const auto db_obj = container.GetCatalog()->GetDatabaseObject(db_oid, txn);
-  const auto table_obj = db_obj->GetTableObject(table_oid);
-  const auto idx_obj = table_obj->GetIndexObject(idx_oid);
+  const auto db_obj = container.GetCatalog()->GetDatabaseCatalogEntry(txn, db_oid);
+  const auto table_obj = db_obj->GetTableCatalogEntry(table_oid);
+  const auto idx_obj = table_obj->GetIndexCatalogEntries(idx_oid);
   const auto col_oids = idx_obj->GetKeyAttrs();
   std::vector<oid_t> input_oids(col_oids);
 
@@ -224,8 +224,8 @@ void CompressedIndexConfigUtil::GetIgnoreTables(
 
   auto txn = txn_manager->BeginTransaction();
   const auto table_objs = catalog::Catalog::GetInstance()
-                              ->GetDatabaseObject(db_name, txn)
-                              ->GetTableObjects();
+                              ->GetDatabaseCatalogEntry(txn, db_name)
+                              ->GetTableCatalogEntries();
 
   for (const auto &it : table_objs) {
     ori_table_oids.insert(it.first);

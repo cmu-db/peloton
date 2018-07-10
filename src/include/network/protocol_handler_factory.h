@@ -32,5 +32,5 @@ class ProtocolHandlerFactory {
   static std::unique_ptr<ProtocolHandler> CreateProtocolHandler(
       ProtocolHandlerType type, tcop::TrafficCop *trafficCop);
 };
-}
-}
+}  // namespace network
+}  // namespace peloton

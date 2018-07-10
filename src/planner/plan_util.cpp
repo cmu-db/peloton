@@ -35,11 +35,11 @@ namespace planner {
 
 const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
     catalog::CatalogCache &catalog_cache, const parser::SQLStatement &sql_stmt,
-    const bool ignore_primary) {
+    UNUSED_ATTRIBUTE const bool ignore_primary) {
   std::vector<col_triplet> index_triplets;
   std::string db_name, table_name, schema_name;
-  std::shared_ptr<catalog::DatabaseCatalogObject> db_object;
-  std::shared_ptr<catalog::TableCatalogObject> table_object;
+  std::shared_ptr<catalog::DatabaseCatalogEntry> db_object;
+  std::shared_ptr<catalog::TableCatalogEntry> table_object;
   oid_t db_oid, table_oid;
   switch (sql_stmt.GetType()) {
     // For INSERT, DELETE, all indexes are affected
@@ -51,7 +51,7 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       db_object = catalog_cache.GetDatabaseObject(db_name);
       db_oid = db_object->GetDatabaseOid();
       schema_name = insert_stmt.GetSchemaName();
-      table_object = db_object->GetTableObject(table_name, schema_name);
+      table_object = db_object->GetTableCatalogEntry(table_name, schema_name);
       table_oid = table_object->GetTableOid();
     }
       PELOTON_FALLTHROUGH;
@@ -64,22 +64,25 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
         db_object = catalog_cache.GetDatabaseObject(db_name);
         db_oid = db_object->GetDatabaseOid();
         schema_name = delete_stmt.GetSchemaName();
-        table_object = db_object->GetTableObject(table_name, schema_name);
+        table_object = db_object->GetTableCatalogEntry(table_name, schema_name);
         table_oid = table_object->GetTableOid();
       }
-      auto indexes_map = table_object->GetIndexObjects();
+      auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
+          ->GetTableCatalogEntry(table_name, schema_name)
+          ->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
         bool add_index = true;
 
-        if (ignore_primary) {
-          const auto col_oids = index.second->GetKeyAttrs();
-          for (const auto col_oid : col_oids) {
-            if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
-              add_index = false;
-              break;
-            }
-          }
-        }
+        // TODO(saatviks): Find a way to check for PKey
+//        if (ignore_primary) {
+//          const auto col_oids = index.second->GetKeyAttrs();
+//          for (const auto col_oid : col_oids) {
+//            if (table_object->GetConstraintCatalogEntries()GetCGetColumnCatalogEntry(col_oid)->) {
+//              add_index = false;
+//              break;
+//            }
+//          }
+//        }
 
         if (add_index) {
           index_triplets.emplace_back(db_oid, table_oid, index.first);
@@ -94,21 +97,20 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       table_name = update_stmt.table->GetTableName();
       db_object = catalog_cache.GetDatabaseObject(db_name);
       schema_name = update_stmt.table->GetSchemaName();
-      table_object = db_object->GetTableObject(table_name, schema_name);
-      db_oid = db_object->GetDatabaseOid();
-      table_oid = table_object->GetTableOid();
+      auto table_object = catalog_cache.GetDatabaseObject(db_name)
+          ->GetTableCatalogEntry(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
       for (const auto &update_clause : update_clauses) {
         LOG_TRACE("Affected column name for table(%s) in UPDATE query: %s",
                   table_name.c_str(), update_clause->column.c_str());
-        auto col_object = table_object->GetColumnObject(update_clause->column);
-
+        auto col_object =
+            table_object->GetColumnCatalogEntry(update_clause->column);
         update_oids.insert(col_object->GetColumnId());
       }
 
-      auto indexes_map = table_object->GetIndexObjects();
+      auto indexes_map = table_object->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
         LOG_TRACE("Checking if UPDATE query affects index: %s",
                   index.second->GetIndexName().c_str());
@@ -120,14 +122,15 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
                     index.second->GetIndexName().c_str());
           bool add_index = true;
 
-          if (ignore_primary) {
-            for (const auto col_oid : key_attrs) {
-              if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
-                add_index = false;
-                break;
-              }
-            }
-          }
+          // TODO(saatviks): Find a way to check for PKey
+//          if (ignore_primary) {
+//            for (const auto col_oid : key_attrs) {
+//              if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
+//                add_index = false;
+//                break;
+//              }
+//            }
+//          }
 
           if (add_index) {
             index_triplets.emplace_back(db_oid, table_oid, index.first);

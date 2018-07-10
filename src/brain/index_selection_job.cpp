@@ -28,16 +28,16 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
   // Analyze stats for all the tables.
   // TODO: AnalyzeStatsForAllTables crashes sometimes.
-  optimizer::StatsStorage *stats_storage =
-      optimizer::StatsStorage::GetInstance();
-  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
-  if (stats_result != ResultType::SUCCESS) {
-    LOG_ERROR(
-        "Cannot generate stats for table columns. Not performing index "
-        "suggestion...");
-    txn_manager.AbortTransaction(txn);
-    return;
-  }
+//  optimizer::StatsStorage *stats_storage =
+//      optimizer::StatsStorage::GetInstance();
+//  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
+//  if (stats_result != ResultType::SUCCESS) {
+//    LOG_ERROR(
+//        "Cannot generate stats for table columns. Not performing index "
+//        "suggestion...");
+//    txn_manager.AbortTransaction(txn);
+//    return;
+//  }
 
   // Query the catalog for new SQL queries.
   // New SQL queries are the queries that were added to the system
@@ -71,12 +71,12 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
     }
 
     // Get the index objects from database.
-    auto database_object = catalog::Catalog::GetInstance()->GetDatabaseObject(
-        DEFAULT_DB_NAME, txn);
+    auto database_object = catalog::Catalog::GetInstance()->GetDatabaseCatalogEntry(
+        txn, DEFAULT_DB_NAME);
     auto pg_index = catalog::Catalog::GetInstance()
                         ->GetSystemCatalogs(database_object->GetDatabaseOid())
                         ->GetIndexCatalog();
-    auto cur_indexes = pg_index->GetIndexObjects(txn);
+    auto cur_indexes = pg_index->GetIndexCatalogEntries(txn, database_object->GetDatabaseOid());
     auto drop_indexes = GetIndexesToDrop(cur_indexes, best_config);
 
     // Drop useless indexes.
@@ -97,12 +97,12 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
   txn_manager.CommitTransaction(txn);
 }
 
-std::vector<std::shared_ptr<catalog::IndexCatalogObject>>
+std::vector<std::shared_ptr<catalog::IndexCatalogEntry>>
 IndexSelectionJob::GetIndexesToDrop(
-    std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>>
+    std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogEntry>>
         &index_objects,
     brain::IndexConfiguration best_config) {
-  std::vector<std::shared_ptr<catalog::IndexCatalogObject>> ret_indexes;
+  std::vector<std::shared_ptr<catalog::IndexCatalogEntry>> ret_indexes;
   // Get the existing indexes and drop them.
   for (auto index : index_objects) {
     auto index_name = index.second->GetIndexName();
@@ -162,7 +162,7 @@ void IndexSelectionJob::CreateIndexRPC(brain::HypotheticalIndexObject *index) {
 }
 
 void IndexSelectionJob::DropIndexRPC(oid_t database_oid,
-                                     catalog::IndexCatalogObject *index) {
+                                     catalog::IndexCatalogEntry *index) {
   // TODO: Remove hardcoded database name and server end point.
   // TODO: Have to be removed when merged with tli's code.
   capnp::EzRpcClient client("localhost:15445");

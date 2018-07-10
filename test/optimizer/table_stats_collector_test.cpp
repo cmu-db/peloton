@@ -48,7 +48,7 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE test(id integer);");
@@ -60,8 +60,10 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         "test", txn);
+  auto table = catalog->GetTableWithName(txn,
+                                         DEFAULT_DB_NAME,
+                                         DEFAULT_SCHEMA_NAME,
+                                         "test");
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
@@ -80,7 +82,7 @@ TEST_F(TableStatsCollectorTests, SingleColumnTableTest) {
 
   // Free the database
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 
@@ -91,7 +93,7 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   auto catalog = catalog::Catalog::GetInstance();
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-  catalog->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   TestingSQLUtil::ExecuteSQLQuery(
@@ -111,8 +113,10 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
   }
 
   txn = txn_manager.BeginTransaction();
-  auto table = catalog->GetTableWithName(DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME,
-                                         "test", txn);
+  auto table = catalog->GetTableWithName(txn,
+                                         DEFAULT_DB_NAME,
+                                         DEFAULT_SCHEMA_NAME,
+                                         "test");
   txn_manager.CommitTransaction(txn);
   TableStatsCollector stats{table};
   stats.CollectColumnStats();
@@ -141,7 +145,7 @@ TEST_F(TableStatsCollectorTests, MultiColumnTableTest) {
 
   // Free the database
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

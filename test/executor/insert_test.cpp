@@ -48,16 +48,21 @@ TEST_F(InsertTests, InsertRecord) {
   std::unique_ptr<catalog::Schema> table_schema(
       new catalog::Schema({id_column, name_column}));
 
-  catalog::Catalog::GetInstance()->CreateDatabase(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->CreateTable(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "TEST_TABLE",
-      std::move(table_schema), txn);
+  catalog::Catalog::GetInstance()->CreateTable(txn,
+                                               DEFAULT_DB_NAME,
+                                               DEFAULT_SCHEMA_NAME,
+                                               std::move(table_schema),
+                                               "TEST_TABLE",
+                                               false);
 
-  auto table = catalog::Catalog::GetInstance()->GetTableWithName(
-      DEFAULT_DB_NAME, DEFAULT_SCHEMA_NAME, "TEST_TABLE", txn);
+  auto table = catalog::Catalog::GetInstance()->GetTableWithName(txn,
+                                                                 DEFAULT_DB_NAME,
+                                                                 DEFAULT_SCHEMA_NAME,
+                                                                 "TEST_TABLE");
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
@@ -141,7 +146,7 @@ TEST_F(InsertTests, InsertRecord) {
 
   // free the database just created
   txn = txn_manager.BeginTransaction();
-  catalog::Catalog::GetInstance()->DropDatabaseWithName(DEFAULT_DB_NAME, txn);
+  catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
   txn_manager.CommitTransaction(txn);
 }
 

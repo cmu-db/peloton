@@ -31,51 +31,57 @@
 namespace peloton {
 namespace catalog {
 
-class SchemaCatalogObject {
-  friend class DatabaseCatalogObject;
+class SchemaCatalogEntry {
+  friend class DatabaseCatalogEntry;
 
  public:
-  SchemaCatalogObject(executor::LogicalTile *tile,
-                      concurrency::TransactionContext *txn);
+  SchemaCatalogEntry(concurrency::TransactionContext *txn,
+                     executor::LogicalTile *tile);
 
-  inline oid_t GetSchemaOid() { return schema_oid; }
-  inline const std::string &GetSchemaName() { return schema_name; }
+  inline oid_t GetSchemaOid() { return schema_oid_; }
+
+  inline const std::string &GetSchemaName() { return schema_name_; }
 
  private:
   // member variables
-  oid_t schema_oid;
-  std::string schema_name;
+  oid_t schema_oid_;
+  std::string schema_name_;
   // Pointer to its corresponding transaction
   // This object is only visible during this transaction
-  concurrency::TransactionContext *txn;
+  concurrency::TransactionContext *txn_;
 };
 
 class SchemaCatalog : public AbstractCatalog {
-  friend class SchemaCatalogObject;
+  friend class SchemaCatalogEntry;
   friend class Catalog;
 
  public:
-  SchemaCatalog(storage::Database *peloton, type::AbstractPool *pool,
-                concurrency::TransactionContext *txn);
+  SchemaCatalog(concurrency::TransactionContext *txn,
+                storage::Database *peloton,
+                type::AbstractPool *pool);
 
   ~SchemaCatalog();
 
   inline oid_t GetNextOid() { return oid_++ | SCHEMA_OID_MASK; }
 
+  void UpdateOid(oid_t add_value) { oid_ += add_value; }
+
   //===--------------------------------------------------------------------===//
   // write Related API
   //===--------------------------------------------------------------------===//
-  bool InsertSchema(oid_t schema_oid, const std::string &schema_name,
-                    type::AbstractPool *pool,
-                    concurrency::TransactionContext *txn);
-  bool DeleteSchema(const std::string &schema_name,
-                    concurrency::TransactionContext *txn);
+  bool InsertSchema(concurrency::TransactionContext *txn,
+                    oid_t schema_oid,
+                    const std::string &schema_name,
+                    type::AbstractPool *pool);
+
+  bool DeleteSchema(concurrency::TransactionContext *txn,
+                    const std::string &schema_name);
 
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<SchemaCatalogObject> GetSchemaObject(
-      const std::string &schema_name, concurrency::TransactionContext *txn);
+  std::shared_ptr<SchemaCatalogEntry> GetSchemaCatalogEntry(concurrency::TransactionContext *txn,
+                                                            const std::string &schema_name);
 
  private:
   std::unique_ptr<catalog::Schema> InitializeSchema();
@@ -85,7 +91,7 @@ class SchemaCatalog : public AbstractCatalog {
     SCHEMA_NAME = 1,
     // Add new columns here in creation order
   };
-  std::vector<oid_t> all_column_ids = {0, 1};
+  std::vector<oid_t> all_column_ids_ = {0, 1};
 
   enum IndexId {
     PRIMARY_KEY = 0,

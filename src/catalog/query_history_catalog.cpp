@@ -27,25 +27,20 @@ QueryHistoryCatalog &QueryHistoryCatalog::GetInstance(
 }
 
 QueryHistoryCatalog::QueryHistoryCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog("CREATE TABLE " CATALOG_DATABASE_NAME
-                      "." CATALOG_SCHEMA_NAME "." QUERY_HISTORY_CATALOG_NAME
-                      " ("
-                      "query_string   VARCHAR NOT NULL, "
-                      "fingerprint    VARCHAR NOT NULL, "
-                      "timestamp      TIMESTAMP NOT NULL);",
-                      txn) {
-  // Secondary index on timestamp
-  Catalog::GetInstance()->CreateIndex(
-      CATALOG_DATABASE_NAME, CATALOG_SCHEMA_NAME, QUERY_HISTORY_CATALOG_NAME,
-      {2}, QUERY_HISTORY_CATALOG_NAME "_skey0", false, IndexType::BWTREE, txn);
-}
+    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+                           "." CATALOG_SCHEMA_NAME "." QUERY_HISTORY_CATALOG_NAME
+                           " ("
+                           "query_string   VARCHAR NOT NULL, "
+                           "fingerprint    VARCHAR NOT NULL, "
+                           "timestamp      TIMESTAMP NOT NULL);") {}
 
 QueryHistoryCatalog::~QueryHistoryCatalog() = default;
 
-bool QueryHistoryCatalog::InsertQueryHistory(
-    const std::string &query_string, const std::string &fingerprint,
-    uint64_t timestamp, type::AbstractPool *pool,
-    concurrency::TransactionContext *txn) {
+bool QueryHistoryCatalog::InsertQueryHistory(concurrency::TransactionContext *txn,
+                                             const std::string &query_string,
+                                             const std::string &fingerprint,
+                                             uint64_t timestamp,
+                                             type::AbstractPool *pool) {
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
@@ -59,7 +54,7 @@ bool QueryHistoryCatalog::InsertQueryHistory(
   tuple->SetValue(ColumnId::TIMESTAMP, val2, pool != nullptr ? pool : &pool_);
 
   // Insert the tuple
-  return InsertTuple(std::move(tuple), txn);
+  return InsertTuple(txn, std::move(tuple));
 }
 
 std::unique_ptr<std::vector<std::pair<uint64_t, std::string>>>
@@ -78,7 +73,7 @@ QueryHistoryCatalog::GetQueryStringsAfterTimestamp(
                                          ExpressionType::COMPARE_GREATERTHAN);
 
   auto result_tiles =
-      GetResultWithIndexScan(column_ids, index_offset, values, expr_types, txn);
+      GetResultWithIndexScan(column_ids, index_offset, values, txn);
 
   std::unique_ptr<std::vector<std::pair<uint64_t, std::string>>> queries(
       new std::vector<std::pair<uint64_t, std::string>>());

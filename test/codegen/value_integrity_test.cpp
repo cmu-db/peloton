@@ -67,7 +67,7 @@ void DivideByZeroTest(const codegen::type::Type &data_type, ExpressionType op) {
   }
 
   // Should be able to compile
-  EXPECT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef void (*func)(CType);
   func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());
@@ -134,7 +134,7 @@ void OverflowTest(const codegen::type::Type &data_type, ExpressionType op) {
   }
 
   // Should be able to compile
-  EXPECT_TRUE(code_context.Compile());
+  code_context.Compile();
 
   typedef void (*func)(CType);
   func f = (func)code_context.GetRawFunctionPointer(function.GetFunction());

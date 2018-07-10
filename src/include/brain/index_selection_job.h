@@ -51,8 +51,8 @@ class IndexSelectionJob : public BrainJob {
    * @param best_config
    * @return indexes that are not useful and to be dropped.
    */
-  std::vector<std::shared_ptr<catalog::IndexCatalogObject>> GetIndexesToDrop(
-      std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogObject>>
+  std::vector<std::shared_ptr<catalog::IndexCatalogEntry>> GetIndexesToDrop(
+      std::unordered_map<oid_t, std::shared_ptr<catalog::IndexCatalogEntry>>
           &cur_indexes,
       brain::IndexConfiguration best_config);
 
@@ -60,7 +60,7 @@ class IndexSelectionJob : public BrainJob {
    * Sends an RPC message to server for drop indexes.
    * @param index
    */
-  void DropIndexRPC(oid_t database_oid, catalog::IndexCatalogObject *index);
+  void DropIndexRPC(oid_t database_oid, catalog::IndexCatalogEntry *index);
 
   /**
    * Timestamp of the latest query of the recently processed

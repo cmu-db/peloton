@@ -37,24 +37,24 @@ void Schema::CreateTupleSchema(
 
     column_offset += column.GetFixedLength();
 
-    columns.push_back(std::move(column));
+    columns_.push_back(std::move(column));
 
     if (is_inlined[column_itr] == false) {
       tup_is_inlined = false;
-      uninlined_columns.push_back(column_itr);
+      uninlined_columns_.push_back(column_itr);
     }
   }
 
-  length = column_offset;
-  tuple_is_inlined = tup_is_inlined;
+  length_ = column_offset;
+  tuple_is_inlined_ = tup_is_inlined;
 
-  column_count = columns.size();
-  uninlined_column_count = uninlined_columns.size();
+  column_count_ = columns_.size();
+  uninlined_column_count_ = uninlined_columns_.size();
 }
 
 // Construct schema from vector of Column
 Schema::Schema(const std::vector<Column> &columns)
-    : length(0), tuple_is_inlined(false) {
+    : length_(0), tuple_is_inlined_(false) {
   oid_t column_count = columns.size();
 
   std::vector<type::TypeId> column_types;
@@ -76,10 +76,14 @@ Schema::Schema(const std::vector<Column> &columns)
 
   CreateTupleSchema(column_types, column_lengths, column_names, is_inlined);
 
-  // Add constraints
+  // Set constraints
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
-    for (auto constraint : columns[column_itr].GetConstraints())
-      AddConstraint(column_itr, constraint);
+    if (columns[column_itr].IsNotNull()) {
+      SetNotNull(column_itr);
+    }
+    if (columns[column_itr].HasDefault()) {
+      SetDefaultValue(column_itr, *(columns[column_itr].GetDefaultValue()));
+    }
   }
 }
 
@@ -105,7 +109,7 @@ std::shared_ptr<const Schema> Schema::CopySchema(
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
-      columns.push_back(schema->columns[column_itr]);
+      columns.push_back(schema->columns_[column_itr]);
     }
   }
 
@@ -153,9 +157,9 @@ Schema *Schema::CopySchema(const Schema *schema,
   // For each column index, push the column
   for (oid_t column_index : index_list) {
     // Make sure the index does not refer to invalid element
-    PELOTON_ASSERT(column_index < schema->columns.size());
+    PELOTON_ASSERT(column_index < schema->columns_.size());
 
-    column_list.push_back(schema->columns[column_index]);
+    column_list.push_back(schema->columns_[column_index]);
   }
 
   Schema *ret_schema = new Schema(column_list);
@@ -195,7 +199,7 @@ Schema *Schema::FilterSchema(const Schema *schema,
   for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
     // If column exists in set
     if (std::find(set.begin(), set.end(), column_itr) != set.end()) {
-      columns.push_back(schema->columns[column_itr]);
+      columns.push_back(schema->columns_[column_itr]);
     }
   }
 
@@ -261,7 +265,7 @@ Schema *Schema::AppendSchemaPtrList(
     for (oid_t column_itr = 0; column_itr < column_count; column_itr++) {
       // If column exists in set.
       if (std::find(subset.begin(), subset.end(), column_itr) != subset.end()) {
-        columns.push_back(schema->columns[column_itr]);
+        columns.push_back(schema->columns_[column_itr]);
       }
     }
   }
@@ -275,22 +279,36 @@ const std::string Schema::GetInfo() const {
   std::ostringstream os;
 
   os << "Schema["
-     << "NumColumns:" << column_count << ", "
-     << "IsInlined:" << tuple_is_inlined << ", "
-     << "Length:" << length << ", "
-     << "UninlinedCount:" << uninlined_column_count << "]";
+     << "NumColumns:" << column_count_ << ", "
+     << "IsInlined:" << tuple_is_inlined_ << ", "
+     << "Length:" << length_ << ", "
+     << "UninlinedCount:" << uninlined_column_count_ << "]";
 
   bool first = true;
   os << " :: (";
-  for (oid_t i = 0; i < column_count; i++) {
+  for (oid_t i = 0; i < column_count_; i++) {
     if (first) {
       first = false;
     } else {
       os << ", ";
     }
-    os << columns[i].GetInfo();
+    os << columns_[i].GetInfo();
   }
   os << ")";
+
+  if (constraints.empty() == false) {
+    os << ", {";
+    bool first = true;
+    for (auto constraint : constraints) {
+      if (first) {
+        first = false;
+      } else {
+        os << ", ";
+      }
+      os << constraint.second->GetInfo();
+    }
+    os << "}";
+  }
 
   return os.str();
 }
@@ -305,7 +323,7 @@ hash_t Schema::Hash() const {
   auto is_inlined = IsInlined();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&is_inlined));
 
-  for (const auto &column : columns) {
+  for (const auto &column : columns_) {
     hash = HashUtil::CombineHashes(hash, column.Hash());
   }
   return hash;

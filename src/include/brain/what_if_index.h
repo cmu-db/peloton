@@ -77,7 +77,7 @@ class WhatIfIndex {
    * @param obj - Index object
    * @return index catalog object
    */
-  static std::shared_ptr<catalog::IndexCatalogObject> CreateIndexCatalogObject(
+  static std::shared_ptr<catalog::IndexCatalogEntry> CreateIndexCatalogEntry(
       HypotheticalIndexObject *obj);
   /**
    * @brief a monotonically increasing sequence number for creating dummy oids
