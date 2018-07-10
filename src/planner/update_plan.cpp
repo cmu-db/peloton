@@ -26,11 +26,10 @@ UpdatePlan::UpdatePlan(storage::DataTable *table,
       update_primary_key_(false) {
   LOG_TRACE("Creating an Update Plan");
 
-  if (project_info_ != nullptr) {
+  if (project_info_ != nullptr && table->GetSchema()->HasPrimary()) {
     for (const auto target : project_info_->GetTargetList()) {
       auto col_id = target.first;
-      update_primary_key_ =
-          target_table_->GetSchema()->GetColumn(col_id).IsPrimary();
+      update_primary_key_ = target_table_->GetSchema()->IsPrimary(col_id);
       if (update_primary_key_)
         break;
     }
