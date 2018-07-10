@@ -190,9 +190,8 @@ TEST_F(GarbageCollectionTests, UpdateTest) {
 
   EXPECT_EQ(0, old_num);
 
-  // there should be 2 tuple recycled due to delete and insert
-  // on primary key
-  EXPECT_EQ(2, recycle_num);
+  // there should be 1 tuple recycled
+  EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
