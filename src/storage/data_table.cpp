@@ -210,7 +210,7 @@ ItemPointer DataTable::GetEmptyTupleSlot(const storage::Tuple *tuple) {
   //=============== garbage collection==================
   // check if there are recycled tuple slots
   auto &gc_manager = gc::GCManagerFactory::GetInstance();
-  auto free_item_pointer = gc_manager.ReturnFreeSlot(this->table_oid);
+  auto free_item_pointer = gc_manager.GetRecycledTupleSlot(table_oid);
   if (free_item_pointer.IsNull() == false) {
     // when inserting a tuple
     if (tuple != nullptr) {
@@ -319,6 +319,12 @@ ItemPointer DataTable::InsertTuple(const storage::Tuple *tuple,
   auto result =
       InsertTuple(tuple, location, transaction, index_entry_ptr, check_fk);
   if (result == false) {
+    // Insertion failed due to some constraint (indexes, etc.) but tuple
+    // is in the table already, need to give the ItemPointer back to the
+    // GCManager
+    auto &gc_manager = gc::GCManagerFactory::GetInstance();
+    gc_manager.RecycleTupleSlot(location);
+
     return INVALID_ITEMPOINTER;
   }
   return location;
@@ -463,9 +469,19 @@ bool DataTable::InsertInIndexes(const AbstractTuple *tuple,
 
     // Handle failure
     if (res == false) {
-      // If some of the indexes have been inserted,
-      // the pointer has a chance to be dereferenced by readers and it cannot be
-      // deleted
+      // if an index insert fails, undo all prior inserts on this index
+      for (index_itr = index_itr + 1; index_itr < index_count; ++index_itr) {
+        index = GetIndex(index_itr);
+        if (index == nullptr) continue;
+        index_schema = index->GetKeySchema();
+        indexed_columns = index_schema->GetIndexedColumns();
+        std::unique_ptr<storage::Tuple> delete_key(
+            new storage::Tuple(index_schema, true));
+        delete_key->SetFromTuple(tuple, indexed_columns, index->GetPool());
+        UNUSED_ATTRIBUTE bool delete_res =
+            index->DeleteEntry(delete_key.get(), *index_entry_ptr);
+        PELOTON_ASSERT(delete_res == true);
+      }
       *index_entry_ptr = nullptr;
       return false;
     } else {

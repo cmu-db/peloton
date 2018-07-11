@@ -117,7 +117,6 @@ class TileGroup : public Printable {
 
   // this function is called only when building tile groups for aggregation
   // operations.
-  // FIXME: GC has recycled some of the tuples, so this count is not accurate
   uint32_t GetActiveTupleCount() const;
 
   uint32_t GetAllocatedTupleCount() const { return num_tuple_slots_; }

@@ -282,11 +282,12 @@ class DataTable : public AbstractTable {
                        concurrency::TransactionContext *transaction,
                        ItemPointer **index_entry_ptr);
 
-  inline static size_t GetActiveTileGroupCount() {
+  inline static size_t GetDefaultActiveTileGroupCount() {
     return default_active_tilegroup_count_;
   }
 
-  static void SetActiveTileGroupCount(const size_t active_tile_group_count) {
+  static void SetDefaultActiveTileGroupCount(
+      const size_t active_tile_group_count) {
     default_active_tilegroup_count_ = active_tile_group_count;
   }
 

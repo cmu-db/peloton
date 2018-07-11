@@ -133,29 +133,34 @@ TEST_F(LoaderTests, LoadingTest) {
 
   int total_tuple_count = loader_threads_count * tilegroup_count_per_loader * TEST_TUPLES_PER_TILEGROUP;
   int max_cached_tuple_count =
-      TEST_TUPLES_PER_TILEGROUP * storage::DataTable::GetActiveTileGroupCount();
+      TEST_TUPLES_PER_TILEGROUP *
+      storage::DataTable::GetDefaultActiveTileGroupCount();
   int max_unfill_cached_tuple_count =
       (TEST_TUPLES_PER_TILEGROUP - 1) *
-      storage::DataTable::GetActiveTileGroupCount();
+      storage::DataTable::GetDefaultActiveTileGroupCount();
 
   if (total_tuple_count - max_cached_tuple_count <= 0) {
     if (total_tuple_count <= max_unfill_cached_tuple_count) {
-      expected_tile_group_count = storage::DataTable::GetActiveTileGroupCount();
+      expected_tile_group_count =
+          storage::DataTable::GetDefaultActiveTileGroupCount();
     } else {
       expected_tile_group_count =
-          storage::DataTable::GetActiveTileGroupCount() + total_tuple_count -
-          max_unfill_cached_tuple_count;
+          storage::DataTable::GetDefaultActiveTileGroupCount() +
+          total_tuple_count - max_unfill_cached_tuple_count;
     }
   } else {
-    int filled_tile_group_count = total_tuple_count / max_cached_tuple_count * storage::DataTable::GetActiveTileGroupCount();
-    
+    int filled_tile_group_count =
+        total_tuple_count / max_cached_tuple_count *
+        storage::DataTable::GetDefaultActiveTileGroupCount();
+
     if (total_tuple_count - filled_tile_group_count * TEST_TUPLES_PER_TILEGROUP - max_unfill_cached_tuple_count <= 0) {
-      expected_tile_group_count = filled_tile_group_count +
-                                  storage::DataTable::GetActiveTileGroupCount();
+      expected_tile_group_count =
+          filled_tile_group_count +
+          storage::DataTable::GetDefaultActiveTileGroupCount();
     } else {
       expected_tile_group_count =
           filled_tile_group_count +
-          storage::DataTable::GetActiveTileGroupCount() +
+          storage::DataTable::GetDefaultActiveTileGroupCount() +
           (total_tuple_count - filled_tile_group_count -
            max_unfill_cached_tuple_count);
     }

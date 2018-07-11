@@ -1071,7 +1071,7 @@ TEST_F(InternalTypesTests, GCVersionTypeTest) {
   std::vector<GCVersionType> list = {
       GCVersionType::INVALID,       GCVersionType::COMMIT_UPDATE,
       GCVersionType::COMMIT_DELETE, GCVersionType::COMMIT_INS_DEL,
-      GCVersionType::ABORT_UPDATE,  GCVersionType::ABORT_DELETE,
+      GCVersionType::ABORT_UPDATE,  GCVersionType::TOMBSTONE,
       GCVersionType::ABORT_INSERT,  GCVersionType::ABORT_INS_DEL,
   };
 
