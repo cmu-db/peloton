@@ -41,7 +41,7 @@ class ModelUtil {
    *           (2) Check: "Early Stopping - but when?" for a more detailed
    *           suite of methods.
    */
-  static bool EarlyStop(vector_t val_losses, size_t patience = 10, float delta = 1e-2);
+  static bool EarlyStop(vector_t val_losses, size_t patience, float delta);
 
   /**
    * Utility function to create a batch of the given data

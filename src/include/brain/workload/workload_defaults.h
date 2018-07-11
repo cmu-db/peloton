@@ -30,6 +30,9 @@ struct CommonWorkloadDefaults {
   static const int HORIZON;
   static const int INTERVAL;
   static const int PADDLING_DAYS;
+  // Early Stop parameters
+  static const int ESTOP_PATIENCE;
+  static const float ESTOP_DELTA;
 };
 
 /**

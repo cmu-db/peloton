@@ -54,7 +54,9 @@ TEST_F(ModelTests, DISABLED_TimeSeriesLSTMTest) {
   float VAL_THESH = 0.05;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::SimpleSinusoidal,
                                     LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
-                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH,
+                                    brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                                    brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
 TEST_F(ModelTests, LinearRegTest) {
@@ -71,7 +73,9 @@ TEST_F(ModelTests, LinearRegTest) {
   float VAL_THESH = 0.1;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::NoisyLinear,
                                     LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
-                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH,
+                                    brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                                    brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
 TEST_F(ModelTests, KernelRegTest) {
@@ -88,7 +92,9 @@ TEST_F(ModelTests, KernelRegTest) {
   float VAL_THESH = 0.1;
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::NoisyLinear,
                                     LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
-                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH,
+                                    brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                                    brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
 TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
@@ -124,7 +130,9 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
           brain::LSTMWorkloadDefaults::BATCH_SIZE));
   TestingForecastUtil::WorkloadTest(*model, WorkloadType::SimpleSinusoidal,
                                     LOG_INTERVAL, NUM_SAMPLES, NUM_FEATS,
-                                    VAL_SPLIT, NORMALIZE, VAL_THESH);
+                                    VAL_SPLIT, NORMALIZE, VAL_THESH,
+                                    brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                                    brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
 }  // namespace test

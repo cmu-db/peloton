@@ -18,6 +18,8 @@ namespace brain {
 const int CommonWorkloadDefaults::HORIZON = 216;
 const int CommonWorkloadDefaults::INTERVAL = 100;
 const int CommonWorkloadDefaults::PADDLING_DAYS = 7;
+const int CommonWorkloadDefaults::ESTOP_PATIENCE = 10;
+const float CommonWorkloadDefaults::ESTOP_DELTA = 0.01f;
 
 const int LSTMWorkloadDefaults::NFEATS = 3;
 const int LSTMWorkloadDefaults::NENCODED = 20;
