@@ -245,7 +245,7 @@ class Schema : public Printable {
     constraints[constraint->GetConstraintOid()] = constraint;
 
     if (constraint->GetType() == ConstraintType::PRIMARY) {
-      has_primary_key_ = true;
+      primary_key_columns_ = constraint->GetColumnIds();
     } else if (constraint->GetType() == ConstraintType::UNIQUE) {
       unique_constraint_count_++;
     } else if (constraint->GetType() == ConstraintType::FOREIGN) {
@@ -256,7 +256,7 @@ class Schema : public Printable {
   // Delete a constraint by id from the table
   inline void DropConstraint(oid_t constraint_oid) {
     if (constraints[constraint_oid]->GetType() == ConstraintType::PRIMARY) {
-      has_primary_key_ = false;
+      primary_key_columns_.clear();
     } else if (constraints[constraint_oid]->GetType() == ConstraintType::UNIQUE) {
       unique_constraint_count_--;
     } else if (constraints[constraint_oid]->GetType() == ConstraintType::FOREIGN) {
@@ -280,7 +280,14 @@ class Schema : public Printable {
   }
 
   // For primary key constraints
-  inline bool HasPrimary() { return has_primary_key_; }
+  inline bool HasPrimary() { return (primary_key_columns_.size() > 0); }
+
+  inline bool IsPrimary(oid_t column_id) {
+    for (auto pk_column_id : primary_key_columns_) {
+      if (pk_column_id == column_id) return true;
+    }
+    return false;
+  }
 
   // For unique constraints
   inline bool HasUniqueConstraints() const { return (unique_constraint_count_ > 0); }
@@ -312,7 +319,7 @@ class Schema : public Printable {
 
   inline bool HasForeignKeySources() const { return (fk_sources_.size() > 0); }
 
-  inline std::vector<std::shared_ptr<Constraint>> GetForeignKeySources() {
+  inline std::vector<std::shared_ptr<Constraint>> GetForeignKeySources() const {
     return fk_sources_;
   }
 
@@ -347,8 +354,8 @@ class Schema : public Printable {
   // not null column list for fast constraint checking
   std::vector<oid_t> not_null_columns_;
 
-  // has a primary key ?
-  bool has_primary_key_ = false;
+  // primary key column list for fast column check
+  std::vector<oid_t> primary_key_columns_;
 
   // # of unique constraints
   oid_t unique_constraint_count_ = START_OID;
