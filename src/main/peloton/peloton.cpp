@@ -101,10 +101,10 @@ int main(int argc, char *argv[]) {
     // run both peloton server and the brain together to test the index suggestion
     // at the brain end without catalog replication between the server and the
     // brain
-//    peloton::settings::SettingsManager::SetBool(
-//        peloton::settings::SettingId::brain, true);
-//    peloton::settings::SettingsManager::SetBool(
-//        peloton::settings::SettingId::rpc_enabled, true);
+    peloton::settings::SettingsManager::SetBool(
+        peloton::settings::SettingId::brain, true);
+    peloton::settings::SettingsManager::SetBool(
+        peloton::settings::SettingId::rpc_enabled, true);
 
     int exit_code = 0;
     if (peloton::settings::SettingsManager::GetBool(

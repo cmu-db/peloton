@@ -28,16 +28,16 @@ void IndexSelectionJob::OnJobInvocation(BrainEnvironment *env) {
 
   // Analyze stats for all the tables.
   // TODO: AnalyzeStatsForAllTables crashes sometimes.
-  optimizer::StatsStorage *stats_storage =
-      optimizer::StatsStorage::GetInstance();
-  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
-  if (stats_result != ResultType::SUCCESS) {
-    LOG_ERROR(
-        "Cannot generate stats for table columns. Not performing index "
-        "suggestion...");
-    txn_manager.AbortTransaction(txn);
-    return;
-  }
+//  optimizer::StatsStorage *stats_storage =
+//      optimizer::StatsStorage::GetInstance();
+//  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(txn);
+//  if (stats_result != ResultType::SUCCESS) {
+//    LOG_ERROR(
+//        "Cannot generate stats for table columns. Not performing index "
+//        "suggestion...");
+//    txn_manager.AbortTransaction(txn);
+//    return;
+//  }
 
   // Query the catalog for new SQL queries.
   // New SQL queries are the queries that were added to the system
