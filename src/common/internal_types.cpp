@@ -3001,8 +3001,8 @@ std::string GCVersionTypeToString(GCVersionType type) {
     case GCVersionType::ABORT_UPDATE: {
       return "ABORT_UPDATE";
     }
-    case GCVersionType::ABORT_DELETE: {
-      return "ABORT_DELETE";
+    case GCVersionType::TOMBSTONE: {
+      return "TOMBSTONE";
     }
     case GCVersionType::ABORT_INSERT: {
       return "ABORT_INSERT";
@@ -3031,8 +3031,8 @@ GCVersionType StringToGCVersionType(const std::string &str) {
     return GCVersionType::COMMIT_INS_DEL;
   } else if (upper_str == "ABORT_UPDATE") {
     return GCVersionType::ABORT_UPDATE;
-  } else if (upper_str == "ABORT_DELETE") {
-    return GCVersionType::ABORT_DELETE;
+  } else if (upper_str == "TOMBSTONE") {
+    return GCVersionType::TOMBSTONE;
   } else if (upper_str == "ABORT_INSERT") {
     return GCVersionType::ABORT_INSERT;
   } else if (upper_str == "ABORT_INS_DEL") {

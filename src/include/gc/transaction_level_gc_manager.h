@@ -6,7 +6,7 @@
 //
 // Identification: src/include/gc/transaction_level_gc_manager.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-18, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,150 +18,197 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/container/cuckoo_map.h"
+#include "common/container/lock_free_queue.h"
 #include "common/init.h"
 #include "common/logger.h"
 #include "common/thread_pool.h"
+#include "common/internal_types.h"
 #include "concurrency/transaction_context.h"
 #include "gc/gc_manager.h"
-#include "common/internal_types.h"
-
-#include "common/container/lock_free_queue.h"
 
 namespace peloton {
+
 namespace gc {
 
-#define MAX_QUEUE_LENGTH 100000
-#define MAX_ATTEMPT_COUNT 100000
+using RecycleQueue = peloton::LockFreeQueue<ItemPointer>;
+
+static constexpr size_t QUEUE_LENGTH = 100000;
+static constexpr size_t INITIAL_MAP_SIZE = 256;
+static constexpr size_t MAX_PROCESSED_COUNT = 100000;
 
 class TransactionLevelGCManager : public GCManager {
  public:
-  TransactionLevelGCManager(const int thread_count)
-      : gc_thread_count_(thread_count), reclaim_maps_(thread_count) {
-    unlink_queues_.reserve(thread_count);
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
-          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
-              MAX_QUEUE_LENGTH));
-      unlink_queues_.push_back(unlink_queue);
-      local_unlink_queues_.emplace_back();
-    }
-  }
-
-  virtual ~TransactionLevelGCManager() {}
-
-  // this function cleans up all the member variables in the class object.
-  virtual void Reset() override {
-    unlink_queues_.clear();
-    local_unlink_queues_.clear();
-
-    unlink_queues_.reserve(gc_thread_count_);
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      std::shared_ptr<LockFreeQueue<concurrency::TransactionContext* >>
-          unlink_queue(new LockFreeQueue<concurrency::TransactionContext* >(
-              MAX_QUEUE_LENGTH));
-      unlink_queues_.push_back(unlink_queue);
-      local_unlink_queues_.emplace_back();
-    }
-
-    reclaim_maps_.clear();
-    reclaim_maps_.resize(gc_thread_count_);
-    recycle_queue_map_.clear();
-
-    is_running_ = false;
-  }
-
-  static TransactionLevelGCManager &GetInstance(const int thread_count = 1) {
-    static TransactionLevelGCManager gc_manager(thread_count);
-    return gc_manager;
-  }
-
-  virtual void StartGC(
-      std::vector<std::unique_ptr<std::thread>> &gc_threads) override {
-    LOG_TRACE("Starting GC");
-    this->is_running_ = true;
-    gc_threads.resize(gc_thread_count_);
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      gc_threads[i].reset(
-          new std::thread(&TransactionLevelGCManager::Running, this, i));
-    }
-  }
-
-  virtual void StartGC() override {
-    LOG_TRACE("Starting GC");
-    this->is_running_ = true;
-    for (int i = 0; i < gc_thread_count_; ++i) {
-      thread_pool.SubmitDedicatedTask(&TransactionLevelGCManager::Running, this,
-                                      std::move(i));
-    }
-  };
+  /**
+   * @brief TransactionLevelGCManager should be created with GetInstance()
+   */
+  TransactionLevelGCManager() = delete;
 
   /**
-   * @brief This stops the Garbage Collector when Peloton shuts down
+   * @brief Resets member variables and data structures to defaults.
    *
-   * @return No return value.
+   * Intended for testing purposes only.
+   *
+   * @warning This leaks tuple slots, txns, etc. if StopGC() not called first!
+   */
+  virtual void Reset() override;
+
+  /**
+   *
+   * @param[in] thread_count Number of Garbage Collector threads
+   * @return Singleton instance of the TransactionLevelGCManager
+   */
+  static TransactionLevelGCManager &GetInstance(
+      const uint32_t &thread_count = 1);
+
+  virtual void StartGC(
+      std::vector<std::unique_ptr<std::thread>> &gc_threads) override;
+
+  /**
+   * @brief Launches GC threads
+   */
+  virtual void StartGC() override;
+
+  /**
+   * @brief Clears garbage for each GC thread and then ends the threads
    */
   virtual void StopGC() override;
 
+  /**
+   * @brief Registers the provided table with the GC to recycle its
+   * tuple slots
+   * @param[in] table_id Global oid of the table to start recycling
+   * slots for
+   */
+  virtual void RegisterTable(const oid_t &table_id) override;
+
+  /**
+   * @brief Deregisters the provided table with the GC to recycle its
+   * tuple slots
+   * @param[in] table_id Global oid of the table to stop recycling
+   * slots for
+   */
+  virtual void DeregisterTable(const oid_t &table_id) override;
+
+  /**
+   * @brief Passes a transaction's context to the GC for freeing and
+   * possible recycling
+   * @param[id] txn TransactionContext pointer for the GC to process.
+   * @warning txn will be freed by the GC, so do not dereference it
+   * after calling this function with txn
+   */
   virtual void RecycleTransaction(
       concurrency::TransactionContext *txn) override;
 
-  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id) override;
-
-  virtual void RegisterTable(const oid_t &table_id) override {
-    // Insert a new entry for the table
-    if (recycle_queue_map_.find(table_id) == recycle_queue_map_.end()) {
-      std::shared_ptr<LockFreeQueue<ItemPointer>> recycle_queue(
-          new LockFreeQueue<ItemPointer>(MAX_QUEUE_LENGTH));
-      recycle_queue_map_[table_id] = recycle_queue;
-    }
-  }
-
-  virtual void DeregisterTable(const oid_t &table_id) override {
-    // Remove dropped tables
-    if (recycle_queue_map_.find(table_id) != recycle_queue_map_.end()) {
-      recycle_queue_map_.erase(table_id);
-    }
-  }
-
-  virtual size_t GetTableCount() override { return recycle_queue_map_.size(); }
-
-  int Unlink(const int &thread_id, const eid_t &expired_eid);
-
-  int Reclaim(const int &thread_id, const eid_t &expired_eid);
-
- private:
-  inline unsigned int HashToThread(const size_t &thread_id) {
-    return (unsigned int)thread_id % gc_thread_count_;
-  }
+  /**
+   * @brief Attempt to get a recycled ItemPointer for this table from the GC
+   * @param[in] table Pointer of the table to return a recycled ItemPointer for
+   * @return ItemPointer to a recycled tuple slot on success,
+   * INVALID_ITEMPOINTER otherwise
+   */
+  virtual ItemPointer GetRecycledTupleSlot(const oid_t &table_id) override;
 
   /**
-   * @brief Unlink and reclaim the tuples remained in a garbage collection
-   * thread when the Garbage Collector stops.
-   *
-   * @return No return value.
+   * @brief Recycle the provided tuple slot
+   * @param[id] location ItemPointer of the tuple slot to be recycled
    */
-  void ClearGarbage(int thread_id);
+  virtual void RecycleTupleSlot(const ItemPointer &location) override;
 
-  void Running(const int &thread_id);
+  /**
+   *
+   * @return Number of tables currently registered with the GC for recycling
+   */
+  virtual size_t GetTableCount() override { return recycle_queues_->GetSize(); }
 
-  void AddToRecycleMap(concurrency::TransactionContext *txn_ctx);
+  /**
+   * @brief Process unlink queue for provided thread
+   * @param[id] thread_id Zero-indexed thread id to access unlink queue
+   * @param[id] expired_eid Expired epoch from the EpochManager
+   * @return Number of processed tuples
+   */
+  uint32_t Unlink(const uint32_t &thread_id, const eid_t &expired_eid);
 
-  bool ResetTuple(const ItemPointer &);
+  /**
+   * @brief Process reclaim queue for provided thread
+   * @param[id] thread_id Zero-indexed thread id to access reclaim queue
+   * @param[id] expired_eid Expired epoch from the EpochManager
+   * @return Number of processed objects
+   */
+  uint32_t Reclaim(const uint32_t &thread_id, const eid_t &expired_eid);
 
-  // this function iterates the gc context and unlinks every version
-  // from the indexes.
-  // this function will call the UnlinkVersion() function.
-  void UnlinkVersions(concurrency::TransactionContext *txn_ctx);
-
-  // this function unlinks a specified version from the index.
-  void UnlinkVersion(const ItemPointer location, const GCVersionType type);
+  /**
+   * @brief Unlink and reclaim the objects currently in queues
+   *
+   * Meant to be used primarily internally by GC and in tests, not
+   * by outside classes
+   *
+   * @param[in] thread_id
+   */
+  void ClearGarbage(const uint32_t &thread_id);
 
  private:
+  TransactionLevelGCManager(const uint32_t &thread_count);
+
+  virtual ~TransactionLevelGCManager() {}
+
+  inline unsigned int HashToThread(const size_t &thread_id);
+
+  /**
+   * @brief Primary function for GC threads: wakes up, runs GC, has
+   * exponential backoff if queues are empty
+   * @param[id] thread_id Zero-indexed thread id for queue access
+   */
+  void Running(const uint32_t &thread_id);
+
+  /**
+   * @brief Recycles all of the tuple slots in transaction context's GCSet
+   * @param[in] txn_ctx TransactionConext pointer containing GCSet to be
+   * processed
+   */
+  void RecycleTupleSlots(concurrency::TransactionContext *txn_ctx);
+
+  /**
+   * @brief Recycles all of the objects in transaction context's GCObjectSet
+   * @param[in] txn_ctx TransactionConext pointer containing GCObjectSet
+   * to be processed
+   */
+  void RemoveObjectLevelGarbage(concurrency::TransactionContext *txn_ctx);
+
+  /**
+   * @brief Resets a tuple slot's version chain info and varlen pool
+   * @return True on success, false if TileGroup no longer exists
+   */
+  bool ResetTuple(const ItemPointer &);
+
+  /**
+ * @brief Helper function to easily look up a table's RecycleStack
+ * @param[id] table_id Global oid of the table
+ * @return Smart pointer to the RecycleStack for the provided table.
+ * May be nullptr if the table is not registered with the GC
+ */
+  std::shared_ptr<RecycleQueue> GetTableRecycleQueue(
+      const oid_t &table_id) const;
+
+  /**
+   * @brief Unlinks all tuples in GCSet from indexes.
+   * @param[in] txn_ctx TransactionConext pointer containing GCSet to be
+   * processed
+   */
+  void RemoveVersionsFromIndexes(concurrency::TransactionContext *txn_ctx);
+
+  // this function unlinks a specified version from the index.
+  /**
+   * @brief Unlinks provided tuple from indexes
+   * @param[in] location ItemPointer to garbage tuple to be processed
+   * @param[in] type GCVersionType for the provided garbage tuple
+   */
+  void RemoveVersionFromIndexes(const ItemPointer &location,
+                                const GCVersionType &type);
+
   //===--------------------------------------------------------------------===//
   // Data members
   //===--------------------------------------------------------------------===//
-
-  int gc_thread_count_;
+  uint32_t gc_thread_count_;
 
   // queues for to-be-unlinked tuples.
   // # unlink_queues == # gc_threads
@@ -182,10 +229,9 @@ class TransactionLevelGCManager : public GCManager {
       reclaim_maps_;
 
   // queues for to-be-reused tuples.
-  // # recycle_queue_maps == # tables
-  std::unordered_map<oid_t,
-                     std::shared_ptr<peloton::LockFreeQueue<ItemPointer>>>
-      recycle_queue_map_;
+  // oid_t here is global DataTable oid
+  std::shared_ptr<peloton::CuckooMap<oid_t, std::shared_ptr<RecycleQueue>>>
+      recycle_queues_;
 };
 }
 }  // namespace peloton

@@ -39,6 +39,8 @@ class ProjectInfo;
 }
 namespace test {
 
+#define RANDOM_SEED 15721
+
 storage::DataTable *TestingTransactionUtil::CreateCombinedPrimaryKeyTable() {
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -233,6 +235,24 @@ storage::DataTable *TestingTransactionUtil::CreateTable(
   txn_manager.CommitTransaction(txn);
 
   return table;
+}
+
+void TestingTransactionUtil::AddSecondaryIndex(storage::DataTable *table) {
+  // Create unique index on the value column
+  std::vector<oid_t> key_attrs = {1};
+  auto tuple_schema = table->GetSchema();
+  bool unique = false;
+  auto key_schema = catalog::Schema::CopySchema(tuple_schema, key_attrs);
+  key_schema->SetIndexedColumns(key_attrs);
+  auto index_metadata2 = new index::IndexMetadata(
+      "unique_btree_index", 1235, TEST_TABLE_OID, CATALOG_DATABASE_OID,
+      IndexType::BWTREE, IndexConstraintType::UNIQUE, tuple_schema, key_schema,
+      key_attrs, unique);
+
+  std::shared_ptr<index::Index> secondary_key_index(
+      index::IndexFactory::GetIndex(index_metadata2));
+
+  table->AddIndex(secondary_key_index);
 }
 
 std::unique_ptr<const planner::ProjectInfo>
@@ -479,5 +499,83 @@ bool TestingTransactionUtil::ExecuteScan(
   }
   return true;
 }
+
+ResultType TestingTransactionUtil::UpdateTuple(storage::DataTable *table,
+                                               const int key) {
+  srand(RANDOM_SEED);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Update(key, rand() % RANDOM_SEED);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
 }
+
+ResultType TestingTransactionUtil::InsertTuple(storage::DataTable *table,
+                                               const int key) {
+  srand(RANDOM_SEED);
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Insert(key, rand() % RANDOM_SEED);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
 }
+
+ResultType TestingTransactionUtil::BulkInsertTuples(storage::DataTable *table,
+                                                    const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i = 0; i < num_tuples; i++) {
+    scheduler.Txn(0).Insert(i, i);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::BulkDeleteTuples(storage::DataTable *table,
+                                                    const size_t num_tuples) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  for (size_t i = 0; i < num_tuples; i++) {
+    scheduler.Txn(0).Delete(i, false);
+  }
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::DeleteTuple(storage::DataTable *table,
+                                               const int key) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Delete(key);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  return scheduler.schedules[0].txn_result;
+}
+
+ResultType TestingTransactionUtil::SelectTuple(storage::DataTable *table,
+                                               const int key,
+                                               std::vector<int> &results) {
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  TransactionScheduler scheduler(1, table, &txn_manager);
+  scheduler.Txn(0).Read(key);
+  scheduler.Txn(0).Commit();
+  scheduler.Run();
+
+  results = scheduler.schedules[0].results;
+
+  return scheduler.schedules[0].txn_result;
+}
+
+}  // namespace test
+}  // namespace peloton
