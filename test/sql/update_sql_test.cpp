@@ -299,10 +299,10 @@ TEST_F(UpdateSQLTests, HalloweenProblemTest) {
   // it would have caused a second update on an already updated Tuple.
 
   size_t active_tilegroup_count = 3;
-  storage::DataTable::SetDefaultActiveTileGroupCount(active_tilegroup_count);
+  storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetDefaultActiveTileGroupCount());
+            storage::DataTable::GetActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT, b INT)");
@@ -372,10 +372,10 @@ TEST_F(UpdateSQLTests, HalloweenProblemTestWithPK) {
 
   // active_tilegroup_count set to 3, [Reason: Refer to HalloweenProblemTest]
   size_t active_tilegroup_count = 3;
-  storage::DataTable::SetDefaultActiveTileGroupCount(active_tilegroup_count);
+  storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetDefaultActiveTileGroupCount());
+            storage::DataTable::GetActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
@@ -469,10 +469,10 @@ TEST_F(UpdateSQLTests, MultiTileGroupUpdateSQLTest) {
 
   // active_tilegroup_count set to 3, [Reason: Refer to HalloweenProblemTest]
   size_t active_tilegroup_count = 3;
-  storage::DataTable::SetDefaultActiveTileGroupCount(active_tilegroup_count);
+  storage::DataTable::SetActiveTileGroupCount(active_tilegroup_count);
 
   LOG_DEBUG("Active tile group count = %zu",
-            storage::DataTable::GetDefaultActiveTileGroupCount());
+            storage::DataTable::GetActiveTileGroupCount());
   // Create a table first
   LOG_DEBUG("Creating a table...");
   LOG_DEBUG("Query: CREATE TABLE test(a INT PRIMARY KEY, b INT)");
