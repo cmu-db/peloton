@@ -32,9 +32,6 @@ class IndexMetric;
 
 class StatementCache;
 
-template <typename T>
-class LockFreeQueue;
-
 CUCKOO_MAP_TEMPLATE_ARGUMENTS
 CUCKOO_MAP_TYPE::CuckooMap() {}
 
@@ -127,9 +124,5 @@ template class CuckooMap<std::shared_ptr<oid_t>, std::shared_ptr<oid_t>>;
 
 // Used in StatementCacheManager
 template class CuckooMap<StatementCache *, StatementCache *>;
-
-// Used in TransactionLevelGCManager
-template class CuckooMap<oid_t,
-                         std::shared_ptr<LockFreeQueue<ItemPointer>>>;
 
 }  // namespace peloton

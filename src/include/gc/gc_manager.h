@@ -29,7 +29,6 @@ class TransactionContext;
 
 namespace storage {
 class TileGroup;
-class DataTable;
 }
 
 namespace gc {
@@ -66,12 +65,9 @@ class GCManager {
 
   virtual void StopGC() {}
 
-  virtual ItemPointer GetRecycledTupleSlot(
-      const oid_t &table_id UNUSED_ATTRIBUTE) {
+  virtual ItemPointer ReturnFreeSlot(const oid_t &table_id UNUSED_ATTRIBUTE) {
     return INVALID_ITEMPOINTER;
   }
-
-  virtual void RecycleTupleSlot(const ItemPointer &location UNUSED_ATTRIBUTE) {}
 
   virtual void RegisterTable(const oid_t &table_id UNUSED_ATTRIBUTE) {}
 

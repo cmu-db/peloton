@@ -106,8 +106,8 @@ int GarbageNum(storage::DataTable *table) {
 // get tuple recycled by GC
 int RecycledNum(storage::DataTable *table) {
   int count = 0;
-  while (
-      !gc::GCManagerFactory::GetInstance().GetRecycledTupleSlot(table->GetOid()).IsNull())
+  auto table_id = table->GetOid();
+  while (!gc::GCManagerFactory::GetInstance().ReturnFreeSlot(table_id).IsNull())
     count++;
 
   LOG_INFO("recycled version num = %d", count);
@@ -289,7 +289,11 @@ TEST_F(GarbageCollectionTests, DeleteTest) {
 
   // there should be two versions to be recycled by the GC:
   // the deleted version and the empty version.
-  EXPECT_EQ(2, recycle_num);
+  // however, the txn will explicitly pass one version (the deleted
+  // version) to the GC manager.
+  // The GC itself should be responsible for recycling the
+  // empty version.
+  EXPECT_EQ(1, recycle_num);
 
   gc_manager.StopGC();
   gc::GCManagerFactory::Configure(0);
