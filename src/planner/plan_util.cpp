@@ -15,6 +15,7 @@
 #include <string>
 #include "catalog/catalog_cache.h"
 #include "catalog/column_catalog.h"
+#include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
@@ -33,9 +34,23 @@
 namespace peloton {
 namespace planner {
 
+const std::set<oid_t> PlanUtil::GetPrimaryKeyColumns(
+    std::unordered_map<oid_t, std::shared_ptr<catalog::ConstraintCatalogEntry>>
+    table_constraint_entries) {
+  std::set<oid_t> pkey_set;
+  for(const auto &kv: table_constraint_entries) {
+    if(kv.second->GetConstraintType() == ConstraintType::PRIMARY) {
+      for(const auto& col_oid: kv.second->GetColumnIds()) {
+        pkey_set.insert(col_oid);
+      }
+    }
+  }
+  return pkey_set;
+}
+
 const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
     catalog::CatalogCache &catalog_cache, const parser::SQLStatement &sql_stmt,
-    UNUSED_ATTRIBUTE const bool ignore_primary) {
+    const bool ignore_primary) {
   std::vector<col_triplet> index_triplets;
   std::string db_name, table_name, schema_name;
   std::shared_ptr<catalog::DatabaseCatalogEntry> db_object;
@@ -73,16 +88,16 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       for (auto &index : indexes_map) {
         bool add_index = true;
 
-        // TODO(saatviks): Find a way to check for PKey
-//        if (ignore_primary) {
-//          const auto col_oids = index.second->GetKeyAttrs();
-//          for (const auto col_oid : col_oids) {
-//            if (table_object->GetConstraintCatalogEntries()GetCGetColumnCatalogEntry(col_oid)->) {
-//              add_index = false;
-//              break;
-//            }
-//          }
-//        }
+        if (ignore_primary) {
+          auto pkey_cols_table = GetPrimaryKeyColumns(table_object->GetConstraintCatalogEntries());
+          const auto col_oids = index.second->GetKeyAttrs();
+          for (const auto col_oid : col_oids) {
+            if(pkey_cols_table.find(col_oid) != pkey_cols_table.end()) {
+              add_index = false;
+              break;
+            }
+          }
+        }
 
         if (add_index) {
           index_triplets.emplace_back(db_oid, table_oid, index.first);
@@ -96,9 +111,11 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
       db_object = catalog_cache.GetDatabaseObject(db_name);
+      db_oid = db_object->GetDatabaseOid();
       schema_name = update_stmt.table->GetSchemaName();
       auto table_object = catalog_cache.GetDatabaseObject(db_name)
           ->GetTableCatalogEntry(table_name, schema_name);
+      table_oid = table_object->GetTableOid();
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -122,15 +139,16 @@ const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
                     index.second->GetIndexName().c_str());
           bool add_index = true;
 
-          // TODO(saatviks): Find a way to check for PKey
-//          if (ignore_primary) {
-//            for (const auto col_oid : key_attrs) {
-//              if (table_object->GetColumnObject(col_oid)->IsPrimary()) {
-//                add_index = false;
-//                break;
-//              }
-//            }
-//          }
+          if (ignore_primary) {
+            auto pkey_cols_table = GetPrimaryKeyColumns(table_object->GetConstraintCatalogEntries());
+            const auto col_oids = index.second->GetKeyAttrs();
+            for (const auto col_oid : col_oids) {
+              if(pkey_cols_table.find(col_oid) != pkey_cols_table.end()) {
+                add_index = false;
+                break;
+              }
+            }
+          }
 
           if (add_index) {
             index_triplets.emplace_back(db_oid, table_oid, index.first);

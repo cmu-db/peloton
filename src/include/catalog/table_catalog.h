@@ -117,7 +117,6 @@ class TableCatalogEntry {
   oid_t database_oid;
   uint32_t version_id;
   oid_t default_layout_oid;
-  bool valid_index_entries;
 
   // Insert layout catalog entry into table catalog entry
   bool InsertLayout(std::shared_ptr<const storage::Layout> layout);

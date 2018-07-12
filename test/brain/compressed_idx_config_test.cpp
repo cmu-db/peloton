@@ -41,8 +41,8 @@ class CompressedIdxConfigTest : public PelotonTest {
    */
   oid_t GetTableOid(const std::string &db_name, const std::string &table_name) {
     auto txn = txn_manager_->BeginTransaction();
-    const auto table_oid = catalog_->GetDatabaseObject(db_name, txn)
-                               ->GetTableObject(table_name, DEFAULT_SCHEMA_NAME)
+    const auto table_oid = catalog_->GetDatabaseCatalogEntry(txn, db_name)
+                               ->GetTableCatalogEntry(table_name, DEFAULT_SCHEMA_NAME)
                                ->GetTableOid();
     txn_manager_->CommitTransaction(txn);
     return table_oid;

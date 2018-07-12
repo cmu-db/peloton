@@ -38,13 +38,8 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
 
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
-
-<<<<<<< HEAD
-  catalog->CreateDatabase(TEST_DB_NAME, txn);
-  auto db = catalog->GetDatabaseWithName(TEST_DB_NAME, txn);
-=======
   catalog->CreateDatabase(txn, TEST_DB_NAME);
->>>>>>> upstream/master
+  auto db = catalog->GetDatabaseWithName(txn, TEST_DB_NAME);
   // Insert a table first
   auto id_column = catalog::Column(
       type::TypeId::INTEGER, type::Type::GetTypeSize(type::TypeId::INTEGER),
@@ -73,13 +68,9 @@ TEST_F(PlanUtilTests, GetAffectedIndexesTest) {
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();
-<<<<<<< HEAD
   oid_t db_oid = db->GetOid();
   oid_t table_oid = source_table->GetOid();
-  oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.column_name);
-=======
   oid_t col_id = source_table->GetSchema()->GetColumnID(id_column.GetName());
->>>>>>> upstream/master
   std::vector<oid_t> source_col_ids;
   source_col_ids.push_back(col_id);
 
@@ -215,18 +206,10 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
 
   auto txn = txn_manager.BeginTransaction();
-<<<<<<< HEAD
-  catalog->CreateDatabase(TEST_DB_COLUMNS, txn);
-  auto db_object = catalog->GetDatabaseObject(TEST_DB_COLUMNS, txn);
-  oid_t database_id = db_object->GetDatabaseOid();
-  int table_count = db_object->GetTableObjects().size();
-=======
   catalog->CreateDatabase(txn, TEST_DB_COLUMNS);
-  auto db = catalog->GetDatabaseWithName(txn, TEST_DB_COLUMNS);
-  oid_t database_id = db->GetOid();
   auto db_object = catalog->GetDatabaseCatalogEntry(txn, TEST_DB_COLUMNS);
+  oid_t database_id = db_object->GetDatabaseOid();
   int table_count = db_object->GetTableCatalogEntries().size();
->>>>>>> upstream/master
   txn_manager.CommitTransaction(txn);
 
   // Insert a 'test_table' with 'id', 'first_name' and 'last_name'
@@ -252,16 +235,10 @@ TEST_F(PlanUtilTests, GetIndexableColumnsTest) {
 
   // Obtain ids for the table and columns
   txn = txn_manager.BeginTransaction();
-<<<<<<< HEAD
-
-  auto source_table = catalog->GetTableWithName(
-      TEST_DB_COLUMNS, DEFAULT_SCHEMA_NAME, "test_table", txn);
-=======
   auto source_table = catalog->GetTableWithName(txn,
                                                 TEST_DB_COLUMNS,
                                                 DEFAULT_SCHEMA_NAME,
                                                 "test_table");
->>>>>>> upstream/master
   txn_manager.CommitTransaction(txn);
 
   oid_t table_id = source_table->GetOid();

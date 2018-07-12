@@ -140,7 +140,7 @@ void TableCatalogEntry::EvictAllIndexCatalogEntries() {
  * @param is_valid
  */
 void TableCatalogEntry::SetValidIndexCatalogEntries(bool is_valid) {
-  valid_index_entries = is_valid;
+  valid_index_catalog_entries_ = is_valid;
 }
 
 /* @brief   get all index objects of this table into cache
