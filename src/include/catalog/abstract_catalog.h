@@ -6,7 +6,7 @@
 //
 // Identification: src/include/catalog/abstract_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -70,6 +70,12 @@ class AbstractCatalog {
       std::vector<oid_t> column_offsets,
       oid_t index_offset,
       std::vector<type::Value> values) const;
+
+  std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+  GetResultWithIndexScan(const std::vector<oid_t> &column_offsets,
+                         const oid_t &index_offset,
+                         const std::vector<type::Value> &values,
+                         concurrency::TransactionContext *txn) const;
 
   std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
   GetResultWithSeqScan(

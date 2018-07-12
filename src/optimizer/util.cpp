@@ -6,10 +6,12 @@
 //
 // Identification: src/optimizer/util.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
+#include "optimizer/stats/selectivity.h"
+#include "optimizer/stats/value_condition.h"
 #include "optimizer/util.h"
 
 #include "catalog/query_metrics_catalog.h"
@@ -143,8 +145,7 @@ std::unordered_map<std::string, std::shared_ptr<expression::AbstractExpression>>
 ConstructSelectElementMap(
     std::vector<std::unique_ptr<expression::AbstractExpression>> &select_list) {
   std::unordered_map<std::string,
-                     std::shared_ptr<expression::AbstractExpression>>
-      res;
+                     std::shared_ptr<expression::AbstractExpression>> res;
   for (auto &expr : select_list) {
     std::string alias;
     if (!expr->alias.empty()) {
@@ -212,6 +213,89 @@ void ExtractEquiJoinKeys(
       }
     }
   }
+}
+
+// Calculate the selectivity given the predicate and the stats of columns in the
+// predicate
+double CalculateSelectivityForPredicate(
+    const std::shared_ptr<TableStats> predicate_table_stats,
+    const expression::AbstractExpression *expr) {
+  double selectivity = 1.f;
+  if (predicate_table_stats->GetColumnCount() == 0 ||
+      predicate_table_stats->GetColumnStats(0)->num_rows == 0) {
+    return selectivity;
+  }
+  // Base case : Column Op Val
+  if ((expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+       (expr->GetChild(1)->GetExpressionType() ==
+            ExpressionType::VALUE_CONSTANT ||
+        expr->GetChild(1)->GetExpressionType() ==
+            ExpressionType::VALUE_PARAMETER)) ||
+      (expr->GetChild(1)->GetExpressionType() == ExpressionType::VALUE_TUPLE &&
+       (expr->GetChild(0)->GetExpressionType() ==
+            ExpressionType::VALUE_CONSTANT ||
+        expr->GetChild(0)->GetExpressionType() ==
+            ExpressionType::VALUE_PARAMETER))) {
+    int right_index =
+        expr->GetChild(0)->GetExpressionType() == ExpressionType::VALUE_TUPLE
+            ? 1
+            : 0;
+
+    auto left_expr = expr->GetChild(1 - right_index);
+    auto col_name =
+        reinterpret_cast<const expression::TupleValueExpression *>(left_expr)
+            ->GetColFullName();
+
+    auto expr_type = expr->GetExpressionType();
+    if (right_index == 0) {
+      switch (expr_type) {
+        case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+          expr_type = ExpressionType::COMPARE_GREATERTHANOREQUALTO;
+          break;
+        case ExpressionType::COMPARE_LESSTHAN:
+          expr_type = ExpressionType::COMPARE_GREATERTHAN;
+          break;
+        case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+          expr_type = ExpressionType::COMPARE_LESSTHANOREQUALTO;
+          break;
+        case ExpressionType::COMPARE_GREATERTHAN:
+          expr_type = ExpressionType::COMPARE_LESSTHAN;
+          break;
+        default:
+          break;
+      }
+    }
+
+    type::Value value;
+    if (expr->GetChild(right_index)->GetExpressionType() ==
+        ExpressionType::VALUE_CONSTANT) {
+      value = reinterpret_cast<expression::ConstantValueExpression *>(
+                  expr->GetModifiableChild(right_index))
+                  ->GetValue();
+    } else {
+      value = type::ValueFactory::GetParameterOffsetValue(
+                  reinterpret_cast<expression::ParameterValueExpression *>(
+                      expr->GetModifiableChild(right_index))
+                      ->GetValueIdx())
+                  .Copy();
+    }
+    ValueCondition condition(col_name, expr_type, value);
+    selectivity =
+        Selectivity::ComputeSelectivity(predicate_table_stats, condition);
+  } else if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND ||
+             expr->GetExpressionType() == ExpressionType::CONJUNCTION_OR) {
+    double left_selectivity = CalculateSelectivityForPredicate(
+        predicate_table_stats, expr->GetChild(0));
+    double right_selectivity = CalculateSelectivityForPredicate(
+        predicate_table_stats, expr->GetChild(1));
+    if (expr->GetExpressionType() == ExpressionType::CONJUNCTION_AND) {
+      selectivity = left_selectivity * right_selectivity;
+    } else {
+      selectivity = left_selectivity + right_selectivity -
+                    left_selectivity * right_selectivity;
+    }
+  }
+  return selectivity;
 }
 
 }  // namespace util

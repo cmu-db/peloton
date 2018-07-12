@@ -6,24 +6,7 @@
 //
 // Identification: src/include/catalog/table_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_table
-//
-// Schema: (column position: column_name)
-// 0: table_oid (pkey)
-// 1: table_name,
-// 2: schema_name (the namespace name that this table belongs to)
-// 3: database_oid
-// 4: version_id: for fast ddl(alter table)
-//
-// Indexes: (index offset: indexed columns)
-// 0: table_oid (unique & primary key)
-// 1: table_name & schema_name(unique)
-// 2: database_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -113,14 +96,8 @@ class TableCatalogEntry {
   inline uint32_t GetVersionId() { return version_id; }
   inline oid_t GetDefaultLayoutOid() { return default_layout_oid; }
 
- private:
-  // member variables
-  oid_t table_oid;
-  std::string table_name;
-  std::string schema_name;
-  oid_t database_oid;
-  uint32_t version_id;
-  oid_t default_layout_oid;
+  // NOTE: should be only used by What-if API.
+  void SetValidIndexCatalogEntries(bool is_valid);
 
   // Insert/Evict index catalog entries
   bool InsertIndexCatalogEntry(std::shared_ptr<IndexCatalogEntry> index_catalog_entry);
@@ -131,6 +108,15 @@ class TableCatalogEntry {
   bool InsertColumnCatalogEntry(std::shared_ptr<ColumnCatalogEntry> column_catalog_entry);
   bool EvictColumnCatalogEntry(oid_t column_id);
   bool EvictColumnCatalogEntry(const std::string &column_name);
+
+ private:
+  // member variables
+  oid_t table_oid;
+  std::string table_name;
+  std::string schema_name;
+  oid_t database_oid;
+  uint32_t version_id;
+  oid_t default_layout_oid;
 
   // Insert layout catalog entry into table catalog entry
   bool InsertLayout(std::shared_ptr<const storage::Layout> layout);

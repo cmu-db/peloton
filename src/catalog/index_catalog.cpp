@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/index_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Index Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -53,6 +53,19 @@ IndexCatalogEntry::IndexCatalogEntry(executor::LogicalTile *tile, int tupleId)
   }
   LOG_TRACE("the size for indexed key is %lu", key_attrs_.size());
 }
+
+IndexCatalogEntry::IndexCatalogEntry(oid_t index_oid, std::string index_name,
+                                       oid_t table_oid, IndexType index_type,
+                                       IndexConstraintType index_constraint,
+                                       bool unique_keys,
+                                       std::vector<oid_t> &key_attrs)
+    : index_oid_(index_oid),
+      index_name_(index_name),
+      table_oid_(table_oid),
+      index_type_(index_type),
+      index_constraint_(index_constraint),
+      unique_keys_(unique_keys),
+      key_attrs_(std::vector<oid_t>(key_attrs.begin(), key_attrs.end())) {}
 
 IndexCatalog::IndexCatalog(concurrency::TransactionContext *,
                            storage::Database *pg_catalog,

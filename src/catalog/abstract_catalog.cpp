@@ -6,7 +6,7 @@
 //
 // Identification: src/catalog/abstract_catalog.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -121,8 +121,8 @@ bool AbstractCatalog::InsertTuple(concurrency::TransactionContext *txn,
 
   executor::ExecutionResult this_p_status;
   auto on_complete = [&this_p_status](
-                         executor::ExecutionResult p_status,
-                         std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
+      executor::ExecutionResult p_status,
+      std::vector<ResultValue> &&values UNUSED_ATTRIBUTE) {
     this_p_status = p_status;
   };
 
@@ -185,6 +185,23 @@ bool AbstractCatalog::DeleteWithIndexScan(concurrency::TransactionContext *txn,
  * @param   column_offsets    Column ids for search (projection)
  * @param   index_offset      Offset of index for scan
  * @param   values            Values for search
+ * @param   txn               TransactionContext
+ * @return  Unique pointer of vector of logical tiles
+ */
+std::unique_ptr<std::vector<std::unique_ptr<executor::LogicalTile>>>
+AbstractCatalog::GetResultWithIndexScan(
+    const std::vector<oid_t>& column_offsets,
+    const oid_t& index_offset,
+    const std::vector<type::Value>& values,
+    concurrency::TransactionContext *txn) const {
+  return GetResultWithIndexScan(txn, column_offsets, index_offset, values);
+}
+
+/*@brief   Index scan helper function
+ * @param   column_offsets    Column ids for search (projection)
+ * @param   index_offset      Offset of index for scan
+ * @param   values            Values for search
+ * @param   expr_types        comparision expressions for the values
  * @param   txn               TransactionContext
  * @return  Unique pointer of vector of logical tiles
  */

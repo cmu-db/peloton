@@ -1455,5 +1455,7 @@ enum class SSLLevel {
 typedef std::vector<std::vector<float>> matrix_t;
 typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
     matrix_eig;
+typedef Eigen::Matrix<float, Eigen::Dynamic, Eigen::RowMajor>
+    vector_eig;
 
 }  // namespace peloton

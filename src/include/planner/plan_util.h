@@ -29,6 +29,7 @@ namespace peloton {
 
 namespace catalog {
 class CatalogCache;
+class ConstraintCatalogEntry;
 }  // namespace catalog
 
 namespace parser {
@@ -56,14 +57,14 @@ class PlanUtil {
       const planner::AbstractPlan *plan);
 
   /**
-   * @brief Get the indexes affected by a given query
-   * @param CatalogCache
-   * @param SQLStatement
-   * @return set of affected index object ids
-   */
-  static const std::set<oid_t> GetAffectedIndexes(
+  * @brief Get the indexes affected by a given query
+  * @param CatalogCache
+  * @param SQLStatement
+  * @return vector of affected index ids with triplet format
+  */
+  static const std::vector<col_triplet> GetAffectedIndexes(
       catalog::CatalogCache &catalog_cache,
-      const parser::SQLStatement &sql_stmt);
+      const parser::SQLStatement &sql_stmt, const bool ignore_primary = false);
 
   /**
   * @brief Get the columns affected by a given query
@@ -81,6 +82,9 @@ class PlanUtil {
   ///
   /// Helpers for GetInfo() and GetTablesReferenced()
   ///
+
+  static const std::set<oid_t> GetPrimaryKeyColumns(std::unordered_map<oid_t, std::shared_ptr<catalog::ConstraintCatalogEntry>>
+                                                    table_constraint_entries);
 
   static void GetInfo(const planner::AbstractPlan *plan, std::ostringstream &os,
                       int num_indent);

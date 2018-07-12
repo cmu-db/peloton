@@ -6,29 +6,7 @@
 //
 // Identification: src/include/catalog/index_catalog.h
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Index Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// pg_index
-//
-// Schema: (column: column_name)
-// 0: index_oid (pkey)
-// 1: index_name
-// 2: table_oid (which table this index belongs to)
-// 3: schema_name (which namespace this index belongs to)
-// 4: index_type (default value is BWTREE)
-// 5: index_constraint
-// 6: unique_keys (is this index supports duplicate keys)
-// 7: indexed_attributes (indicate which table columns this index indexes. For
-// example a value of 0 2 would mean that the first and the third table columns
-// make up the index.)
-//
-// Indexes: (index offset: indexed columns)
-// 0: index_oid (unique & primary key)
-// 1: index_name & schema_name (unique)
-// 2: table_oid (non-unique)
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -36,6 +14,7 @@
 
 #include "catalog/abstract_catalog.h"
 #include "executor/logical_tile.h"
+#include <set>
 
 namespace peloton {
 namespace catalog {
@@ -46,6 +25,11 @@ class IndexCatalogEntry {
  public:
   IndexCatalogEntry(executor::LogicalTile *tile, int tupleId = 0);
 
+  // This constructor should only be used for what-if index API.
+  IndexCatalogEntry(oid_t index_oid, std::string index_name, oid_t table_oid,
+                     IndexType index_type, IndexConstraintType index_constraint,
+                     bool unique_keys, std::vector<oid_t> &key_attrs);
+
   inline oid_t GetIndexOid() { return index_oid_; }
   inline const std::string &GetIndexName() { return index_name_; }
   inline oid_t GetTableOid() { return table_oid_; }
@@ -54,7 +38,6 @@ class IndexCatalogEntry {
   inline IndexConstraintType GetIndexConstraint() { return index_constraint_; }
   inline bool HasUniqueKeys() { return unique_keys_; }
   inline const std::vector<oid_t> &GetKeyAttrs() { return key_attrs_; }
-
  private:
   // member variables
   oid_t index_oid_;
@@ -105,7 +88,6 @@ class IndexCatalog : public AbstractCatalog {
                                                           const std::string &schema_name,
                                                           const std::string &index_name);
 
- private:
   std::shared_ptr<IndexCatalogEntry> GetIndexCatalogEntry(concurrency::TransactionContext *txn,
                                                           oid_t database_oid,
                                                           oid_t index_oid);
@@ -114,6 +96,8 @@ class IndexCatalog : public AbstractCatalog {
   GetIndexCatalogEntries(
       concurrency::TransactionContext *txn,
       oid_t table_oid);
+
+ private:
 
   std::unique_ptr<catalog::Schema> InitializeSchema();
 

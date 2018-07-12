@@ -35,10 +35,39 @@ TEST_F(TensorflowTests, DISABLED_BasicTFTest) {
 }
 
 TEST_F(TensorflowTests, BasicEigenTest) {
-  Eigen::MatrixXd m = Eigen::MatrixXd::Random(2, 2);
+  /**
+   * Notes on Eigen:
+   * 1. Don't use 'auto'!!
+   */
+  // Eigen Matrix
+  matrix_eig m = matrix_eig::Random(2, 2);
   EXPECT_EQ(m.rows(), 2);
   EXPECT_EQ(m.cols(), 2);
   EXPECT_TRUE(m.IsRowMajor);
+  // Eigen Vector
+  vector_eig v = vector_eig::Random(2);
+  EXPECT_EQ(v.rows(), 2);
+  EXPECT_EQ(v.cols(), 1);
+  // Transpose(if you try to store as `vec_eig` it will be 2x1)
+  matrix_eig vT = v.transpose();
+  EXPECT_EQ(vT.rows(), 1);
+  EXPECT_EQ(vT.cols(), 2);
+  // Matrix multiplication(1)
+  vector_eig vTv = vT * v;
+  EXPECT_EQ(vTv.rows(), 1);
+  EXPECT_EQ(vTv.cols(), 1);
+  // Matrix multiplication(2)
+  matrix_eig vvT = v * vT;
+  EXPECT_EQ(vvT.rows(), 2);
+  EXPECT_EQ(vvT.cols(), 2);
+  // Element-wise multiplication
+  matrix_eig mvvT = m.array() * vvT.array();
+  EXPECT_EQ(mvvT.rows(), 2);
+  EXPECT_EQ(mvvT.cols(), 2);
+  EXPECT_EQ(m(0, 0) * vvT(0, 0), mvvT(0, 0));
+  EXPECT_EQ(m(0, 1) * vvT(0, 1), mvvT(0, 1));
+  EXPECT_EQ(m(1, 0) * vvT(1, 0), mvvT(1, 0));
+  EXPECT_EQ(m(1, 1) * vvT(1, 1), mvvT(1, 1));
 }
 
 // TODO: Enable this test once tensorflow package supports Python 3.7 (#1448)

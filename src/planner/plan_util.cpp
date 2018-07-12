@@ -15,6 +15,7 @@
 #include <string>
 #include "catalog/catalog_cache.h"
 #include "catalog/column_catalog.h"
+#include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
@@ -33,11 +34,28 @@
 namespace peloton {
 namespace planner {
 
-const std::set<oid_t> PlanUtil::GetAffectedIndexes(
-    catalog::CatalogCache &catalog_cache,
-    const parser::SQLStatement &sql_stmt) {
-  std::set<oid_t> index_oids;
+const std::set<oid_t> PlanUtil::GetPrimaryKeyColumns(
+    std::unordered_map<oid_t, std::shared_ptr<catalog::ConstraintCatalogEntry>>
+    table_constraint_entries) {
+  std::set<oid_t> pkey_set;
+  for(const auto &kv: table_constraint_entries) {
+    if(kv.second->GetConstraintType() == ConstraintType::PRIMARY) {
+      for(const auto& col_oid: kv.second->GetColumnIds()) {
+        pkey_set.insert(col_oid);
+      }
+    }
+  }
+  return pkey_set;
+}
+
+const std::vector<col_triplet> PlanUtil::GetAffectedIndexes(
+    catalog::CatalogCache &catalog_cache, const parser::SQLStatement &sql_stmt,
+    const bool ignore_primary) {
+  std::vector<col_triplet> index_triplets;
   std::string db_name, table_name, schema_name;
+  std::shared_ptr<catalog::DatabaseCatalogEntry> db_object;
+  std::shared_ptr<catalog::TableCatalogEntry> table_object;
+  oid_t db_oid, table_oid;
   switch (sql_stmt.GetType()) {
     // For INSERT, DELETE, all indexes are affected
     case StatementType::INSERT: {
@@ -45,7 +63,11 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
           static_cast<const parser::InsertStatement &>(sql_stmt);
       db_name = insert_stmt.GetDatabaseName();
       table_name = insert_stmt.GetTableName();
+      db_object = catalog_cache.GetDatabaseObject(db_name);
+      db_oid = db_object->GetDatabaseOid();
       schema_name = insert_stmt.GetSchemaName();
+      table_object = db_object->GetTableCatalogEntry(table_name, schema_name);
+      table_oid = table_object->GetTableOid();
     }
       PELOTON_FALLTHROUGH;
     case StatementType::DELETE: {
@@ -54,23 +76,46 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
             static_cast<const parser::DeleteStatement &>(sql_stmt);
         db_name = delete_stmt.GetDatabaseName();
         table_name = delete_stmt.GetTableName();
+        db_object = catalog_cache.GetDatabaseObject(db_name);
+        db_oid = db_object->GetDatabaseOid();
         schema_name = delete_stmt.GetSchemaName();
+        table_object = db_object->GetTableCatalogEntry(table_name, schema_name);
+        table_oid = table_object->GetTableOid();
       }
       auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
           ->GetTableCatalogEntry(table_name, schema_name)
           ->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
-        index_oids.insert(index.first);
+        bool add_index = true;
+
+        if (ignore_primary) {
+          auto pkey_cols_table = GetPrimaryKeyColumns(table_object->GetConstraintCatalogEntries());
+          const auto col_oids = index.second->GetKeyAttrs();
+          for (const auto col_oid : col_oids) {
+            if(pkey_cols_table.find(col_oid) != pkey_cols_table.end()) {
+              add_index = false;
+              break;
+            }
+          }
+        }
+
+        if (add_index) {
+          index_triplets.emplace_back(db_oid, table_oid, index.first);
+        }
       }
+
     } break;
     case StatementType::UPDATE: {
       auto &update_stmt =
           static_cast<const parser::UpdateStatement &>(sql_stmt);
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
+      db_object = catalog_cache.GetDatabaseObject(db_name);
+      db_oid = db_object->GetDatabaseOid();
       schema_name = update_stmt.table->GetSchemaName();
       auto table_object = catalog_cache.GetDatabaseObject(db_name)
           ->GetTableCatalogEntry(table_name, schema_name);
+      table_oid = table_object->GetTableOid();
 
       auto &update_clauses = update_stmt.updates;
       std::set<oid_t> update_oids;
@@ -92,7 +137,22 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
         if (!SetUtil::IsDisjoint(key_attrs_set, update_oids)) {
           LOG_TRACE("Index (%s) is affected",
                     index.second->GetIndexName().c_str());
-          index_oids.insert(index.first);
+          bool add_index = true;
+
+          if (ignore_primary) {
+            auto pkey_cols_table = GetPrimaryKeyColumns(table_object->GetConstraintCatalogEntries());
+            const auto col_oids = index.second->GetKeyAttrs();
+            for (const auto col_oid : col_oids) {
+              if(pkey_cols_table.find(col_oid) != pkey_cols_table.end()) {
+                add_index = false;
+                break;
+              }
+            }
+          }
+
+          if (add_index) {
+            index_triplets.emplace_back(db_oid, table_oid, index.first);
+          }
         }
       }
     } break;
@@ -102,7 +162,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       LOG_TRACE("Does not support finding affected indexes for query type: %d",
                 static_cast<int>(sql_stmt.GetType()));
   }
-  return (index_oids);
+  return (index_triplets);
 }
 
 const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
@@ -184,7 +244,6 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
         LOG_ERROR("Error in BuildPelotonPlanTree: %s", e.what());
       }
 
-      // TODO: should transaction commit or not?
       txn_manager.AbortTransaction(txn);
     } break;
     default:
