@@ -69,6 +69,26 @@ std::vector<std::unique_ptr<Group>> &Memo::Groups() {
 
 Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
+
+const std::string Memo::GetInfo(int num_indent) {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "Memo::\n";
+    os << StringUtil::Indent(num_indent + 1) 
+       << "rule_set_size_: " << rule_set_size_ << std::endl;
+    for (size_t i = 0; i < groups_.size(); ++i) {
+        auto groupInfo = groups_[i]->GetInfo(num_indent + 2);
+        os << groupInfo;
+    }
+    return os.str();
+}
+
+const std::string Memo::GetInfo() {
+    std::ostringstream os;
+    os << GetInfo(0);
+    return os.str();
+}
+
+
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
   // Find out the table alias that this group represents

@@ -75,6 +75,74 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
   return stats_[column_name];
 }
 
+const std::string Group::GetInfo(int num_indent) {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent)
+       << "GroupID: " << GetID() << std::endl;
+
+    if (logical_expressions_.size() > 0)
+        os << StringUtil::Indent(num_indent + 2)
+           << "logical_expressions_: \n";
+    for (size_t i = 0; i < logical_expressions_.size(); ++i) {
+        os << StringUtil::Indent(num_indent + 4)
+           << logical_expressions_[i]->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = logical_expressions_[i]->GetChildGroupIDs();
+        if (ChildGroupIDs.size() > 0) {        
+                os << StringUtil::Indent(num_indent + 6)
+                   << "ChildGroupIDs: ";
+            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
+                os << ChildGroupIDs[j];
+                if (j != ChildGroupIDs.size() - 1)
+                    os << ", ";
+            }
+            os << std::endl;
+        }
+    }
+
+    if (physical_expressions_.size() > 0)
+        os << StringUtil::Indent(num_indent + 2)
+           << "physical_expressions_: \n";
+    for (size_t i = 0; i < physical_expressions_.size(); ++i) {
+        os << StringUtil::Indent(num_indent + 4)
+           << physical_expressions_[i]->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = physical_expressions_[i]->GetChildGroupIDs();
+        if (ChildGroupIDs.size() > 0) {
+            os << StringUtil::Indent(num_indent + 6)
+               << "ChildGroupIDs: ";
+            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
+                os << ChildGroupIDs[j];
+                if (j != ChildGroupIDs.size() - 1)
+                    os << ", ";
+            }
+            os << std::endl;
+        }
+
+    }
+
+    if (enforced_exprs_.size() > 0)
+        os << StringUtil::Indent(num_indent + 2)
+           << "enforced_exprs_: \n";
+    for (size_t i = 0; i < enforced_exprs_.size(); ++i) {
+        os << StringUtil::Indent(num_indent + 4)
+           << enforced_exprs_[i]->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = enforced_exprs_[i]->GetChildGroupIDs();
+        if (ChildGroupIDs.size() > 0) {
+            os << StringUtil::Indent(num_indent + 6)
+               << "ChildGroupIDs: \n";
+            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
+                os << ChildGroupIDs[j];
+                if (j != ChildGroupIDs.size() - 1)
+                    os << ", ";
+            }
+            os << std::endl;
+        }
+    }
+
+    return os.str();
+}
+
+
+
 void Group::AddStats(std::string column_name,
                      std::shared_ptr<ColumnStats> stats) {
   PELOTON_ASSERT((size_t)GetNumRows() == stats->num_rows);

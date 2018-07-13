@@ -62,9 +62,8 @@ bool TupleValueExpression::IsNullable() const { return ai_->type.nullable; }
 const std::string TupleValueExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1)
-     << "expression type = Tuple Value,\n";
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Tuple Value]\n";
   if (table_name_.size() > 0) {
     os << StringUtil::Indent(num_indent + 1) << "table name: " << table_name_
        << std::endl;

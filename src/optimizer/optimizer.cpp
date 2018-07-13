@@ -123,6 +123,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 
   try {
+    auto info = metadata_.memo.GetInfo();
+    LOG_INFO("***%s", info.c_str());
+
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
                                     query_info.output_exprs);
     if (best_plan == nullptr) return nullptr;
@@ -294,6 +297,33 @@ QueryInfo Optimizer::GetQueryInfo(parser::SQLStatement *tree) {
 
   return QueryInfo(output_exprs, physical_props);
 }
+
+const std::string Optimizer::GetOperatorInfo(
+    GroupID id, std::shared_ptr<PropertySet> required_props,
+    int num_indent) {
+    std::ostringstream os;
+
+    Group *group = metadata_.memo.GetGroupByID(id);
+    auto gexpr = group->GetBestExpression(required_props);
+    
+    os << std::endl << StringUtil::Indent(num_indent) << "operator name: "
+       << gexpr->Op().GetName().c_str();
+
+    vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
+    auto required_input_props = gexpr->GetInputProperties(required_props);
+    PELOTON_ASSERT(required_input_props.size() == child_groups.size());
+
+    for (size_t i = 0; i < child_groups.size(); ++i) {
+        auto child_info = 
+            GetOperatorInfo(child_groups[i], required_input_props[i],
+                num_indent + 2);
+        os << StringUtil::Indent(num_indent + 2)
+           << child_info;
+    }
+    return os.str();
+}
+
+
 
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, std::shared_ptr<PropertySet> required_props,

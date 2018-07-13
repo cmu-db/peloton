@@ -92,6 +92,9 @@ class Group {
 
   inline GroupID GetID() { return id_; }
 
+  const std::string GetInfo(int num_indent);
+
+
   // This is called in rewrite phase to erase the only logical expression in the
   // group
   inline void EraseLogicalExpression() {

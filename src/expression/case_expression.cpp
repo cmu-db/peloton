@@ -18,8 +18,8 @@ namespace expression {
 const std::string CaseExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Case,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Case]\n"
      << StringUtil::Indent(num_indent + 1) << "default: \n"
      << default_expr_.get()->GetInfo(num_indent + 2);
 

@@ -17,8 +17,8 @@ namespace expression {
 
 const std::string AggregateExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Aggregate,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Aggregate]\n"
      << StringUtil::Indent(num_indent + 1) << "aggregate type = " << expr_name_
      << std::endl;
   for (const auto &child : children_) {

@@ -18,8 +18,8 @@ namespace expression {
 const std::string ConjunctionExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Conjunction,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Conjunction]\n"
      << StringUtil::Indent(num_indent + 1)
      << "conjunction type = " << ExpressionTypeToString(exp_type_) << "\n";
 
