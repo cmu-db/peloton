@@ -123,9 +123,6 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 
   try {
-    auto info = metadata_.memo.GetInfo();
-    LOG_INFO("***%s", info.c_str());
-
     auto best_plan = ChooseBestPlan(root_id, query_info.physical_props,
                                     query_info.output_exprs);
     if (best_plan == nullptr) return nullptr;
