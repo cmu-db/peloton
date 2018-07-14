@@ -709,9 +709,6 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
       gc_set->operator[](tile_group_id)[tuple_slot] =
           GCVersionType::COMMIT_DELETE;
 
-      gc_set->operator[](new_version.block)[new_version.offset] =
-          GCVersionType::TOMBSTONE;
-
       log_manager.LogDelete(ItemPointer(tile_group_id, tuple_slot));
 
     } else if (tuple_entry.second == RWType::INSERT) {
@@ -830,11 +827,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // before we unlink the aborted version from version list
       ItemPointer *index_entry_ptr =
           tile_group_header->GetIndirection(tuple_slot);
-      if (index_entry_ptr) {
-        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-        PELOTON_ASSERT(res == true);
-      }
+      UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+          index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+      PELOTON_ASSERT(res == true);
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.
@@ -880,11 +875,9 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
       // before we unlink the aborted version from version list
       ItemPointer *index_entry_ptr =
           tile_group_header->GetIndirection(tuple_slot);
-      if (index_entry_ptr) {
-        UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
-            index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
-        PELOTON_ASSERT(res == true);
-      }
+      UNUSED_ATTRIBUTE auto res = AtomicUpdateItemPointer(
+          index_entry_ptr, ItemPointer(tile_group_id, tuple_slot));
+      PELOTON_ASSERT(res == true);
       //////////////////////////////////////////////////
 
       // we should set the version before releasing the lock.
@@ -902,7 +895,7 @@ ResultType TimestampOrderingTransactionManager::AbortTransaction(
 
       // add the version to gc set.
       gc_set->operator[](new_version.block)[new_version.offset] =
-          GCVersionType::TOMBSTONE;
+          GCVersionType::ABORT_DELETE;
 
     } else if (tuple_entry.second == RWType::INSERT) {
       tile_group_header->SetBeginCommitId(tuple_slot, MAX_CID);
