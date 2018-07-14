@@ -321,7 +321,6 @@ const std::string Optimizer::GetOperatorInfo(
 }
 
 
-
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, std::shared_ptr<PropertySet> required_props,
     std::vector<expression::AbstractExpression *> required_cols) {

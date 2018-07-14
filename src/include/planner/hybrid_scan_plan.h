@@ -62,7 +62,7 @@ class HybridScanPlan : public AbstractScan {
 
   HybridScanType GetHybridType() const { return type_; }
 
-  const std::string GetInfo() const override { return "HybridScan"; }
+  const std::string GetInfo() const override { return "HybridScanPlan"; }
 
  private:
   HybridScanType type_ = HybridScanType::INVALID;

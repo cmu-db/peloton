@@ -69,20 +69,20 @@ std::vector<std::unique_ptr<Group>> &Memo::Groups() {
 
 Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
-
-const std::string Memo::GetInfo(int num_indent) {
+const std::string Memo::GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "Memo::\n";
     os << StringUtil::Indent(num_indent + 1) 
        << "rule_set_size_: " << rule_set_size_ << std::endl;
-    for (size_t i = 0; i < groups_.size(); ++i) {
-        auto groupInfo = groups_[i]->GetInfo(num_indent + 2);
+    
+    for (auto &group : groups_) {
+        auto groupInfo = group->GetInfo(num_indent + 2);
         os << groupInfo;
     }
     return os.str();
 }
 
-const std::string Memo::GetInfo() {
+const std::string Memo::GetInfo() const {
     std::ostringstream os;
     os << GetInfo(0);
     return os.str();

@@ -55,7 +55,7 @@ class HashJoinPlan : public AbstractJoinPlan {
 
   void SetBloomFilterFlag(bool flag) { build_bloomfilter_ = flag; }
 
-  const std::string GetInfo() const override { return "HashJoin"; }
+  const std::string GetInfo() const override { return "HashJoinPlan"; }
 
   void GetLeftHashKeys(
       std::vector<const expression::AbstractExpression *> &keys) const;

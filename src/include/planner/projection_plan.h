@@ -53,7 +53,7 @@ class ProjectionPlan : public AbstractPlan {
     return PlanNodeType::PROJECTION;
   }
 
-  const std::string GetInfo() const override { return "Projection"; }
+  const std::string GetInfo() const override { return "ProjectionPlan"; }
 
   const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 

@@ -37,7 +37,7 @@ class MockPlan : public planner::AbstractPlan {
   // Utilities
   //===--------------------------------------------------------------------===//
 
-  inline const std::string GetInfo() const { return "Mock"; }
+  inline const std::string GetInfo() const { return "MockPlan"; }
 
   std::unique_ptr<planner::AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new MockPlan());

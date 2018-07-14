@@ -45,7 +45,7 @@ class ExportExternalFilePlan : public AbstractPlan {
   char GetQuoteChar() const { return quote_; }
   char GetEscapeChar() const { return escape_; }
 
-  const std::string GetInfo() const override { return "ExportExternalFile"; }
+  const std::string GetInfo() const override { return "ExportExternalFilePlan"; }
 
   //////////////////////////////////////////////////////////////////////////////
   ///

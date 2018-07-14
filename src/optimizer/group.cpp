@@ -75,7 +75,7 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
   return stats_[column_name];
 }
 
-const std::string Group::GetInfo(int num_indent) {
+const std::string Group::GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent)
        << "GroupID: " << GetID() << std::endl;
@@ -83,18 +83,16 @@ const std::string Group::GetInfo(int num_indent) {
     if (logical_expressions_.size() > 0)
         os << StringUtil::Indent(num_indent + 2)
            << "logical_expressions_: \n";
-    for (size_t i = 0; i < logical_expressions_.size(); ++i) {
+    
+    for (auto expr : logical_expressions_) {
         os << StringUtil::Indent(num_indent + 4)
-           << logical_expressions_[i]->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = logical_expressions_[i]->GetChildGroupIDs();
+           << expr->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {        
-                os << StringUtil::Indent(num_indent + 6)
-                   << "ChildGroupIDs: ";
-            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
-                os << ChildGroupIDs[j];
-                if (j != ChildGroupIDs.size() - 1)
-                    os << ", ";
-            }
+            os << StringUtil::Indent(num_indent + 6)
+               << "ChildGroupIDs: ";
+            for (auto childGroupID : ChildGroupIDs)
+                os << childGroupID << " ";
             os << std::endl;
         }
     }
@@ -102,18 +100,15 @@ const std::string Group::GetInfo(int num_indent) {
     if (physical_expressions_.size() > 0)
         os << StringUtil::Indent(num_indent + 2)
            << "physical_expressions_: \n";
-    for (size_t i = 0; i < physical_expressions_.size(); ++i) {
+    for (auto expr : physical_expressions_) {
         os << StringUtil::Indent(num_indent + 4)
-           << physical_expressions_[i]->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = physical_expressions_[i]->GetChildGroupIDs();
+           << expr->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {
             os << StringUtil::Indent(num_indent + 6)
                << "ChildGroupIDs: ";
-            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
-                os << ChildGroupIDs[j];
-                if (j != ChildGroupIDs.size() - 1)
-                    os << ", ";
-            }
+            for (auto childGroupID : ChildGroupIDs) 
+                os << childGroupID << " ";
             os << std::endl;
         }
 
@@ -122,17 +117,15 @@ const std::string Group::GetInfo(int num_indent) {
     if (enforced_exprs_.size() > 0)
         os << StringUtil::Indent(num_indent + 2)
            << "enforced_exprs_: \n";
-    for (size_t i = 0; i < enforced_exprs_.size(); ++i) {
+    for (auto expr : enforced_exprs_) {
         os << StringUtil::Indent(num_indent + 4)
-           << enforced_exprs_[i]->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = enforced_exprs_[i]->GetChildGroupIDs();
+           << expr->Op().GetName() << std::endl;
+        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {
             os << StringUtil::Indent(num_indent + 6)
                << "ChildGroupIDs: \n";
-            for (size_t j = 0; j < ChildGroupIDs.size(); ++j) {
-                os << ChildGroupIDs[j];
-                if (j != ChildGroupIDs.size() - 1)
-                    os << ", ";
+            for (auto childGroupID : ChildGroupIDs) {
+                os << childGroupID << " ";
             }
             os << std::endl;
         }
@@ -141,6 +134,11 @@ const std::string Group::GetInfo(int num_indent) {
     return os.str();
 }
 
+const std::string Group::GetInfo() const {
+    std::ostringstream os;
+    os << GetInfo(0);
+    return os.str();
+}
 
 
 void Group::AddStats(std::string column_name,
