@@ -60,7 +60,7 @@ class AnalyzePlan : public AbstractPlan {
 
   inline std::vector<char *> GetColumnNames() const { return column_names_; }
 
-  const std::string GetInfo() const { return "Analyze table"; }
+  const std::string GetInfo() const { return "Analyze table Plan"; }
 
   inline std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new AnalyzePlan(target_table_));

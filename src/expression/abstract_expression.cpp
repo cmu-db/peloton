@@ -93,9 +93,8 @@ void AbstractExpression::DeduceExpressionName() {
 const std::string AbstractExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1)
-     << "expression type = " << GetExpressionType() << ",\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << GetExpressionType() << "]\n"
      << StringUtil::Indent(num_indent + 1)
      << "value type = " << type::Type::GetInstance(GetValueType())->ToString()
      << ",\n";

@@ -18,9 +18,8 @@ namespace expression {
 const std::string ConstantValueExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1)
-     << "expression type = Constant Value,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Constant Value]\n"
      << StringUtil::Indent(num_indent + 1) << "value: " << value_.GetInfo()
      << std::endl;
 

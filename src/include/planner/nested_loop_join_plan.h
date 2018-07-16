@@ -44,7 +44,7 @@ class NestedLoopJoinPlan : public AbstractJoinPlan {
     return PlanNodeType::NESTLOOP;
   }
 
-  const std::string GetInfo() const override { return "NestedLoopJoin"; }
+  const std::string GetInfo() const override { return "NestedLoopJoinPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const override;
 

@@ -38,7 +38,7 @@ class LimitPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::LIMIT; }
 
-  const std::string GetInfo() const { return "Limit"; }
+  const std::string GetInfo() const { return "LimitPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new LimitPlan(limit_, offset_));

@@ -65,7 +65,7 @@ class OrderByPlan : public AbstractPlan {
   }
 
   const std::string GetInfo() const override {
-    return std::string("OrderBy") +
+    return std::string("OrderByPlan") +
            (limit_
                 ? "(Limit : " + std::to_string(limit_number_) + ", Offset : " +
                       std::to_string(limit_offset_) + ")"
