@@ -84,8 +84,8 @@ void FunctionExpression::SetUDFFunctionExpressionParameters(
 const std::string FunctionExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Function,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Function]\n"
      << StringUtil::Indent(num_indent + 1) << "function name: " << func_name_
      << "\n"
      << StringUtil::Indent(num_indent + 1) << "function args: " << std::endl;

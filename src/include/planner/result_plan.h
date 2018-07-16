@@ -40,7 +40,7 @@ class ResultPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::RESULT; }
 
-  inline std::string GetInfo() const { return "Result"; }
+  inline std::string GetInfo() const { return "ResultPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(

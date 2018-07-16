@@ -43,7 +43,7 @@ class PopulateIndexPlan : public AbstractPlan {
 
   inline const std::vector<oid_t> &GetColumnIds() const { return column_ids_; }
 
-  const std::string GetInfo() const { return "PopulateIndex"; }
+  const std::string GetInfo() const { return "PopulateIndexPlan"; }
 
   storage::DataTable *GetTable() const { return target_table_; }
 

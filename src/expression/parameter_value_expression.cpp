@@ -72,9 +72,8 @@ void ParameterValueExpression::VisitParameters(
 const std::string ParameterValueExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1)
-     << "expression type = Parameter Value,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Parameter Value]\n"
      << StringUtil::Indent(num_indent + 1)
      << "value index: " << std::to_string(value_idx_)
      << StringUtil::Indent(num_indent + 1)

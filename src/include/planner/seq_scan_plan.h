@@ -43,7 +43,7 @@ class SeqScanPlan : public AbstractScan {
   }
 
   const std::string GetInfo() const override {
-    return "SeqScan(" + GetPredicateInfo() + ")";
+    return "SeqScanPlan(" + GetPredicateInfo() + ")";
   }
 
   void SetParameterValues(std::vector<type::Value> *values) override;

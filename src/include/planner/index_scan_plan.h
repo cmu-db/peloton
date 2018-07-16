@@ -145,7 +145,7 @@ class IndexScanPlan : public AbstractScan {
 
   inline bool GetDescend() const { return descend_; }
 
-  const std::string GetInfo() const { return "IndexScan"; }
+  const std::string GetInfo() const { return "IndexScanPlan"; }
 
   void SetLimit(bool limit) { limit_ = limit; }
 
