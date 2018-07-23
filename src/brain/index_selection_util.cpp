@@ -193,7 +193,8 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
       case StatementType::SELECT: {
         // Get all the table names referenced in the query.
         std::unordered_set<std::string> tables_used;
-        Workload::GetTableNamesReferenced(stmt_shared, tables_used);
+        bool placeholder;
+        Workload::GetTableNamesReferenced(stmt_shared, tables_used, placeholder);
         AddQuery(stmt_shared, tables_used);
       }
       default:
@@ -205,7 +206,7 @@ Workload::Workload(std::vector<std::string> &queries, std::string database_name,
 
 void Workload::GetTableNamesReferenced(
     std::shared_ptr<parser::SQLStatement> query,
-    std::unordered_set<std::string> &table_names) {
+    std::unordered_set<std::string> &table_names, bool &illegal_query) {
   // populated if this query has a cross-product table references.
   std::vector<std::unique_ptr<parser::TableRef>> *table_cp_list;
 
@@ -256,6 +257,7 @@ void Workload::GetTableNamesReferenced(
             } else if (front->type == TableReferenceType::NAME) {
               table_names.insert(front->GetTableName());
             } else {
+              illegal_query = true;
               PELOTON_ASSERT(false);
             }
           }
@@ -265,7 +267,7 @@ void Workload::GetTableNamesReferenced(
           Workload::GetTableNamesReferenced(
               std::shared_ptr<parser::SQLStatement>(
                   sql_statement->from_table->select),
-              table_names);
+              table_names, illegal_query);
           break;
         }
         case TableReferenceType::CROSS_PRODUCT: {
@@ -285,7 +287,7 @@ void Workload::GetTableNamesReferenced(
     }
     default: {
       LOG_ERROR("Cannot handle DDL statements");
-      PELOTON_ASSERT(false);
+      illegal_query = true;
     }
   }
 }

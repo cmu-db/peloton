@@ -37,7 +37,10 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
 
   const auto db_obj = catalog_->GetDatabaseObject(database_name_, txn);
   database_oid_ = db_obj->GetDatabaseOid();
+  LOG_DEBUG("IndexConfigContainerInit: DB OID: %d", database_oid_);
   const auto table_objs = db_obj->GetTableObjects();
+  LOG_DEBUG("IndexConfigContainerInit: Num Tables: %lu", table_objs.size());
+  LOG_DEBUG("Ignore Tables: %lu", ignore_table_oids.size());
 
   // Uniq identifier per index config
   size_t next_index_id = 0;
@@ -48,7 +51,7 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     if (ignore_table_oids.find(table_oid) != ignore_table_oids.end()) {
       continue;
     }
-
+    LOG_DEBUG("Building datastructure info for OID: %d/(of %lu tables)", table_oid, table_objs.size());
     // Enumerate configurations and prepare data structures for future usage
     table_indexid_map_[table_oid] = {};
     indexid_table_map_[table_oid] = {};
@@ -60,9 +63,10 @@ CompressedIndexConfigContainer::CompressedIndexConfigContainer(
     for (const auto &col_obj : col_objs) {
       cols.push_back(col_obj.first);
     }
+    LOG_DEBUG("Beginning Config Enumeration for OID: %d", table_oid);
     EnumerateConfigurations(cols, max_index_size, indexconf_id_map,
                             id_indexconf_map, null_conf, next_index_id);
-
+    LOG_DEBUG("Completed Config Enumeration for OID: %d", table_oid);
     table_offset_map_[table_oid] = next_table_offset_;
     table_offset_reverse_map_[next_table_offset_] = table_oid;
     next_table_offset_ += indexconf_id_map.size();
@@ -105,11 +109,10 @@ void CompressedIndexConfigContainer::EnumerateConfigurations(
     std::map<std::vector<peloton::oid_t>, size_t> &indexconf_id_map,
     std::map<size_t, std::vector<peloton::oid_t>> &id_indexconf_map,
     std::vector<peloton::oid_t> &index_conf, size_t &next_id) {
-  if (index_conf.size() <= std::min<size_t>(max_index_size, cols.size())) {
-    indexconf_id_map[index_conf] = next_id;
-    id_indexconf_map[next_id] = index_conf;
-    next_id++;
-  }
+  indexconf_id_map[index_conf] = next_id;
+  id_indexconf_map[next_id] = index_conf;
+  next_id++;
+  if (index_conf.size() == std::min<size_t>(max_index_size, cols.size())) return;
   for (auto col : cols) {
     if (std::find(index_conf.begin(), index_conf.end(), col) ==
         index_conf.end()) {
@@ -120,6 +123,7 @@ void CompressedIndexConfigContainer::EnumerateConfigurations(
     }
   }
 }
+
 
 // TODO: Add HypotheticalIndexObject set to Add/Drop index RPC call here
 void CompressedIndexConfigContainer::AdjustIndexes(

@@ -111,6 +111,10 @@ class CompressedIndexConfigUtil {
   */
   static std::string ToString(vector_eig v);
 
+  static double WhatIfIndexCost(std::string query,
+                         brain::IndexConfiguration &config,
+                         std::string database_name);
+
  private:
   /**
    * @brief: converts query string to a binded sql-statement list

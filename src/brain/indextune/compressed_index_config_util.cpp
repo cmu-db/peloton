@@ -12,6 +12,7 @@
 
 #include "brain/indextune/compressed_index_config_util.h"
 #include "brain/index_selection.h"
+#include "brain/what_if_index.h"
 
 namespace peloton {
 namespace brain {
@@ -228,6 +229,9 @@ void CompressedIndexConfigUtil::GetIgnoreTables(
                               ->GetTableObjects();
 
   for (const auto &it : table_objs) {
+    auto table_name = it.second->GetTableName();
+    if(table_name.find("pg_") != 0) continue;
+    LOG_DEBUG("Ignoring table %s", it.second->GetTableName().c_str());
     ori_table_oids.insert(it.first);
   }
 
@@ -312,6 +316,35 @@ std::string CompressedIndexConfigUtil::ToString(peloton::vector_eig v) {
   std::stringstream str_stream;
   str_stream << v.transpose() << std::endl;
   return str_stream.str();
+}
+
+double CompressedIndexConfigUtil::WhatIfIndexCost(std::string query,
+                                                  brain::IndexConfiguration &config,
+                                                  std::string database_name) {
+  std::unique_ptr<parser::SQLStatementList> stmt_list(
+      parser::PostgresParser::ParseSQLString(query));
+
+  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+  auto txn = txn_manager.BeginTransaction();
+
+  std::unique_ptr<binder::BindNodeVisitor> binder(
+      new binder::BindNodeVisitor(txn, database_name));
+
+  // Get the first statement.
+  auto sql_statement = std::shared_ptr<parser::SQLStatement>(
+      stmt_list->PassOutStatement(0));
+
+  binder->BindNameToNode(sql_statement.get());
+  auto tree = brain::WhatIfIndex::GetCostAndBestPlanTree(sql_statement, config,
+                                                        database_name, txn);
+  double cost;
+  if(tree == nullptr) {
+    cost = 0.;
+  } else {
+    cost = tree->cost;
+  }
+  txn_manager.CommitTransaction(txn);
+  return cost;
 }
 
 }  // namespace brain

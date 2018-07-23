@@ -18,6 +18,7 @@
 #include "common/logger.h"
 #include "catalog/catalog.h"
 #include "optimizer/stats/stats_storage.h"
+#include "brain/index_selection_job_lspi.h"
 
 namespace peloton {
 namespace executor {
@@ -35,6 +36,7 @@ bool AnalyzeExecutor::DInit() {
 
 bool AnalyzeExecutor::DExecute() {
   LOG_TRACE("Executing Analyze...");
+
 
   const planner::AnalyzePlan &node = GetPlanNode<planner::AnalyzePlan>();
 
@@ -57,6 +59,16 @@ bool AnalyzeExecutor::DExecute() {
       LOG_TRACE("Failed to analyze table %s", node.GetTableName().c_str());
     }
   } else {
+    optimizer::StatsStorage *stats_storage =
+        optimizer::StatsStorage::GetInstance();
+
+    ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(current_txn);
+    if (stats_result != ResultType::SUCCESS) {
+      LOG_ERROR(
+          "Cannot generate stats for table columns. Not performing index "
+          "suggestion...");
+    }
+    brain::IndexSelectionJobLSPI::enable_ = true;
     // other operations unsupported for now
     current_txn->SetResult(peloton::ResultType::SUCCESS);
   }

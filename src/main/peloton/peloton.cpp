@@ -13,6 +13,7 @@
 #include <iostream>
 
 #include <gflags/gflags.h>
+#include <include/brain/index_selection_job_lspi.h>
 #include "common/init.h"
 #include "common/logger.h"
 #include "network/peloton_server.h"
@@ -53,14 +54,14 @@ int RunPelotonBrain() {
   evthread_use_pthreads();
   // TODO(tianyu): register jobs here
   struct timeval one_minute;
-  one_minute.tv_sec = 10;
+  one_minute.tv_sec = 5;
   one_minute.tv_usec = 0;
 
   // The handler for the Index Suggestion related RPC calls to create/drop
   // indexes
   // TODO[vamshi]: Remove this hard coding
   auto num_queries_threshold = 2;
-  brain.RegisterJob<peloton::brain::IndexSelectionJob>(
+  brain.RegisterJob<peloton::brain::IndexSelectionJobLSPI>(
       &one_minute, "index_suggestion", num_queries_threshold);
   brain.Run();
   return 0;

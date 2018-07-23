@@ -120,6 +120,10 @@ TEST_F(CompressedIdxConfigTest, CompressedRepresentationTest) {
   }
 }
 
+TEST_F(CompressedIdxConfigTest, ConfigEnumerationTest) {
+
+}
+
 TEST_F(CompressedIdxConfigTest, AddSimpleCandidatesTest) {
   std::string database_name = DEFAULT_DB_NAME;
   index_selection::TestingIndexSelectionUtil testing_util(database_name);

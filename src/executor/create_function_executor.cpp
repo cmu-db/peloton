@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <include/optimizer/stats/stats_storage.h>
 #include "executor/create_function_executor.h"
 
 #include "catalog/catalog.h"
@@ -20,6 +21,7 @@
 #include "executor/executor_context.h"
 #include "planner/create_function_plan.h"
 #include "udf/udf_handler.h"
+
 
 namespace peloton {
 namespace executor {
@@ -34,9 +36,23 @@ bool CreateFunctionExecutor::DInit() {
 }
 
 bool CreateFunctionExecutor::DExecute() {
-  LOG_TRACE("Executing Create...");
+  LOG_DEBUG("Executing Create Function...");
   const auto &node = GetPlanNode<planner::CreateFunctionPlan>();
   auto *current_txn = executor_context_->GetTransaction();
+
+//  // TODO: HACK: Remove: Analyze table column stats
+//  optimizer::StatsStorage *stats_storage =
+//      optimizer::StatsStorage::GetInstance();
+//
+//  ResultType stats_result = stats_storage->AnalyzeStatsForAllTables(current_txn);
+//  if (stats_result != ResultType::SUCCESS) {
+//    LOG_ERROR(
+//        "Cannot generate stats for table columns. Not performing index "
+//        "suggestion...");
+//  }
+
+  // TODO: HACK: Now run the brain job.
+//  brain::IndexSelectionJobLSPI::enable_ = true;
 
   auto proname = node.GetFunctionName();
   oid_t prolang = catalog::LanguageCatalog::GetInstance()

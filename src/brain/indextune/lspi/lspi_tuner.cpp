@@ -28,6 +28,7 @@ LSPIIndexTuner::LSPIIndexTuner(
                                          max_index_size, catalog,
                                          txn_manager));
   size_t feat_len = index_config_->GetConfigurationCount();
+  LOG_DEBUG("feat_len: %zu", feat_len);
   rlse_model_ = std::unique_ptr<RLSEModel>(new RLSEModel(2 * feat_len, variance_init, reg_coeff));
   lstdq_model_ = std::unique_ptr<LSTDQModel>(new LSTDQModel(feat_len));
   prev_config_vec = vector_eig::Zero(feat_len);

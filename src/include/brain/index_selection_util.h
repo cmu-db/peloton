@@ -282,7 +282,8 @@ class Workload {
    */
   static void GetTableNamesReferenced(
       std::shared_ptr<parser::SQLStatement> query,
-      std::unordered_set<std::string> &table_names);
+      std::unordered_set<std::string> &table_names,
+      bool &illegal_query);
 
  private:
   /**
