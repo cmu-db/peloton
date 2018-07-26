@@ -20,8 +20,8 @@ namespace expression {
 const std::string StarExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Star,"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Star]"
      << std::endl;
 
   return os.str();

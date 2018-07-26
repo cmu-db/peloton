@@ -18,8 +18,8 @@ namespace expression {
 const std::string OperatorExpression::GetInfo(int num_indent) const {
   std::ostringstream os;
 
-  os << StringUtil::Indent(num_indent) << "Expression ::\n"
-     << StringUtil::Indent(num_indent + 1) << "expression type = Operator,\n"
+  os << StringUtil::Indent(num_indent) << "-[Expression :: "
+     << "Operator]\n"
      << StringUtil::Indent(num_indent + 1)
      << "operator name: " << ExpressionTypeToString(exp_type_) << std::endl;
 

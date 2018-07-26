@@ -61,6 +61,8 @@ class CSVScanPlan : public AbstractScan {
 
   const std::string &GetFileName() const { return file_name_; }
 
+  const std::string GetInfo() const override { return "CSVScanPlan"; }
+
   void GetAttributes(std::vector<const AttributeInfo *> &ais) const override;
 
   char GetDelimiterChar() const { return delimiter_; }

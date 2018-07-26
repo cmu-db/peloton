@@ -14,6 +14,7 @@
 
 #include <mutex>
 
+#include "catalog/constraint_catalog.h"
 #include "catalog/database_catalog.h"
 #include "catalog/index_metrics_catalog.h"
 #include "catalog/query_metrics_catalog.h"
@@ -35,6 +36,7 @@ class TableCatalog;
 class IndexCatalog;
 class ColumnCatalog;
 class LayoutCatalog;
+class ConstraintCatalog;
 
 class SystemCatalogs {
  public:
@@ -88,6 +90,13 @@ class SystemCatalogs {
     return pg_layout_;
   }
 
+  ConstraintCatalog *GetConstraintCatalog() {
+    if (!pg_constraint_) {
+      throw CatalogException("Layout catalog has not been initialized");
+    }
+    return pg_constraint_;
+  }
+
   TriggerCatalog *GetTriggerCatalog() {
     if (!pg_trigger_) {
       throw CatalogException("Trigger catalog has not been initialized");
@@ -122,6 +131,7 @@ class SystemCatalogs {
   TableCatalog *pg_table_;
   IndexCatalog *pg_index_;
   LayoutCatalog *pg_layout_;
+  ConstraintCatalog *pg_constraint_;
 
   TriggerCatalog *pg_trigger_;
   // ProcCatalog *pg_proc;

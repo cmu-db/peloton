@@ -32,7 +32,7 @@ class ColumnStats;
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-class Group {
+class Group : public Printable {
  public:
   Group(GroupID id, std::unordered_set<std::string> table_alias);
 
@@ -90,7 +90,10 @@ class Group {
 
   int GetNumRows() { return num_rows_; }
 
-  inline GroupID GetID() { return id_; }
+  inline GroupID GetID() const { return id_; }
+
+  const std::string GetInfo(int num_indent) const;
+  const std::string GetInfo() const override;
 
   // This is called in rewrite phase to erase the only logical expression in the
   // group

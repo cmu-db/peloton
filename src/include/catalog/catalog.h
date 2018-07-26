@@ -20,6 +20,7 @@
 namespace peloton {
 
 namespace catalog {
+class Constraint;
 class Schema;
 class DatabaseCatalogEntry;
 class TableCatalogEntry;
@@ -124,11 +125,13 @@ class Catalog {
                          const std::string &schema_name,
                          oid_t table_oid,
                          bool is_catalog,
+                         oid_t index_oid,
                          const std::string &index_name,
                          const std::vector<oid_t> &key_attrs,
                          bool unique_keys,
                          IndexType index_type,
                          IndexConstraintType index_constraint);
+
 
   /**
    * @brief   create a new layout for a table
@@ -158,6 +161,60 @@ class Catalog {
                                                              oid_t database_oid,
                                                              oid_t table_oid,
                                                              const column_map_type &column_map);
+
+  //===--------------------------------------------------------------------===//
+  // SET FUNCTIONS FOR COLUMN CONSTRAINT
+  //===--------------------------------------------------------------------===//
+
+  // Set not null constraint for a column
+  ResultType SetNotNullConstraint(concurrency::TransactionContext *txn,
+                                  oid_t database_oid,
+                                  oid_t table_oid,
+                                  oid_t column_id);
+
+  // Set default constraint for a column
+  ResultType SetDefaultConstraint(concurrency::TransactionContext *txn,
+                                  oid_t database_oid,
+                                  oid_t table_oid,
+                                  oid_t column_id,
+                                  const type::Value &default_value);
+
+  //===--------------------------------------------------------------------===//
+  // ADD FUNCTIONS FOR TABLE CONSTRAINT
+  //===--------------------------------------------------------------------===//
+
+  // Add a new primary constraint for a table
+  ResultType AddPrimaryKeyConstraint(concurrency::TransactionContext *txn,
+                                     oid_t database_oid,
+                                     oid_t table_oid,
+                                     const std::vector<oid_t> &column_ids,
+                                     const std::string &constraint_name);
+
+  // Add a new unique constraint for a table
+  ResultType AddUniqueConstraint(concurrency::TransactionContext *txn,
+                                 oid_t database_oid,
+                                 oid_t table_oid,
+                                 const std::vector<oid_t> &column_ids,
+                                 const std::string &constraint_name);
+
+  // Add a new foreign key constraint for a table
+  ResultType AddForeignKeyConstraint(concurrency::TransactionContext *txn,
+                                     oid_t database_oid,
+                                     oid_t src_table_oid,
+                                     const std::vector<oid_t> &src_col_ids,
+                                     oid_t sink_table_oid,
+                                     const std::vector<oid_t> &sink_col_ids,
+                                     FKConstrActionType upd_action,
+                                     FKConstrActionType del_action,
+                                     const std::string &constraint_name);
+
+  // Add a new check constraint for a table
+  ResultType AddCheckConstraint(concurrency::TransactionContext *txn,
+                                oid_t database_oid,
+                                oid_t table_oid,
+                                const std::vector<oid_t> &column_ids,
+                                const std::pair<ExpressionType, type::Value> &exp,
+                                const std::string &constraint_name);
 
   //===--------------------------------------------------------------------===//
   // DROP FUNCTIONS
@@ -203,6 +260,25 @@ class Catalog {
                         oid_t database_oid,
                         oid_t table_oid,
                         oid_t layout_oid);
+
+  // Drop not null constraint for a column
+  ResultType DropNotNullConstraint(concurrency::TransactionContext *txn,
+                                   oid_t database_oid,
+                                   oid_t table_oid,
+                                   oid_t column_id);
+
+  // Drop default constraint for a column
+  ResultType DropDefaultConstraint(concurrency::TransactionContext *txn,
+                                   oid_t database_oid,
+                                   oid_t table_oid,
+                                   oid_t column_id);
+
+  // Drop constraint for a table
+  ResultType DropConstraint(concurrency::TransactionContext *txn,
+                            oid_t database_oid,
+                            oid_t table_oid,
+                            oid_t constraint_oid);
+
   //===--------------------------------------------------------------------===//
   // GET WITH NAME - CHECK FROM CATALOG TABLES, USING TRANSACTION
   //===--------------------------------------------------------------------===//
@@ -295,13 +371,6 @@ class Catalog {
 
   void BootstrapSystemCatalogs(concurrency::TransactionContext *txn,
                                storage::Database *database);
-
-  // Create the primary key index for a table, don't call this function outside
-  // catalog.cpp
-  ResultType CreatePrimaryIndex(concurrency::TransactionContext *txn,
-                                oid_t database_oid,
-                                const std::string &schema_name,
-                                oid_t table_oid);
 
   // The pool for new varlen tuple fields
   std::unique_ptr<type::AbstractPool> pool_;

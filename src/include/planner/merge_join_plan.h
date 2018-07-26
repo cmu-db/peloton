@@ -72,7 +72,7 @@ class MergeJoinPlan : public AbstractJoinPlan {
     return &join_clauses_;
   }
 
-  const std::string GetInfo() const override { return "MergeJoin"; }
+  const std::string GetInfo() const override { return "MergeJoinPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const override {
     std::vector<JoinClause> new_join_clauses;

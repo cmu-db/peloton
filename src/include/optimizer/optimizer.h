@@ -127,6 +127,13 @@ class Optimizer : public AbstractOptimizer {
    */
   QueryInfo GetQueryInfo(parser::SQLStatement *tree);
 
+  /* GetOperatorInfo - get the best operator tree in the memo
+   * 
+   * take ChooseBestPlan as a reference                   
+   */
+  const std::string GetOperatorInfo(
+      GroupID id, std::shared_ptr<PropertySet> required_props, int num_indent);
+
   /* ChooseBestPlan - retrieve the lowest cost tree of physical operators for
    *     the given properties
    *
