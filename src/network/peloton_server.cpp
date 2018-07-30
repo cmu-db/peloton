@@ -83,16 +83,18 @@ unsigned long PelotonServer::SSLIdFunction(void) {
 }
 
 void PelotonServer::LoadSSLFileSettings() {
-  private_key_file_ = DATA_DIR + settings::SettingsManager::GetString(
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  private_key_file_ = DATA_DIR + settings_manager.GetString(
                                      settings::SettingId::private_key_file);
-  certificate_file_ = DATA_DIR + settings::SettingsManager::GetString(
+  certificate_file_ = DATA_DIR + settings_manager.GetString(
                                      settings::SettingId::certificate_file);
-  root_cert_file_ = DATA_DIR + settings::SettingsManager::GetString(
+  root_cert_file_ = DATA_DIR + settings_manager.GetString(
                                    settings::SettingId::root_cert_file);
 }
 
 void PelotonServer::SSLInit() {
-  if (!settings::SettingsManager::GetBool(settings::SettingId::ssl)) {
+  if (!settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::ssl)) {
     SetSSLLevel(SSLLevel::SSL_DISABLE);
     return;
   }
@@ -189,9 +191,10 @@ void PelotonServer::SSLInit() {
 }
 
 PelotonServer::PelotonServer() {
-  port_ = settings::SettingsManager::GetInt(settings::SettingId::port);
-  max_connections_ =
-      settings::SettingsManager::GetInt(settings::SettingId::max_connections);
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  port_ = settings_manager.GetInt(settings::SettingId::port);
+  max_connections_ = settings_manager.GetInt(
+          settings::SettingId::max_connections);
 
   // For logging purposes
   //  event_enable_debug_mode();
@@ -237,7 +240,7 @@ void PelotonServer::TrySslOperation(int (*func)(Ts...), Ts... arg) {
 PelotonServer &PelotonServer::SetupServer() {
   // This line is critical to performance for some reason
   evthread_use_pthreads();
-  if (settings::SettingsManager::GetString(
+  if (settings::SettingsManager::GetInstance().GetString(
           settings::SettingId::socket_family) != "AF_INET")
     throw ConnectionException("Unsupported socket family");
 
@@ -269,9 +272,10 @@ PelotonServer &PelotonServer::SetupServer() {
 }
 
 void PelotonServer::ServerLoop() {
-  if (settings::SettingsManager::GetBool(settings::SettingId::rpc_enabled)) {
-    int rpc_port =
-        settings::SettingsManager::GetInt(settings::SettingId::rpc_port);
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  if (settings_manager.GetBool(settings::SettingId::rpc_enabled)) {
+    int rpc_port = settings_manager.GetInt(
+        settings::SettingId::rpc_port);
     std::string address = "127.0.0.1:" + std::to_string(rpc_port);
     auto rpc_task = std::make_shared<PelotonRpcHandlerTask>(address.c_str());
     DedicatedThreadRegistry::GetInstance()

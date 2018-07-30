@@ -159,7 +159,7 @@ void PlanExecutor::ExecutePlan(
   LOG_TRACE("PlanExecutor Start (Txn ID=%" PRId64 ")", txn->GetTransactionId());
 
   bool codegen_enabled =
-      settings::SettingsManager::GetBool(settings::SettingId::codegen);
+      settings::SettingsManager::GetInstance().GetBool(settings::SettingId::codegen);
 
   try {
     if (codegen_enabled && codegen::QueryCompiler::IsSupported(*plan)) {

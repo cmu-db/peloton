@@ -352,7 +352,8 @@ void Catalog::Bootstrap() {
   // TODO: change pg_proc to per database
   ProcCatalog::GetInstance(txn);
 
-  if (settings::SettingsManager::GetBool(settings::SettingId::brain)) {
+  if (settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::brain)) {
     QueryHistoryCatalog::GetInstance(txn);
   }
 
@@ -958,7 +959,8 @@ ResultType Catalog::AddUniqueConstraint(concurrency::TransactionContext *txn,
                     ->GetSchema();
 
   // Create index
-  std::stringstream index_name(table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << table_object->GetTableName();
   for (auto column_id : column_ids)
     index_name << "_" + schema->GetColumn(column_id).GetName();
   index_name << "_UNIQ";
@@ -1033,7 +1035,8 @@ ResultType Catalog::AddForeignKeyConstraint(concurrency::TransactionContext *txn
                                 ->GetTableCatalogEntry(txn, src_table_oid);
   auto src_schema = src_table->GetSchema();
 
-  std::stringstream index_name(src_table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << src_table_object->GetTableName();
   for (auto col_id : src_col_ids)
     index_name << "_" << src_schema->GetColumn(col_id).GetName();
   index_name << "_fkey";

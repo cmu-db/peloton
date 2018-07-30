@@ -33,8 +33,9 @@ QueryToOperatorTransformer::QueryToOperatorTransformer(
     concurrency::TransactionContext *txn)
     : txn_(txn),
       get_id(0),
-      enable_predicate_push_down_(settings::SettingsManager::GetBool(
-          settings::SettingId::predicate_push_down)) {}
+      enable_predicate_push_down_(
+          settings::SettingsManager::GetInstance().GetBool(
+              settings::SettingId::predicate_push_down)) {}
 std::shared_ptr<OperatorExpression>
 QueryToOperatorTransformer::ConvertToOpExpression(parser::SQLStatement *op) {
   output_expr_ = nullptr;

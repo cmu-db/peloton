@@ -87,9 +87,10 @@ inline void MonoQueuePool::SubmitTask(const F &func) {
 }
 
 inline MonoQueuePool &MonoQueuePool::GetInstance() {
-  int32_t task_queue_size = settings::SettingsManager::GetInt(
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  int32_t task_queue_size = settings_manager.GetInt(
       settings::SettingId::monoqueue_task_queue_size);
-  int32_t worker_pool_size = settings::SettingsManager::GetInt(
+  int32_t worker_pool_size = settings_manager.GetInt(
       settings::SettingId::monoqueue_worker_pool_size);
 
   PELOTON_ASSERT(task_queue_size > 0);
@@ -104,9 +105,10 @@ inline MonoQueuePool &MonoQueuePool::GetInstance() {
 }
 
 inline MonoQueuePool &MonoQueuePool::GetBrainInstance() {
-  int32_t task_queue_size = settings::SettingsManager::GetInt(
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  int32_t task_queue_size = settings_manager.GetInt(
       settings::SettingId::brain_task_queue_size);
-  int32_t worker_pool_size = settings::SettingsManager::GetInt(
+  int32_t worker_pool_size = settings_manager.GetInt(
       settings::SettingId::brain_worker_pool_size);
 
   PELOTON_ASSERT(task_queue_size > 0);
@@ -121,9 +123,10 @@ inline MonoQueuePool &MonoQueuePool::GetBrainInstance() {
 }
 
 inline MonoQueuePool &MonoQueuePool::GetExecutionInstance() {
-  int32_t task_queue_size = settings::SettingsManager::GetInt(
+  auto &settings_manager = settings::SettingsManager::GetInstance();
+  int32_t task_queue_size = settings_manager.GetInt(
       settings::SettingId::monoqueue_task_queue_size);
-  int32_t worker_pool_size = settings::SettingsManager::GetInt(
+  int32_t worker_pool_size = settings_manager.GetInt(
       settings::SettingId::monoqueue_worker_pool_size);
 
   PELOTON_ASSERT(task_queue_size > 0);

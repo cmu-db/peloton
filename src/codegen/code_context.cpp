@@ -311,8 +311,8 @@ void CodeContext::Compile() {
   // make sure the code is verified
   if (!is_verified_) Verify();
 
-  // Print some IR stats
-  if (settings::SettingsManager::GetBool(settings::SettingId::print_ir_stats)) {
+  if (settings::SettingsManager::GetInstance().GetBool(
+          settings::SettingId::print_ir_stats)) {
     char name[] = "inst count";
     InstructionCounts inst_count(*name);
     inst_count.runOnModule(GetModule());
@@ -329,7 +329,8 @@ void CodeContext::Compile() {
 
   // Log the module
   LOG_TRACE("%s\n", GetIR().c_str());
-  if (settings::SettingsManager::GetBool(settings::SettingId::dump_ir)) {
+if (settings::SettingsManager::GetInstance().GetBool(
+        settings::SettingId::dump_ir)) {
     LOG_DEBUG("%s\n", GetIR().c_str());
   }
 }

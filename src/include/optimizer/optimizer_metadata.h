@@ -31,7 +31,7 @@ class RuleSet;
 class OptimizerMetadata {
  public:
   OptimizerMetadata()
-      : timeout_limit(settings::SettingsManager::GetInt(
+      : timeout_limit(settings::SettingsManager::GetInstance().GetInt(
             settings::SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
 

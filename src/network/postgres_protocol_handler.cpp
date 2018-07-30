@@ -383,7 +383,7 @@ void PostgresProtocolHandler::ExecParseMessage(InputPacket *pkt) {
   statement->SetParamTypes(param_types);
 
   // Stat
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID) {
     // Make a copy of param types for stat collection
     stats::QueryMetric::QueryParamBuf query_type_buf;
@@ -529,7 +529,7 @@ void PostgresProtocolHandler::ExecBindMessage(InputPacket *pkt) {
   }
 
   std::shared_ptr<stats::QueryMetric::QueryParams> param_stat(nullptr);
-  if (static_cast<StatsType>(settings::SettingsManager::GetInt(
+  if (static_cast<StatsType>(settings::SettingsManager::GetInstance().GetInt(
           settings::SettingId::stats_mode)) != StatsType::INVALID &&
       num_params > 0) {
     // Make a copy of format for stat collection

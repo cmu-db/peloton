@@ -259,7 +259,7 @@ void Pipeline::MarkSource(OperatorTranslator *translator,
   PELOTON_ASSERT(translator == pipeline_.back());
 
   // Check parallel execution settings
-  bool parallel_exec_disabled = !settings::SettingsManager::GetBool(
+  bool parallel_exec_disabled = !settings::SettingsManager::GetInstance().GetBool(
                                     settings::SettingId::parallel_execution);
 
   // Check if the consumer supports parallel execution

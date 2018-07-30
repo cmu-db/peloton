@@ -81,10 +81,10 @@ int main(int argc, char *argv[]) {
   }
 
   try {
+    // Load build-in settings
+    auto &settings = peloton::settings::SettingsManager::GetInstance();
     // Print settings
-    if (peloton::settings::SettingsManager::GetBool(
-      peloton::settings::SettingId::display_settings)) {
-      auto &settings = peloton::settings::SettingsManager::GetInstance();
+    if (settings.GetBool(peloton::settings::SettingId::display_settings)) {
       settings.ShowInfo();
     }
   } catch (peloton::SettingsException &exception) {
@@ -93,7 +93,7 @@ int main(int argc, char *argv[]) {
   }
 
   int exit_code = 0;
-  if (peloton::settings::SettingsManager::GetBool(
+  if (peloton::settings::SettingsManager::GetInstance().GetBool(
       peloton::settings::SettingId::brain))
     exit_code =  RunPelotonBrain();
   else

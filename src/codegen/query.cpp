@@ -47,7 +47,7 @@ void Query::Execute(executor::ExecutorContext &executor_context,
   func_args->executor_context = &executor_context;
   func_args->consumer_arg = consumer.GetConsumerState();
 
-  bool force_interpreter = settings::SettingsManager::GetBool(
+  bool force_interpreter = settings::SettingsManager::GetInstance().GetBool(
       settings::SettingId::codegen_interpreter);
 
   if (is_compiled_ && !force_interpreter) {
