@@ -12,8 +12,8 @@
 
 #include <random>
 
-#include "common/harness.h"
 #include "brain/query_clusterer.h"
+#include "common/harness.h"
 
 namespace peloton {
 namespace test {
