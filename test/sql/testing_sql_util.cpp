@@ -98,6 +98,21 @@ ResultType TestingSQLUtil::ExecuteSQLQuery(
   return status;
 }
 
+void PrintPlan(planner::AbstractPlan *plan, int level = 0) {
+  auto spacing = std::string(level, '\t');
+  if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
+    auto scan = dynamic_cast<planner::AbstractScan *>(plan);
+    LOG_INFO("%s%s(%s)", spacing.c_str(), scan->GetInfo().c_str(),
+              scan->GetTable()->GetName().c_str());
+  } else {
+    LOG_INFO("%s%s", spacing.c_str(), plan->GetInfo().c_str());
+  }
+  for (size_t i = 0; i < plan->GetChildren().size(); i++) {
+    PrintPlan(plan->GetChildren()[i].get(), level + 1);
+  }
+  return;
+}
+
 // Execute a SQL query end-to-end with the specific optimizer
 ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
     std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
@@ -116,6 +131,7 @@ ResultType TestingSQLUtil::ExecuteSQLQueryWithOptimizer(
   bind_node_visitor.BindNameToNode(parsed_stmt->GetStatement(0));
 
   auto plan = optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  PrintPlan(plan.get());
   tuple_descriptor =
       traffic_cop_.GenerateTupleDescriptor(parsed_stmt->GetStatement(0));
   auto result_format = std::vector<int>(tuple_descriptor.size(), 0);
