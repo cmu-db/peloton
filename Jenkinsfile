@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
     stages {
         stage('Build') {
             parallel {
@@ -92,6 +92,21 @@ pipeline {
                         sh 'python ./script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCMAKE_CXX_FLAGS="-DLOG_LEVEL=LOG_LEVEL_TRACE" -DCOVERALLS=False .. && make -j4'
+                    }
+                }
+
+                stage('macOS 10.13/Apple LLVM version 9.1.0 (Debug)') {
+                    agent { label 'macos' }
+                    steps {
+                        sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'python script/validators/source_validator.py'
+                        sh 'mkdir build'
+                        sh 'cd build && cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && ASAN_OPTIONS=detect_container_overflow=0 make check -j4'
+                        sh 'cd build && make install'
+                        sh 'cd build && bash ../script/testing/psql/psql_test.sh'
+                        sh 'cd build && python ../script/validators/jdbc_validator.py'
+                        sh 'cd build && ASAN_OPTIONS=detect_container_overflow=0 python ../script/testing/junit/run_junit.py'
                     }
                 }
 
