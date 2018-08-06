@@ -6,7 +6,7 @@
 //
 // Identification: src/include/planner/order_by_plan.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,26 +18,23 @@
 namespace peloton {
 namespace planner {
 
-/**
- * IMPORTANT All tiles got from child must have the same physical schema.
- */
-
 class OrderByPlan : public AbstractPlan {
  public:
+  // Constructor for SORT without LIMIT
   OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
               const std::vector<oid_t> &output_column_ids);
 
   OrderByPlan(const std::vector<oid_t> &sort_keys,
               const std::vector<bool> &descend_flags,
-              const std::vector<oid_t> &output_column_ids, const uint64_t limit,
-              const uint64_t offset);
+              const std::vector<oid_t> &output_column_ids, uint64_t limit,
+              uint64_t offset);
 
-  void PerformBinding(BindingContext &binding_context) override;
-
-  //===--------------------------------------------------------------------===//
-  // Accessors
-  //===--------------------------------------------------------------------===//
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Accessors
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
   const std::vector<oid_t> &GetSortKeys() const { return sort_keys_; }
 
@@ -56,7 +53,7 @@ class OrderByPlan : public AbstractPlan {
     return output_ais_;
   }
 
-  inline PlanNodeType GetPlanNodeType() const override {
+  PlanNodeType GetPlanNodeType() const override {
     return PlanNodeType::ORDERBY;
   }
 
@@ -64,70 +61,49 @@ class OrderByPlan : public AbstractPlan {
     columns = GetOutputColumnIds();
   }
 
-  const std::string GetInfo() const override {
-    return std::string("OrderByPlan") +
-           (limit_
-                ? "(Limit : " + std::to_string(limit_number_) + ", Offset : " +
-                      std::to_string(limit_offset_) + ")"
-                : "");
-  }
+  const std::string GetInfo() const override;
 
-  void SetUnderlyingOrder(bool same_order) { underling_ordered_ = same_order; }
+  bool HasLimit() const { return has_limit_; }
 
-  void SetLimit(bool limit) { limit_ = limit; }
+  uint64_t GetLimit() const { return limit_; }
 
-  void SetLimitNumber(uint64_t limit_number) { limit_number_ = limit_number; }
+  uint64_t GetOffset() const { return offset_; }
 
-  void SetLimitOffset(uint64_t limit_offset) { limit_offset_ = limit_offset; }
+  //////////////////////////////////////////////////////////////////////////////
+  ///
+  /// Utils
+  ///
+  //////////////////////////////////////////////////////////////////////////////
 
-  bool GetUnderlyingOrder() const { return underling_ordered_; }
+  void PerformBinding(BindingContext &binding_context) override;
 
-  bool GetLimit() const { return limit_; }
-
-  uint64_t GetLimitNumber() const { return limit_number_; }
-
-  uint64_t GetLimitOffset() const { return limit_offset_; }
-
-  std::unique_ptr<AbstractPlan> Copy() const override {
-    return std::unique_ptr<AbstractPlan>(
-        new OrderByPlan(sort_keys_, descend_flags_, output_column_ids_));
-  }
+  std::unique_ptr<AbstractPlan> Copy() const override;
 
   hash_t Hash() const override;
 
   bool operator==(const AbstractPlan &rhs) const override;
-  bool operator!=(const AbstractPlan &rhs) const override {
-    return !(*this == rhs);
-  }
 
  private:
-  /** @brief Column Ids to sort keys w.r.t input tiles.
-   *  Primary sort key comes first, secondary comes next, etc.
-   */
+  /* Column Ids used (in order) to sort input tuples */
   const std::vector<oid_t> sort_keys_;
 
-  /** @brief Sort order flags. */
+  /* Sort order flag. */
   const std::vector<bool> descend_flags_;
 
-  /** @brief Projected columns Ids. */
+  /* Projected columns Ids */
   const std::vector<oid_t> output_column_ids_;
 
   std::vector<const AttributeInfo *> output_ais_;
   std::vector<const AttributeInfo *> sort_key_ais_;
 
-  // Used to show that whether the output is has the same ordering with order by
-  // expression. If the so, we can directly used the output result without any
-  // additional sorting operation
-  bool underling_ordered_ = false;
+  /* Whether there is limit clause */
+  bool has_limit_;
 
-  // Whether there is limit clause;
-  bool limit_ = false;
+  /* How many tuples to return */
+  uint64_t limit_;
 
-  // How many tuples denoted by limit clause
-  uint64_t limit_number_ = 0;
-
-  // The point denoted by limit clause
-  uint64_t limit_offset_ = 0;
+  /* How many tuples to skip first */
+  uint64_t offset_;
 
  private:
   DISALLOW_COPY_AND_MOVE(OrderByPlan);

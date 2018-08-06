@@ -39,7 +39,8 @@ class ConsumerContext {
   // Constructor
   ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline);
   ConsumerContext(CompilationContext &compilation_context, Pipeline &pipeline,
-                  PipelineContext *pipeline_context);
+                  PipelineContext *pipeline_context,
+                  llvm::BasicBlock *exit_block);
 
   /// This class cannot be copy or move-constructed
   DISALLOW_COPY_AND_MOVE(ConsumerContext);
@@ -60,6 +61,8 @@ class ConsumerContext {
   const Pipeline &GetPipeline() const { return pipeline_; }
   PipelineContext *GetPipelineContext() const { return pipeline_context_; }
 
+  llvm::BasicBlock *GetExitBlock() const { return exit_block_; }
+
  private:
   // The compilation context
   CompilationContext &compilation_context_;
@@ -67,6 +70,9 @@ class ConsumerContext {
   // The pipeline of operators that this context passes through
   Pipeline &pipeline_;
   PipelineContext *pipeline_context_;
+
+  // The exit block
+  llvm::BasicBlock *exit_block_;
 };
 
 }  // namespace codegen

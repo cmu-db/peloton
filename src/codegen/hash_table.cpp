@@ -68,7 +68,7 @@ void HashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *null =
       codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
+  lang::Loop chain_loop(codegen, end_condition, {{"iter", bucket}});
   {
     // The current entry
     llvm::Type *ht_entry_type = EntryProxy::GetType(codegen);
@@ -76,8 +76,8 @@ void HashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
 
     // Does the hash of the current entry match?
     llvm::Value *entry_hash = codegen.Load(EntryProxy::hash, entry);
-    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
-                        "hashMatch"};
+    lang::If hash_match(codegen, codegen->CreateICmpEQ(entry_hash, hash_val),
+                        "hashMatch");
     {
       // The hashes match, what about the keys?
       llvm::Value *keys_ptr =
@@ -90,14 +90,18 @@ void HashTable::ProbeOrInsert(CodeGen &codegen, llvm::Value *ht_ptr,
 
       // Check keys for equality
       auto keys_are_equal = Value::TestEquality(codegen, key, hash_entry_keys);
-      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
+      lang::If key_match(codegen, keys_are_equal.GetValue(), "keyMatch");
       {
-        // We found a duplicate key, issue the probe callback
+        // We found an exact match for the key, issue the probe callback
         probe_callback.ProcessEntry(codegen, values_area);
-        key_match.EndIf(cont_bb);
+
+        // Jump out of the loop
+        codegen->CreateBr(cont_bb);
       }
-      hash_match.EndIf();
+      // End if
+      key_match.EndIf();
     }
+    hash_match.EndIf();
 
     // No match found, move along
     entry = codegen.Load(EntryProxy::next, entry);
@@ -181,7 +185,7 @@ void HashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
   llvm::Value *bucket_num = codegen.Const64(0);
   llvm::Value *bucket_cond = codegen->CreateICmpULT(bucket_num, num_buckets);
 
-  lang::Loop bucket_loop{codegen, bucket_cond, {{"bucketNum", bucket_num}}};
+  lang::Loop bucket_loop(codegen, bucket_cond, {{"bucketNum", bucket_num}});
   {
     bucket_num = bucket_loop.GetLoopVar(0);
     llvm::Value *bucket =
@@ -189,9 +193,9 @@ void HashTable::Iterate(CodeGen &codegen, llvm::Value *ht_ptr,
     llvm::Value *null_bucket =
         codegen.NullPtr(llvm::cast<llvm::PointerType>(bucket->getType()));
 
-    lang::Loop chain_loop{codegen,
+    lang::Loop chain_loop(codegen,
                           codegen->CreateICmpNE(bucket, null_bucket),
-                          {{"entry", bucket}}};
+                          {{"entry", bucket}});
     {
       llvm::Type *ht_entry_type = EntryProxy::GetType(codegen);
       llvm::Value *entry = chain_loop.GetLoopVar(0);
@@ -229,13 +233,13 @@ void HashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
 
   // Loop chain
   llvm::Value *end_condition = codegen->CreateICmpNE(bucket, null);
-  lang::Loop chain_loop{codegen, end_condition, {{"iter", bucket}}};
+  lang::Loop chain_loop(codegen, end_condition, {{"iter", bucket}});
   {
     llvm::Value *entry = chain_loop.GetLoopVar(0);
 
     llvm::Value *entry_hash = codegen.Load(EntryProxy::hash, entry);
-    lang::If hash_match{codegen, codegen->CreateICmpEQ(entry_hash, hash),
-                        "hashMatch"};
+    lang::If hash_match(codegen, codegen->CreateICmpEQ(entry_hash, hash),
+                        "hashMatch");
     {
       llvm::Value *iter_keys =
           codegen->CreateConstInBoundsGEP1_32(entry_type, entry, 1);
@@ -244,7 +248,7 @@ void HashTable::FindAll(CodeGen &codegen, llvm::Value *ht_ptr,
           key_storage_.LoadValues(codegen, iter_keys, entry_keys);
 
       auto keys_are_equal = Value::TestEquality(codegen, key, entry_keys);
-      lang::If key_match{codegen, keys_are_equal.GetValue(), "keyMatch"};
+      lang::If key_match(codegen, keys_are_equal.GetValue(), "keyMatch");
       {
         callback.ProcessEntry(codegen, key, data_area);
         key_match.EndIf();

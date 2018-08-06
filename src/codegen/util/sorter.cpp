@@ -60,7 +60,7 @@ void Sorter::Init(Sorter &sorter, executor::ExecutorContext &exec_ctx,
 
 void Sorter::Destroy(Sorter &sorter) { sorter.~Sorter(); }
 
-char *Sorter::StoreInputTuple() {
+char *Sorter::StoreTuple() {
   // Make room for a new tuple
   MakeRoomForNewTuple();
 
@@ -73,6 +73,39 @@ char *Sorter::StoreInputTuple() {
 
   // Finish
   return ret;
+}
+
+char *Sorter::StoreTupleForTopK(UNUSED_ATTRIBUTE uint64_t top_k) {
+  return StoreTuple();
+}
+
+void Sorter::StoreTupleForTopKFinish(uint64_t top_k) {
+  // If the number of buffered tuples is less than the bound, we're done
+  if (tuples_.size() < top_k) {
+    return;
+  }
+
+  // If the number of buffered tuples exactly equals the bound, let's build the
+  // heap (from scratch for the first time).
+  if (tuples_.size() == top_k) {
+    BuildHeap();
+    return;
+  }
+
+  // Check if the most recently inserted tuple belongs in the heap
+
+  char *last_insert = tuples_.back();
+
+  tuples_.pop_back();
+
+  char *heap_top = tuples_.front();
+
+  if (cmp_func_(last_insert, heap_top) <= 0) {
+    // The last inserted tuples belongs in the top-k. Swap it with the current
+    // maximum and sift it down.
+    tuples_.front() = last_insert;
+    HeapSiftDown();
+  }
 }
 
 void Sorter::Sort() {
@@ -88,7 +121,8 @@ void Sorter::Sort() {
   // Sort the sucker
   // TODO(pmenon): The standard std::sort is super slow. We should consider a
   //               switch to IPS4O which is up to 3-4x faster.
-  auto cmp = [this](char *l, char *r) { return cmp_func_(l, r) < 0; };
+  auto cmp =
+      [this](char *left, char *right) { return cmp_func_(left, right) < 0; };
   std::sort(tuples_.begin(), tuples_.end(), cmp);
 
   // Setup pointers
@@ -97,8 +131,11 @@ void Sorter::Sort() {
 
   timer.Stop();
 
-  LOG_DEBUG("Sorted %zu tuples in %.2f ms", tuples_.size(),
-            timer.GetDuration());
+#ifdef LOG_DEBUG_ENABLED
+  auto rate = tuples_.size() / timer.GetDuration();
+  LOG_DEBUG("Sorted %zu tuples in %.2f ms (%.2lf tuples/sec)", tuples_.size(),
+            timer.GetDuration(), rate);
+#endif
 }
 
 namespace {
@@ -142,7 +179,8 @@ void Sorter::SortParallel(
   auto &work_pool = threadpool::MonoQueuePool::GetExecutionInstance();
 
   // The main comparison function to compare two tuples
-  auto comp = [this](char *l, char *r) { return cmp_func_(l, r) < 0; };
+  auto comp =
+      [this](char *left, char *right) { return cmp_func_(left, right) < 0; };
 
   // Where the merging work units are collected
   std::vector<MergeWork> merge_work;
@@ -166,7 +204,7 @@ void Sorter::SortParallel(
   /// Step 1 - Sort each local run in parallel
   ////////////////////////////////////////////////////////////////////
   {
-    common::synchronization::CountDownLatch latch{sorters.size()};
+    common::synchronization::CountDownLatch latch(sorters.size());
     for (uint32_t sort_idx = 0; sort_idx < sorters.size(); sort_idx++) {
       work_pool.SubmitTask([&sorters, &splitters, &latch, sort_idx]() {
         // First sort
@@ -262,7 +300,7 @@ void Sorter::SortParallel(
   /// Step 3 - Distribute work packages to workers in parallel
   //////////////////////////////////////////////////////////////////
   {
-    common::synchronization::CountDownLatch latch{merge_work.size()};
+    common::synchronization::CountDownLatch latch(merge_work.size());
     auto heap_cmp =
         [this](const MergeWork::InputRange &l, const MergeWork::InputRange &r) {
           return !(cmp_func_(*l.first, *r.first) < 0);
@@ -307,6 +345,18 @@ void Sorter::SortParallel(
   LOG_DEBUG("Merging sorted runs time: %.2lf ms", timer.GetDuration());
 }
 
+void Sorter::SortTopKParallel(
+    const executor::ExecutorContext::ThreadStates &thread_states,
+    uint32_t sorter_offset, uint64_t top_k) {
+  // Parallel sort
+  SortParallel(thread_states, sorter_offset);
+
+  // Trim to top-K
+  tuples_.resize(top_k);
+  tuples_start_ = tuples_.data();
+  tuples_end_ = tuples_start_ + tuples_.size();
+}
+
 void Sorter::MakeRoomForNewTuple() {
   bool has_room =
       (buffer_pos_ != nullptr && buffer_pos_ + tuple_size_ < buffer_end_);
@@ -337,6 +387,44 @@ void Sorter::TransferMemoryBlocks(Sorter &target) {
   // Clear out
   tuples_.clear();
   blocks_.clear();
+}
+
+void Sorter::BuildHeap() {
+  const auto compare = [this](const char *left, const char *right) {
+    return cmp_func_(left, right) < 0;
+  };
+  std::make_heap(tuples_.begin(), tuples_.end(), compare);
+}
+
+void Sorter::HeapSiftDown() {
+  const auto compare = [this](const char *left, const char *right) {
+    return cmp_func_(left, right) < 0;
+  };
+
+  uint64_t size = tuples_.size();
+  uint32_t idx = 0;
+
+  char *top = tuples_[idx];
+
+  while (true) {
+    uint32_t child = (2 * idx) + 1;
+
+    if (child >= size) {
+      break;
+    }
+
+    if (child + 1 < size && compare(tuples_[child], tuples_[child + 1]) > 0) {
+      child++;
+    }
+
+    if (compare(top, tuples_[child]) <= 0) {
+      break;
+    }
+
+    std::swap(tuples_[idx], tuples_[child]);
+    idx = child;
+  }
+  tuples_[idx] = top;
 }
 
 }  // namespace util

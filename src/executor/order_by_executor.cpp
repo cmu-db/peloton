@@ -43,17 +43,14 @@ bool OrderByExecutor::DInit() {
   // Grab info from plan node and check it
   const planner::OrderByPlan &node = GetPlanNode<planner::OrderByPlan>();
 
-  // copy from underlying plan
-  underling_ordered_ = node.GetUnderlyingOrder();
-
   // Whether there is limit clause
-  limit_ = node.GetLimit();
+  limit_ = node.HasLimit();
 
   // Copied from plan node
-  limit_number_ = node.GetLimitNumber();
+  limit_number_ = node.GetLimit();
 
   // Copied from plan node
-  limit_offset_ = node.GetLimitOffset();
+  limit_offset_ = node.GetOffset();
 
   return true;
 }
@@ -72,7 +69,8 @@ bool OrderByExecutor::DExecute() {
   PELOTON_ASSERT(input_tiles_.size() > 0);
 
   // Returned tiles must be newly created physical tiles.
-  // NOTE: the schema of these tiles might not match the input tiles when some of the order by columns are not be part of the output schema
+  // NOTE: the schema of these tiles might not match the input tiles when some
+  // of the order by columns are not be part of the output schema
 
   size_t tile_size = std::min(size_t(DEFAULT_TUPLES_PER_TILEGROUP),
                               sort_buffer_.size() - num_tuples_returned_);
@@ -122,8 +120,7 @@ bool OrderByExecutor::DoSort() {
     num_tuples_get_ += input_tiles_.back()->GetTupleCount();
 
     // Optimization for ordered output
-    if (underling_ordered_ && limit_) {
-      LOG_TRACE("underling_ordered and limit both work");
+    if (limit_) {
       // We already get enough tuples, break while
       if (num_tuples_get_ >= (limit_offset_ + limit_number_)) {
         LOG_TRACE("num_tuples_get_ (%lu) are enough", num_tuples_get_);
@@ -180,15 +177,6 @@ bool OrderByExecutor::DoSort() {
   }
 
   PELOTON_ASSERT(count == sort_buffer_.size());
-
-  // If the underlying result has the same order, it is not necessary to sort
-  // the result again. Instead, go to the end.
-  if (underling_ordered_) {
-    LOG_TRACE("underling_ordered works and already get all tuples (%lu)",
-              count);
-    sort_done_ = true;
-    return true;
-  }
 
   // Prepare the compare function
   // Note: This is a less-than comparer, NOT an equality comparer.

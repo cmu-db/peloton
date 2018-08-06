@@ -65,7 +65,7 @@ void PipelineContext::LoopOverStates::Do(
 
   llvm::Value *tid = codegen.Const32(0);
   llvm::Value *loop_cond = codegen->CreateICmpNE(tid, num_threads);
-  lang::Loop state_loop{codegen, loop_cond, {{"tid", tid}}};
+  lang::Loop state_loop(codegen, loop_cond, {{"tid", tid}});
   {
     // Pull out state for current TID
     tid = state_loop.GetLoopVar(0);
@@ -96,16 +96,16 @@ void PipelineContext::LoopOverStates::DoParallel(
   std::vector<FunctionDeclaration::ArgumentInfo> args = {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", ctx_.GetThreadStateType()->getPointerTo()}};
-  FunctionDeclaration decl{codegen.GetCodeContext(), name,
+  FunctionDeclaration decl(codegen.GetCodeContext(), name,
                            FunctionDeclaration::Visibility::Internal,
-                           codegen.VoidType(), args};
-  FunctionBuilder func{codegen.GetCodeContext(), decl};
+                           codegen.VoidType(), args);
+  FunctionBuilder func(codegen.GetCodeContext(), decl);
   {
     // Pull out arguments
     auto *thread_state_ptr = func.GetArgumentByPosition(1);
 
     // Setup access to the thread state
-    PipelineContext::SetState state_access{ctx_, func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access(ctx_, func.GetArgumentByPosition(1));
 
     // Execute function body
     body(thread_state_ptr);
@@ -233,11 +233,10 @@ Pipeline &PipelineContext::GetPipeline() { return pipeline_; }
 ////////////////////////////////////////////////////////////////////////////////
 
 Pipeline::Pipeline(CompilationContext &compilation_ctx)
-    : compilation_ctx_(compilation_ctx),
+    : id_(compilation_ctx.RegisterPipeline(*this)),
+      compilation_ctx_(compilation_ctx),
       pipeline_index_(0),
-      parallelism_(Pipeline::Parallelism::Flexible) {
-  id_ = compilation_ctx.RegisterPipeline(*this);
-}
+      parallelism_(Pipeline::Parallelism::Flexible) {}
 
 Pipeline::Pipeline(OperatorTranslator *translator,
                    Pipeline::Parallelism parallelism)
@@ -260,26 +259,36 @@ void Pipeline::MarkSource(OperatorTranslator *translator,
 
   // Check parallel execution settings
   bool parallel_exec_disabled = !settings::SettingsManager::GetBool(
-                                    settings::SettingId::parallel_execution);
+      settings::SettingId::parallel_execution);
 
   // Check if the consumer supports parallel execution
+  bool last_pipeline = compilation_ctx_.IsLastPipeline(*this);
   auto &exec_consumer = compilation_ctx_.GetExecutionConsumer();
   bool parallel_consumer = exec_consumer.SupportsParallelExec();
 
-  // We choose serial execution for one of four reasons:
-  //   1. If parallel execution is globally disabled.
-  //   2. If the consumer isn't parallel.
-  //   3. If the source wants serial execution.
-  //   4. If the pipeline is already configured to be serial.
-  if (parallel_exec_disabled || !parallel_consumer ||
+  /*
+   * We need to make a final decision as to whether we should execute this
+   * pipeline serially using a single thread, or in parallel using multiple
+   * threads. For now, we explicitly choose serial execution for any one of 
+   * the following four reasons:
+   *   1. If parallel execution is globally disabled.
+   *   2. If this pipeline is the last to execute and the consumer does not
+   *      support parallel execution.
+   *   3. If the source operator explicitly requests serial execution.
+   *   4. If the pipeline is already configured to be serial. This may happen if
+   *      **ANY** other operator in the pipeline specifically requested serial
+   *      execution.
+   * 
+   * Finally, if the source operator did not commit to serial or parallel, we
+   * err on the side of caution and fallback to serial execution.
+   */
+  if (parallel_exec_disabled || (last_pipeline && !parallel_consumer) ||
       parallelism == Pipeline::Parallelism::Serial ||
       parallelism_ == Pipeline::Parallelism::Serial) {
     parallelism_ = Pipeline::Parallelism::Serial;
     return;
   }
 
-  // At this point, the pipeline is either fully parallel or flexible, and the
-  // source is either parallel or flexible. We choose whatever the source wants
   if (parallelism == Pipeline::Parallelism::Flexible) {
     auto pipeline_name = ConstructPipelineName();
     auto source_name = translator->GetPlan().GetInfo();
@@ -413,11 +422,11 @@ void Pipeline::InitializePipeline(PipelineContext &pipeline_ctx) {
       {"queryState", query_state.GetType()->getPointerTo()},
       {"threadState", pipeline_ctx.GetThreadStateType()->getPointerTo()}};
 
-  FunctionDeclaration init_decl{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder init_func{cc, init_decl};
+  FunctionDeclaration init_decl(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder init_func(cc, init_decl);
   {
-    PipelineContext::SetState state_access{pipeline_ctx,
-                                           init_func.GetArgumentByPosition(1)};
+    PipelineContext::SetState state_access(pipeline_ctx,
+                                           init_func.GetArgumentByPosition(1));
 
     // Set initialized flag
     pipeline_ctx.MarkInitialized(codegen);
@@ -452,7 +461,7 @@ void Pipeline::CompletePipeline(PipelineContext &pipeline_ctx) {
   // Loop over all states to allow operators to clean up components
   PipelineContext::LoopOverStates loop_state{pipeline_ctx};
   loop_state.Do([this, &pipeline_ctx](llvm::Value *thread_state) {
-    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
+    PipelineContext::SetState state_access(pipeline_ctx, thread_state);
     // Let operators in the pipeline clean up any pipeline state
     for (auto riter = pipeline_.rbegin(), rend = pipeline_.rend();
          riter != rend; ++riter) {
@@ -486,7 +495,7 @@ void Pipeline::Run(
     const std::function<void(ConsumerContext &,
                              const std::vector<llvm::Value *> &)> &body) {
   // Create context
-  PipelineContext pipeline_ctx{*this};
+  PipelineContext pipeline_ctx(*this);
 
   // Initialize the pipeline
   InitializePipeline(pipeline_ctx);
@@ -522,8 +531,8 @@ void Pipeline::DoRun(
   }
 
   // The main function
-  FunctionDeclaration declaration{cc, func_name, visibility, ret_type, args};
-  FunctionBuilder func{cc, declaration};
+  FunctionDeclaration declaration(cc, func_name, visibility, ret_type, args);
+  FunctionBuilder func(cc, declaration);
   {
     auto *query_state = func.GetArgumentByPosition(0);
     auto *thread_state = func.GetArgumentByPosition(1);
@@ -538,7 +547,7 @@ void Pipeline::DoRun(
     }
 
     // Setup the thread state access for the pipeline context
-    PipelineContext::SetState state_access{pipeline_ctx, thread_state};
+    PipelineContext::SetState state_access(pipeline_ctx, thread_state);
 
     // First initialize the execution consumer
     auto &execution_consumer = compilation_ctx_.GetExecutionConsumer();
@@ -551,7 +560,8 @@ void Pipeline::DoRun(
     }
 
     // Generate pipeline body
-    ConsumerContext ctx{compilation_ctx_, *this, &pipeline_ctx};
+    ConsumerContext ctx(compilation_ctx_, *this, &pipeline_ctx,
+                        func.GetExitBlock());
     body(ctx, pipeline_args);
 
     // Finish

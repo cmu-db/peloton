@@ -61,11 +61,11 @@ llvm::Function *ConstructFunction(
 
 }  // namespace
 
-//===----------------------------------------------------------------------===//
-//
-// FunctionDeclaration
-//
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// FunctionDeclaration
+///
+////////////////////////////////////////////////////////////////////////////////
 
 FunctionDeclaration::FunctionDeclaration(
     CodeContext &cc, const std::string &name,
@@ -84,11 +84,11 @@ FunctionDeclaration FunctionDeclaration::MakeDeclaration(
   return FunctionDeclaration(cc, name, visibility, ret_type, args);
 }
 
-//===----------------------------------------------------------------------===//
-//
-// FunctionBuilder
-//
-//===----------------------------------------------------------------------===//
+////////////////////////////////////////////////////////////////////////////////
+///
+/// FunctionBuilder
+///
+////////////////////////////////////////////////////////////////////////////////
 
 // We preserve the state of any ongoing function construction in order to be
 // able to restore it after this function has been fully completed. Thus,
@@ -101,7 +101,8 @@ FunctionBuilder::FunctionBuilder(CodeContext &cc, llvm::Function *func_decl)
       previous_insert_point_(cc.GetBuilder().GetInsertBlock()),
       func_(func_decl),
       overflow_bb_(nullptr),
-      divide_by_zero_bb_(nullptr) {
+      divide_by_zero_bb_(nullptr),
+      return_bb_(nullptr) {
   // At this point, we've saved the current position during code generation and
   // we have a function declaration. Now:
   //  1. We define the "entry" block and attach it to the function. At this
@@ -175,10 +176,11 @@ llvm::BasicBlock *FunctionBuilder::GetOverflowBB() {
     return overflow_bb_;
   }
 
-  CodeGen codegen{code_context_};
+  CodeGen codegen(code_context_);
 
   // Save the current position so we can restore after we're done
-  auto *curr_position = codegen->GetInsertBlock();
+  auto *curr_block = codegen->GetInsertBlock();
+  auto curr_pos = codegen->GetInsertPoint();
 
   // Create the overflow block now, but don't attach to function just yet.
   overflow_bb_ = llvm::BasicBlock::Create(codegen.GetContext(), "overflow");
@@ -189,7 +191,7 @@ llvm::BasicBlock *FunctionBuilder::GetOverflowBB() {
   codegen->CreateUnreachable();
 
   // Restore position
-  codegen->SetInsertPoint(curr_position);
+  codegen->SetInsertPoint(curr_block, curr_pos);
 
   return overflow_bb_;
 }
@@ -204,10 +206,11 @@ llvm::BasicBlock *FunctionBuilder::GetDivideByZeroBB() {
     return divide_by_zero_bb_;
   }
 
-  CodeGen codegen{code_context_};
+  CodeGen codegen(code_context_);
 
   // Save the current position so we can restore after we're done
-  auto *curr_position = codegen->GetInsertBlock();
+  auto *curr_block = codegen->GetInsertBlock();
+  auto curr_pos = codegen->GetInsertPoint();
 
   // Create the overflow block now, but don't attach to function just yet.
   divide_by_zero_bb_ =
@@ -219,9 +222,33 @@ llvm::BasicBlock *FunctionBuilder::GetDivideByZeroBB() {
   codegen->CreateUnreachable();
 
   // Restore position
-  codegen->SetInsertPoint(curr_position);
+  codegen->SetInsertPoint(curr_block, curr_pos);
 
   return divide_by_zero_bb_;
+}
+
+llvm::BasicBlock *FunctionBuilder::GetExitBlock() {
+  if (return_bb_ != nullptr) {
+    return return_bb_;
+  }
+
+  CodeGen codegen(code_context_);
+
+  // Save the current position so we can restore after we're done
+  auto *curr_block = codegen->GetInsertBlock();
+  auto curr_pos = codegen->GetInsertPoint();
+
+  // Create the overflow block now, but don't attach to function just yet.
+  return_bb_ = llvm::BasicBlock::Create(codegen.GetContext(), "return");
+
+  // Quickly switch into the return block
+  codegen->SetInsertPoint(return_bb_);
+  codegen->CreateRetVoid();
+
+  // Restore position
+  codegen->SetInsertPoint(curr_block, curr_pos);
+
+  return return_bb_;
 }
 
 // Return the given value from the function and finish it
@@ -230,7 +257,7 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
     return;
   }
 
-  CodeGen codegen{code_context_};
+  CodeGen codegen(code_context_);
 
   if (ret != nullptr) {
     codegen->CreateRet(ret);
@@ -239,12 +266,17 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
     codegen->CreateRetVoid();
   }
 
-  // Add the overflow error block if it exists
+  // Add the return block, if it exists
+  if (return_bb_ != nullptr) {
+    return_bb_->insertInto(func_);
+  }
+
+  // Add the overflow error block, if it exists
   if (overflow_bb_ != nullptr) {
     overflow_bb_->insertInto(func_);
   }
 
-  // Add the divide-by-zero error block if it exists
+  // Add the divide-by-zero error block, if it exists
   if (divide_by_zero_bb_ != nullptr) {
     divide_by_zero_bb_->insertInto(func_);
   }
@@ -261,23 +293,33 @@ void FunctionBuilder::ReturnAndFinish(llvm::Value *ret) {
 }
 
 llvm::Value *FunctionBuilder::GetOrCacheVariable(
-    const std::string &name, const std::function<llvm::Value *()> &func) {
-  auto iter = cached_vars_.find(name);
-  if (iter != cached_vars_.end()) {
-    return iter->second;
-  } else {
-    CodeGen codegen{code_context_};
-    auto pos = codegen->GetInsertPoint();
-    if (entry_bb_->empty()) {
-      codegen->SetInsertPoint(entry_bb_);
-    } else {
-      codegen->SetInsertPoint(&entry_bb_->back());
-    }
-    auto *val = func();
-    codegen->SetInsertPoint(&*pos);
-    cached_vars_.emplace(name, val);
+    const std::string &name, const std::function<llvm::Value *()> &load_func) {
+  llvm::Value *&val = cached_vars_[name];
+  if (val != nullptr) {
     return val;
   }
+
+  CodeGen codegen(code_context_);
+
+  // Save current position
+  auto *curr_block = codegen->GetInsertBlock();
+  auto curr_pos = codegen->GetInsertPoint();
+
+  // Move to start of function
+  if (entry_bb_->empty()) {
+    codegen->SetInsertPoint(entry_bb_);
+  } else {
+    codegen->SetInsertPoint(&entry_bb_->back());
+  }
+
+  // Generate loading code and save in cache
+  val = load_func();
+
+  // Move back
+  codegen->SetInsertPoint(curr_block, curr_pos);
+
+  // Return value
+  return val;
 }
 
 }  // namespace codegen
