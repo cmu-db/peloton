@@ -28,5 +28,12 @@ const int LSTMWorkloadDefaults::SEGMENT = 72;
 const int LSTMWorkloadDefaults::INTERVAL = 20;
 const int LSTMWorkloadDefaults::PADDLING_DAYS = 7;
 const int LSTMWorkloadDefaults::BPTT = 90;
+
+const int AugmentedNNWorkloadDefaults::NCOL = 1;
+const int AugmentedNNWorkloadDefaults::ORDER = 1;
+const int AugmentedNNWorkloadDefaults::NNEURON = 16;
+const float AugmentedNNWorkloadDefaults::LR = 0.1f;
+const int AugmentedNNWorkloadDefaults::BATCH_SIZE = 256;
+
 }
 }
