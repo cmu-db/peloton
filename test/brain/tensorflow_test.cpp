@@ -1,4 +1,4 @@
-
+//===----------------------------------------------------------------------===//
 //
 //                         Peloton
 //
@@ -19,7 +19,7 @@
 #include "brain/workload/workload_defaults.h"
 #include "common/harness.h"
 #include "util/file_util.h"
-#include "stdlib.h"
+//#include "stdlib.h"
 
 
 namespace peloton {
