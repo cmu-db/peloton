@@ -2,7 +2,7 @@
 #
 #                         Peloton
 #
-# LSTM.py
+# AugmentedNN.py
 #
 # Identification: src/brain/modelgen/AugmentedNN.py
 #
