@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// lstm_tf.cpp
+// AugmentedNN_tf.cpp
 //
-// Identification: src/brain/workload/lstm_tf.cpp
+// Identification: src/brain/workload/AugmentedNN_tf.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
