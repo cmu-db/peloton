@@ -6,12 +6,13 @@
 //
 // Identification: test/codegen/order_by_translator_test.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #include "codegen/query_compiler.h"
 #include "common/harness.h"
+#include "planner/limit_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/seq_scan_plan.h"
 
@@ -134,8 +135,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColAscTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(0)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;
@@ -180,8 +180,7 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
   EXPECT_TRUE(std::is_sorted(
       results.begin(), results.end(),
       [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
-        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) ==
-            CmpBool::CmpTrue) {
+        if (t1.GetValue(1).CompareEquals(t2.GetValue(1)) == CmpBool::CmpTrue) {
           // t1.b == t2.b => t1.a <= t2.a
           return t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0)) ==
                  CmpBool::CmpTrue;
@@ -190,6 +189,95 @@ TEST_F(OrderByTranslatorTest, MultiIntColMixedTest) {
           return t1.GetValue(1).CompareGreaterThan(t2.GetValue(1)) ==
                  CmpBool::CmpTrue;
         }
+      }));
+}
+
+TEST_F(OrderByTranslatorTest, OrderWithLimitOnly) {
+  //
+  // SELECT * FROM test_table ORDER BY a limit 1;
+  //
+
+  uint64_t offset = 0;
+  uint64_t limit = 10;
+  uint32_t num_rows = 100;
+
+  LoadTestTable(TestTableId(), num_rows);
+
+  std::unique_ptr<planner::LimitPlan> limit_plan(
+      new planner::LimitPlan(limit, offset));
+
+  std::unique_ptr<planner::OrderByPlan> order_by_plan(
+      new planner::OrderByPlan({0}, {false}, {0, 1, 2, 3}, limit, offset));
+
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3}));
+
+  order_by_plan->AddChild(std::move(seq_scan_plan));
+  limit_plan->AddChild(std::move(order_by_plan));
+
+  // Do binding
+  planner::BindingContext context;
+  limit_plan->PerformBinding(context);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(*limit_plan, buffer);
+
+  // The results should be sorted in ascending order
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(limit, results.size());
+  EXPECT_TRUE(std::is_sorted(
+      results.begin(), results.end(),
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
+        auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
+        return is_lte == CmpBool::CmpTrue;
+      }));
+}
+
+TEST_F(OrderByTranslatorTest, OrderWithLimitAndOffset) {
+  //
+  // SELECT * FROM test_table ORDER BY a offset = <num_rows - 5> limit 10;
+  //
+  // - Should return 5 rows
+
+  uint64_t num_rows = 100;
+  uint64_t offset = num_rows - 5;
+  uint32_t limit = 10;
+
+  LoadTestTable(TestTableId(), num_rows);
+
+  std::unique_ptr<planner::LimitPlan> limit_plan(
+      new planner::LimitPlan(limit, offset));
+
+  std::unique_ptr<planner::OrderByPlan> order_by_plan(
+      new planner::OrderByPlan({0}, {false}, {0, 1, 2, 3}, limit, offset));
+
+  std::unique_ptr<planner::SeqScanPlan> seq_scan_plan(new planner::SeqScanPlan(
+      &GetTestTable(TestTableId()), nullptr, {0, 1, 2, 3}));
+
+  order_by_plan->AddChild(std::move(seq_scan_plan));
+  limit_plan->AddChild(std::move(order_by_plan));
+
+  // Do binding
+  planner::BindingContext context;
+  limit_plan->PerformBinding(context);
+
+  // We collect the results of the query into an in-memory buffer
+  codegen::BufferingConsumer buffer{{0, 1}, context};
+
+  // COMPILE and execute
+  CompileAndExecute(*limit_plan, buffer);
+
+  // The results should be sorted in ascending order
+  const auto &results = buffer.GetOutputTuples();
+  EXPECT_EQ(num_rows - offset, results.size());
+  EXPECT_TRUE(std::is_sorted(
+      results.begin(), results.end(),
+      [](const codegen::WrappedTuple &t1, const codegen::WrappedTuple &t2) {
+        auto is_lte = t1.GetValue(0).CompareLessThanEquals(t2.GetValue(0));
+        return is_lte == CmpBool::CmpTrue;
       }));
 }
 

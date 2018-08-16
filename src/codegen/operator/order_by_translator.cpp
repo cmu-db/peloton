@@ -124,9 +124,9 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
                                      CompilationContext &context,
                                      Pipeline &pipeline)
     : OperatorTranslator(plan, context, pipeline),
-      child_pipeline_(this, Pipeline::Parallelism::Serial) {
-  // Aggregations happen serially (for now ...)
-  pipeline.SetSerial();
+      child_pipeline_(this, Pipeline::Parallelism::Flexible) {
+  // Scanning the sorter happens serially (for now ...)
+  pipeline.MarkSource(this, Pipeline::Parallelism::Serial);
 
   // Prepare the child
   context.Prepare(*plan.GetChild(0), child_pipeline_);
@@ -177,20 +177,25 @@ OrderByTranslator::OrderByTranslator(const planner::OrderByPlan &plan,
     if (iter != col_id_map.end()) {
       LOG_DEBUG("Sort column %p (%s) references output column @ %u", ai,
                 TypeIdToString(ai->type.type_id).c_str(), iter->second);
-      sort_key_info = {ai, true, iter->second};
+      sort_key_info = {.sort_key = ai,
+                       .is_part_of_output = true,
+                       .tuple_slot = iter->second};
     } else {
       LOG_DEBUG("Adding sort column %p (%s) to tuple format @ %u", ai,
                 TypeIdToString(ai->type.type_id).c_str(),
                 static_cast<uint32_t>(tuple_desc.size()));
       tuple_desc.push_back(ai->type);
-      sort_key_info = {ai, false, static_cast<uint32_t>(tuple_desc.size() - 1)};
+      sort_key_info = {
+          .sort_key = ai,
+          .is_part_of_output = false,
+          .tuple_slot = static_cast<uint32_t>(tuple_desc.size() - 1)};
     }
 
     sort_key_info_.push_back(sort_key_info);
   }
 
   // Create the sorter
-  sorter_ = Sorter{codegen, tuple_desc};
+  sorter_ = Sorter(codegen, tuple_desc);
 }
 
 void OrderByTranslator::InitializeQueryState() {
@@ -253,8 +258,8 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
                                                     right_tuple);
 
     // The result of the overall comparison
-    codegen::Value result;
-    codegen::Value zero(type::Integer::Instance(), codegen.Const32(0));
+    llvm::Value *result = nullptr;
+    llvm::Value *zero = codegen.Const32(0);
 
     for (size_t idx = 0; idx < sort_keys.size(); idx++) {
       auto &sort_key_info = sort_key_info_[idx];
@@ -274,22 +279,22 @@ void OrderByTranslator::DefineAuxiliaryFunctions() {
         cmp = right.CompareForSort(codegen, left);
       }
 
+      // Comparisons for sort must never return a NULL
+      PELOTON_ASSERT(!cmp.IsNullable());
+
       if (idx == 0) {
-        result = cmp;
+        result = cmp.GetValue();
       } else {
         // If previous result is zero (meaning the values were equal), set the
         // running value to the result of the last comparison. Otherwise, carry
         // forward the comparison result of the previous attributes
-        auto prev_zero = result.CompareEq(codegen, zero);
-        result = codegen::Value(
-            type::Integer::Instance(),
-            codegen->CreateSelect(prev_zero.GetValue(), cmp.GetValue(),
-                                  result.GetValue()));
+        auto prev_zero = codegen->CreateICmpEQ(result, zero);
+        result = codegen->CreateSelect(prev_zero, cmp.GetValue(), result);
       }
     }
 
     // Return result
-    compare.ReturnAndFinish(result.GetValue());
+    compare.ReturnAndFinish(result);
   }
   // Set the function pointer
   compare_func_ = compare.GetFunction();
@@ -311,10 +316,13 @@ void OrderByTranslator::Produce() const {
 
     const auto &plan = GetPlanAs<planner::OrderByPlan>();
     ProduceResults callback(ctx, plan, position_list);
-    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, callback);
+    sorter_.VectorizedIterate(codegen, sorter_ptr, vec_size, 0, callback);
   };
 
-  GetPipeline().RunSerial(producer);
+  // We set the pipeline to be serial in the constructor. Sanity check here.
+  auto &pipeline = GetPipeline();
+  PELOTON_ASSERT(!pipeline.IsParallel());
+  pipeline.RunSerial(producer);
 }
 
 void OrderByTranslator::Consume(ConsumerContext &ctx,
@@ -345,8 +353,13 @@ void OrderByTranslator::Consume(ConsumerContext &ctx,
     sorter_ptr = LoadStatePtr(sorter_id_);
   }
 
-  // Append the tuple into the sorter
-  sorter_.Append(codegen, sorter_ptr, tuple);
+  // Insert the tuple into the sorter instance
+  if (plan.HasLimit()) {
+    auto top_k_bound = plan.GetOffset() + plan.GetLimit();
+    sorter_.StoreTupleForTopK(codegen, sorter_ptr, tuple, top_k_bound);
+  } else {
+    sorter_.StoreTuple(codegen, sorter_ptr, tuple);
+  }
 }
 
 void OrderByTranslator::RegisterPipelineState(PipelineContext &pipeline_ctx) {
@@ -377,7 +390,19 @@ void OrderByTranslator::FinishPipeline(PipelineContext &pipeline_ctx) {
   if (pipeline_ctx.IsParallel()) {
     auto *thread_states_ptr = GetThreadStatesPtr();
     auto offset = pipeline_ctx.GetEntryOffset(codegen, thread_sorter_id_);
-    sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+
+    const auto &plan = GetPlanAs<planner::OrderByPlan>();
+
+    // If the plan has a limit, call SortTopKParallel() rather than the normal
+    // SortParallel() method.
+
+    if (plan.HasLimit()) {
+      auto top_k_bound = plan.GetOffset() + plan.GetLimit();
+      sorter_.SortTopKParallel(codegen, sorter_ptr, thread_states_ptr, offset,
+                               top_k_bound);
+    } else {
+      sorter_.SortParallel(codegen, sorter_ptr, thread_states_ptr, offset);
+    }
   } else {
     sorter_.Sort(codegen, sorter_ptr);
   }

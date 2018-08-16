@@ -21,9 +21,12 @@ DEFINE_TYPE(Sorter, "peloton::util::Sorter", opaque1, tuples_start, tuples_end,
             opaque2);
 
 DEFINE_METHOD(peloton::codegen::util, Sorter, Init);
-DEFINE_METHOD(peloton::codegen::util, Sorter, StoreInputTuple);
+DEFINE_METHOD(peloton::codegen::util, Sorter, StoreTuple);
+DEFINE_METHOD(peloton::codegen::util, Sorter, StoreTupleForTopK);
+DEFINE_METHOD(peloton::codegen::util, Sorter, StoreTupleForTopKFinish);
 DEFINE_METHOD(peloton::codegen::util, Sorter, Sort);
 DEFINE_METHOD(peloton::codegen::util, Sorter, SortParallel);
+DEFINE_METHOD(peloton::codegen::util, Sorter, SortTopKParallel);
 DEFINE_METHOD(peloton::codegen::util, Sorter, Destroy);
 
 }  // namespace codegen

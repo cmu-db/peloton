@@ -6,7 +6,7 @@
 //
 // Identification: src/codegen/expression/case_translator.cpp
 //
-// Copyright (c) 2015-2017, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,13 +47,20 @@ codegen::Value CaseTranslator::DeriveValue(CodeGen &codegen,
   codegen::Value ret;
   for (uint32_t i = 0; i < expr.GetWhenClauseSize(); i++) {
     codegen::Value cond = row.DeriveValue(codegen, *expr.GetWhenClauseCond(i));
-    lang::If when{codegen, cond.GetValue(), "case" + std::to_string(i)};
+    lang::If when(codegen, cond.GetValue(), "case" + std::to_string(i));
     {
+      // Derive the value of this case expression
       ret = row.DeriveValue(codegen, *expr.GetWhenClauseResult(i));
+
+      // Collect the value in order to merge at the very end
       branch_vals.emplace_back(ret, codegen->GetInsertBlock());
+
+      // Branch (unconditionally) to the merging block
+      codegen->CreateBr(merge_bb);
     }
-    when.EndIf(merge_bb);
+    when.EndIf();
   }
+
   // Compute the default clause
   // default_ret will have the same type as one of the ret's from above
   codegen::Value default_ret =

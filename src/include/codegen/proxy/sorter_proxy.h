@@ -38,9 +38,12 @@ PROXY(Sorter) {
 
   // Proxy methods in util::Sorter
   DECLARE_METHOD(Init);
-  DECLARE_METHOD(StoreInputTuple);
+  DECLARE_METHOD(StoreTuple);
+  DECLARE_METHOD(StoreTupleForTopK);
+  DECLARE_METHOD(StoreTupleForTopKFinish);
   DECLARE_METHOD(Sort);
   DECLARE_METHOD(SortParallel);
+  DECLARE_METHOD(SortTopKParallel);
   DECLARE_METHOD(Destroy);
 };
 

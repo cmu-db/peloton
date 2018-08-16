@@ -417,7 +417,7 @@ void Aggregation::DoNullCheck(
         default: { break; }
       }
     }
-    agg_is_null.ElseBlock("Agg.IfAggIsNotNull");
+    agg_is_null.ElseBlock();
     {
       // (1)
       DoAdvanceValue(codegen, space, type, storage_index, update);
