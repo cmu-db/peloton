@@ -3,6 +3,7 @@
 #include "brain/util/model_util.h"
 #include "brain/util/eigen_util.h"
 #include "common/harness.h"
+#include <random>
 
 namespace peloton {
 namespace test {
