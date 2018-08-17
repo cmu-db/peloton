@@ -16,6 +16,7 @@
 #include "brain/workload/kernel_model.h"
 #include "brain/workload/linear_model.h"
 #include "brain/workload/lstm.h"
+#include "brain/workload/augmentedNN.h"
 #include "brain/workload/workload_defaults.h"
 #include "common/harness.h"
 #include "util/file_util.h"
@@ -133,6 +134,50 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
                                     VAL_SPLIT, NORMALIZE, VAL_THESH,
                                     brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
                                     brain::CommonWorkloadDefaults::ESTOP_DELTA);
+}
+
+TEST_F(ModelTests, DISABLED_AugmentedNNUniformTest) {
+  auto model = std::unique_ptr<brain::AugmentedNN>(new brain::AugmentedNN(
+      brain::AugmentedNNWorkloadDefaults::NCOL,
+      brain::AugmentedNNWorkloadDefaults::ORDER,
+      brain::AugmentedNNWorkloadDefaults::NNEURON,
+      brain::AugmentedNNWorkloadDefaults::LR,
+      brain::AugmentedNNWorkloadDefaults::BATCH_SIZE,
+      brain::AugmentedNNWorkloadDefaults::EPOCHS));
+  EXPECT_TRUE(model->IsTFModel());
+  size_t LOG_INTERVAL = 20;
+  size_t NUM_SAMPLES = 10000;
+  float VAL_SPLIT = 0.5;
+  bool NORMALIZE = false;
+  float VAL_THESH = 0.05;
+
+  TestingAugmentedNNUtil::Test(*model, DistributionType::UniformDistribution,
+                               LOG_INTERVAL, NUM_SAMPLES,
+                               VAL_SPLIT, NORMALIZE, VAL_THESH,
+                               brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                               brain::CommonWorkloadDefaults::ESTOP_DELTA);
+}
+
+TEST_F(ModelTests, DISABLED_AugmentedNNSkewedTest) {
+  auto model = std::unique_ptr<brain::AugmentedNN>(new brain::AugmentedNN(
+      brain::AugmentedNNWorkloadDefaults::NCOL,
+      brain::AugmentedNNWorkloadDefaults::ORDER,
+      brain::AugmentedNNWorkloadDefaults::NNEURON,
+      brain::AugmentedNNWorkloadDefaults::LR,
+      brain::AugmentedNNWorkloadDefaults::BATCH_SIZE,
+      brain::AugmentedNNWorkloadDefaults::EPOCHS));
+  EXPECT_TRUE(model->IsTFModel());
+  size_t LOG_INTERVAL = 20;
+  size_t NUM_SAMPLES = 10000;
+  float VAL_SPLIT = 0.5;
+  bool NORMALIZE = false;
+  float VAL_THESH = 0.05;
+
+  TestingAugmentedNNUtil::Test(*model, DistributionType::SkewedDistribution,
+                               LOG_INTERVAL, NUM_SAMPLES,
+                               VAL_SPLIT, NORMALIZE, VAL_THESH,
+                               brain::CommonWorkloadDefaults::ESTOP_PATIENCE,
+                               brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
 }  // namespace test
