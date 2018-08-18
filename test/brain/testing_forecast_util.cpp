@@ -172,37 +172,36 @@ void TestingAugmentedNNUtil::Test(
       test_data.block(0, test_data.cols() - 1, test_data.rows(), 1);
 
   matrix_eig test_res = model.Predict(check_data, num_tests*3);
-  float test_loss = 10.0;
 
-  LOG_DEBUG("Test with on high end: ");
+  LOG_INFO("Test with on high end: ");
   for (size_t i = 0; i < 10; i++) {
-    LOG_DEBUG("Truth: %.8f, Pred: %.8f", 
+    LOG_INFO("Truth: %.8f, Pred: %.8f", 
               check_target_data(i,0), test_res(i,0));
   }
-  test_loss = peloton::brain::ModelUtil::MeanSqError(
+  float test_loss = peloton::brain::ModelUtil::MeanSqError(
       check_target_data.topRows(num_tests), 
       test_res.topRows(num_tests)); 
-  LOG_DEBUG("AMSE: %.8f", test_loss);
+  LOG_INFO("AMSE: %.8f", test_loss);
 
-  LOG_DEBUG("Test with on low end: ");
+  LOG_INFO("Test with on low end: ");
   for (size_t i = num_tests; i < num_tests + 10; i++) {
-    LOG_DEBUG("Truth: %.8f, Pred: %.8f", 
+    LOG_INFO("Truth: %.8f, Pred: %.8f", 
               check_target_data(i,0), test_res(i,0));
   }
   test_loss = peloton::brain::ModelUtil::MeanSqError(
       check_target_data.middleRows(num_tests, num_tests), 
       test_res.middleRows(num_tests, num_tests)); 
-  LOG_DEBUG("AMSE: %.8f", test_loss);
+  LOG_INFO("AMSE: %.8f", test_loss);
 
-  LOG_DEBUG("Test randomly: ");
+  LOG_INFO("Test randomly: ");
   for (size_t i = 2 * num_tests; i < 2 * num_tests + 10; i++) {
-    LOG_DEBUG("Truth: %.8f, Pred: %.8f", 
+    LOG_INFO("Truth: %.8f, Pred: %.8f", 
               check_target_data(i,0), test_res(i,0));
   }
   test_loss = peloton::brain::ModelUtil::MeanSqError(
       check_target_data.bottomRows(num_tests), 
       test_res.bottomRows(num_tests)); 
-  LOG_DEBUG("AMSE: %.8f", test_loss);
+  LOG_INFO("AMSE: %.8f", test_loss);
 
 }
 
