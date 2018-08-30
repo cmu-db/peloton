@@ -1,0 +1,139 @@
+
+
+#include "optimizer/optimizer.h"
+#include "concurrency/transaction_manager_factory.h"
+#include "binder/bind_node_visitor.h"
+#include "common/harness.h"
+#include "sql/testing_sql_util.h"
+#include "parser/postgresparser.h"
+
+
+
+namespace peloton {
+namespace test {
+
+class OptimizerTestUtil : public PelotonTest {
+ public:
+  virtual void SetUp() override {
+    // Call parent virtual function first
+    PelotonTest::SetUp();
+
+    // Create database
+    CreateDatabase();
+
+    // Create Optimizer
+    optimizer_.reset(new optimizer::Optimizer());
+
+  }
+
+  virtual void TearDown() override {
+    // Destroy test database
+    DestroyDatabase();
+
+    // Call parent virtual function
+    PelotonTest::TearDown();
+  }
+
+  void CreateTable(const std::string &table_name) {
+    TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE " + table_name + "(a INT, b INT, c INT);");
+  }
+
+  void CreateTable(const std::string &table_name, int num_tuples) {
+    CreateTable(table_name);
+    InsertData(table_name, num_tuples);
+  }
+
+  void AnalyzeTable(const std::string &table_name) {
+    LOG_INFO("Analyzing %s", table_name.c_str());
+    TestingSQLUtil::ExecuteSQLQuery("ANALYZE " + table_name + ";");
+  }
+
+  void InsertData(const std::string &table_name, int num_tuples) {
+    InsertDataHelper(table_name, num_tuples);
+    AnalyzeTable(table_name);
+  }
+
+  std::shared_ptr<planner::AbstractPlan> GeneratePlan(const std::string query) {
+    // Begin Transaction
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+
+    auto plan = GeneratePlanHelper(optimizer_, query, txn);
+
+    txn_manager.CommitTransaction(txn);
+
+    return plan;
+  }
+
+  std::shared_ptr<planner::AbstractPlan> GeneratePlan(const std::string query, concurrency::TransactionContext *txn) {
+    return GeneratePlanHelper(optimizer_, query, txn);
+  }
+
+ private:
+
+  void CreateDatabase() {
+    // Create database
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);
+    txn_manager.CommitTransaction(txn);
+  }
+
+  void DestroyDatabase() {
+    auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
+    auto txn = txn_manager.BeginTransaction();
+    catalog::Catalog::GetInstance()->DropDatabaseWithName(txn, DEFAULT_DB_NAME);
+    txn_manager.CommitTransaction(txn);
+  }
+
+  void InsertDataHelper(const std::string &table_name, int tuple_count) {
+    int batch_size = 1000;
+    std::stringstream ss;
+    auto count = 0;
+    if (tuple_count > batch_size) {
+      for (int i = 0; i < tuple_count; i += batch_size) {
+        ss.str(std::string());
+        ss << "INSERT INTO " << table_name << " VALUES ";
+        for (int j = 1; j <= batch_size; j++) {
+          count++;
+          ss << "(" << count << ", 1.1, 'abcd')";
+          if (j < batch_size) {
+            ss << ",";
+          }
+        }
+        ss << ";";
+        TestingSQLUtil::ExecuteSQLQuery(ss.str());
+      }
+    } else {
+      ss << "INSERT INTO " << table_name << " VALUES ";
+      for (int i = 1; i <= tuple_count; i++) {
+        ss << "(" << i << ", 1.1, 'abcd')";
+        if (i < tuple_count) {
+          ss << ",";
+        }
+        count++;
+      }
+      ss << ";";
+      TestingSQLUtil::ExecuteSQLQuery(ss.str());
+    }
+    LOG_INFO("Inserted %d rows into %s", count, table_name.c_str());
+  }
+
+  std::shared_ptr<planner::AbstractPlan> GeneratePlanHelper(
+      std::unique_ptr<optimizer::AbstractOptimizer> &optimizer,
+      const std::string query, concurrency::TransactionContext *txn) {
+    auto &peloton_parser = parser::PostgresParser::GetInstance();
+    auto parsed_stmt = peloton_parser.BuildParseTree(query);
+
+    auto parse_tree = parsed_stmt->GetStatement(0);
+    auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
+    bind_node_visitor.BindNameToNode(parse_tree);
+
+    return optimizer->BuildPelotonPlanTree(parsed_stmt, txn);
+  }
+
+  std::unique_ptr<optimizer::AbstractOptimizer> optimizer_;
+
+};
+}
+}
