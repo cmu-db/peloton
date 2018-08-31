@@ -40,7 +40,6 @@ TEST_F(CardinalityTest, EstimatedCardinalityTestWithPredicate) {
   auto plan = GeneratePlan("SELECT * from " + test_table_name + " WHERE " + test_table_name + "." + "a < 10;");
 
   EXPECT_GE(num_rows, plan->GetCardinality());
-  LOG_DEBUG("Cardinality %d", plan->GetCardinality());
 }
 
 
