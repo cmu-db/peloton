@@ -35,7 +35,11 @@ class OptimizerTestUtil : public PelotonTest {
   }
 
   void CreateTable(const std::string &table_name) {
-    TestingSQLUtil::ExecuteSQLQuery("CREATE TABLE " + table_name + "(a INT, b INT, c INT);");
+    std::stringstream ss;
+    ss << "CREATE TABLE " << table_name << "(" << "a"
+       << " INT PRIMARY KEY, " << "b" << " DECIMAL, " << "c"
+       << " VARCHAR);";
+    EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(ss.str()), peloton::ResultType::SUCCESS);
   }
 
   void CreateTable(const std::string &table_name, int num_tuples) {
@@ -44,12 +48,16 @@ class OptimizerTestUtil : public PelotonTest {
   }
 
   void AnalyzeTable(const std::string &table_name) {
-    LOG_INFO("Analyzing %s", table_name.c_str());
-    TestingSQLUtil::ExecuteSQLQuery("ANALYZE " + table_name + ";");
+    std::stringstream ss;
+    ss << "ANALYZE " << table_name << ";";
+    ResultType result = TestingSQLUtil::ExecuteSQLQuery(ss.str());
+    EXPECT_EQ(result, peloton::ResultType::SUCCESS);
+    LOG_INFO("Analyzed %s", table_name.c_str());
   }
 
   void InsertData(const std::string &table_name, int num_tuples) {
     InsertDataHelper(table_name, num_tuples);
+
     AnalyzeTable(table_name);
   }
 
@@ -102,7 +110,8 @@ class OptimizerTestUtil : public PelotonTest {
           }
         }
         ss << ";";
-        TestingSQLUtil::ExecuteSQLQuery(ss.str());
+        ResultType result = TestingSQLUtil::ExecuteSQLQuery(ss.str());
+        EXPECT_EQ(result, peloton::ResultType::SUCCESS);
       }
     } else {
       ss << "INSERT INTO " << table_name << " VALUES ";
@@ -114,7 +123,8 @@ class OptimizerTestUtil : public PelotonTest {
         count++;
       }
       ss << ";";
-      TestingSQLUtil::ExecuteSQLQuery(ss.str());
+      ResultType result = TestingSQLUtil::ExecuteSQLQuery(ss.str());
+      EXPECT_EQ(result, peloton::ResultType::SUCCESS);
     }
     LOG_INFO("Inserted %d rows into %s", count, table_name.c_str());
   }

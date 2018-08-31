@@ -50,7 +50,8 @@ std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {
 const std::string AbstractPlan::GetInfo() const {
   std::ostringstream os;
   os << PlanNodeTypeToString(GetPlanNodeType())
-     << " [NumChildren=" << children_.size() << "]";
+     << " [NumChildren=" << children_.size() << "]"
+     <<  " [Estimated Cardinality=" << GetCardinality() << "]";
   return os.str();
 }
 
