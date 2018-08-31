@@ -30,6 +30,7 @@
 #include "codegen/operator/hash_join_translator.h"
 #include "codegen/operator/hash_translator.h"
 #include "codegen/operator/insert_translator.h"
+#include "codegen/operator/limit_translator.h"
 #include "codegen/operator/order_by_translator.h"
 #include "codegen/operator/projection_translator.h"
 #include "codegen/operator/table_scan_translator.h"
@@ -48,6 +49,7 @@
 #include "planner/hash_join_plan.h"
 #include "planner/hash_plan.h"
 #include "planner/insert_plan.h"
+#include "planner/limit_plan.h"
 #include "planner/nested_loop_join_plan.h"
 #include "planner/order_by_plan.h"
 #include "planner/projection_plan.h"
@@ -129,6 +131,11 @@ std::unique_ptr<OperatorTranslator> TranslatorFactory::CreateTranslator(
     case PlanNodeType::UPDATE: {
       auto &update_plan = static_cast<const planner::UpdatePlan &>(plan_node);
       translator = new UpdateTranslator(update_plan, context, pipeline);
+      break;
+    }
+    case PlanNodeType::LIMIT: {
+      auto &limit_plan = static_cast<const planner::LimitPlan &>(plan_node);
+      translator = new LimitTranslator(limit_plan, context, pipeline);
       break;
     }
     default: {

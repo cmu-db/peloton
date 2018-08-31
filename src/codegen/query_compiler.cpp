@@ -51,6 +51,7 @@ bool QueryCompiler::IsSupported(const planner::AbstractPlan &plan) {
     case PlanNodeType::DELETE:
     case PlanNodeType::INSERT:
     case PlanNodeType::UPDATE:
+    case PlanNodeType::LIMIT:
     case PlanNodeType::AGGREGATE_V2: {
       break;
     }

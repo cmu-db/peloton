@@ -43,9 +43,8 @@ namespace {
 
 class PelotonMemoryManager : public llvm::SectionMemoryManager {
  public:
-  explicit PelotonMemoryManager(
-      const std::unordered_map<std::string,
-                               std::pair<llvm::Function *, CodeContext::FuncPtr>> &builtins)
+  explicit PelotonMemoryManager(const std::unordered_map<
+      std::string, std::pair<llvm::Function *, CodeContext::FuncPtr>> &builtins)
       : builtins_(builtins) {}
 
 #if LLVM_VERSION_GE(4, 0)
@@ -93,8 +92,8 @@ class PelotonMemoryManager : public llvm::SectionMemoryManager {
  private:
   // The code context
   const std::unordered_map<std::string,
-                           std::pair<llvm::Function *, CodeContext::FuncPtr>>
-      &builtins_;
+                           std::pair<llvm::Function *, CodeContext::FuncPtr>> &
+      builtins_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -143,9 +142,9 @@ class InstructionCounts : public llvm::ModulePass {
 
   void DumpStats() const {
     LOG_INFO("# functions: %" PRId64 " (%" PRId64
-              " external), # blocks: %" PRId64 ", # instructions: %" PRId64,
-              func_count_, external_func_count_, basic_block_count_,
-              total_inst_counts_);
+             " external), # blocks: %" PRId64 ", # instructions: %" PRId64,
+             func_count_, external_func_count_, basic_block_count_,
+             total_inst_counts_);
     for (const auto iter : counts_) {
       const char *inst_name = llvm::Instruction::getOpcodeName(iter.first);
       LOG_INFO("↳ %s: %" PRId64, inst_name, iter.second);
@@ -198,13 +197,13 @@ CodeContext::CodeContext()
   // references etc.
   std::unique_ptr<llvm::Module> m{module_};
   module_ = m.get();
-  engine_.reset(
-      llvm::EngineBuilder(std::move(m))
-          .setEngineKind(llvm::EngineKind::JIT)
-          .setMCJITMemoryManager(llvm::make_unique<PelotonMemoryManager>(builtins_))
-          .setMCPU(llvm::sys::getHostCPUName())
-          .setErrorStr(&err_str_)
-          .create());
+  engine_.reset(llvm::EngineBuilder(std::move(m))
+                    .setEngineKind(llvm::EngineKind::JIT)
+                    .setMCJITMemoryManager(
+                         llvm::make_unique<PelotonMemoryManager>(builtins_))
+                    .setMCPU(llvm::sys::getHostCPUName())
+                    .setErrorStr(&err_str_)
+                    .create());
   PELOTON_ASSERT(engine_ != nullptr);
 
   // The set of optimization passes we include
@@ -272,9 +271,13 @@ void CodeContext::RegisterBuiltin(llvm::Function *func_decl,
   builtins_[name] = std::make_pair(func_decl, func_impl);
 }
 
-std::pair<llvm::Function *, CodeContext::FuncPtr> CodeContext::LookupBuiltin(const std::string &name) const {
+std::pair<llvm::Function *, CodeContext::FuncPtr> CodeContext::LookupBuiltin(
+    const std::string &name) const {
   auto iter = builtins_.find(name);
-  return (iter == builtins_.end() ? std::make_pair<llvm::Function *, CodeContext::FuncPtr>(nullptr, nullptr) : iter->second);
+  return (iter == builtins_.end()
+              ? std::make_pair<llvm::Function *, CodeContext::FuncPtr>(nullptr,
+                                                                       nullptr)
+              : iter->second);
 }
 
 /// Verify all the functions that were created in this context
@@ -328,7 +331,6 @@ void CodeContext::Compile() {
   }
 
   // Log the module
-  LOG_TRACE("%s\n", GetIR().c_str());
   if (settings::SettingsManager::GetBool(settings::SettingId::dump_ir)) {
     LOG_DEBUG("%s\n", GetIR().c_str());
   }
@@ -351,7 +353,8 @@ size_t CodeContext::GetTypeAllocSizeInBits(llvm::Type *type) const {
   return GetDataLayout().getTypeAllocSizeInBits(type);
 }
 
-size_t CodeContext::GetStructElementOffset(llvm::StructType *type, size_t index) const {
+size_t CodeContext::GetStructElementOffset(llvm::StructType *type,
+                                           size_t index) const {
   return GetDataLayout().getStructLayout(type)->getElementOffset(index);
 }
 
