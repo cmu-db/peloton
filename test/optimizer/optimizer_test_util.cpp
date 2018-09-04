@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// optimizer_test_util.cpp
+//
+// Identification: test/optimizer/optimizer_test_util.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 
 #include "optimizer/optimizer.h"

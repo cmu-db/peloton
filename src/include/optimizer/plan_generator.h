@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// operator_to_plan_transformer.h
+// plan_generator.h
 //
-// Identification: src/include/optimizer/operator_to_plan_transformer.h
+// Identification: src/include/optimizer/plan_generator.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 

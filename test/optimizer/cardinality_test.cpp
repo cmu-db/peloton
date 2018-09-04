@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+//                         Peloton
+//
+// cardinality_test.cpp
+//
+// Identification: test/optimizer/cardinality_test.cpp
+//
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
+//
+//===----------------------------------------------------------------------===//
+
 
 #include "optimizer_test_util.cpp"
 #include <chrono>

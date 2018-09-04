@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// rule.h
+// optimizer_task.cpp
 //
 // Identification: src/optimizer/optimizer_task.cpp
 //
@@ -315,7 +315,6 @@ void OptimizeInputs::execute() {
         if (cur_total_cost_ > context_->cost_upper_bound) break;
       } else if (prev_child_idx_ !=
                  cur_child_idx_) {  // We haven't optimized child group
-        // Reset child idx and total cost
         prev_child_idx_ = cur_child_idx_;
         PushTask(new OptimizeInputs(this));
         PushTask(new OptimizeGroup(

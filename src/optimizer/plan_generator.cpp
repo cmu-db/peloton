@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// operator_to_plan_transformer.cpp
+// plan_generator.cpp
 //
-// Identification: src/optimizer/operator_to_plan_transformer.cpp
+// Identification: src/optimizer/plan_generator.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
