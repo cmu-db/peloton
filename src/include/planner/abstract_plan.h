@@ -153,7 +153,7 @@ class AbstractPlan : public Printable {
 
   AbstractPlan *parent_ = nullptr;
 
-  int estimated_cardinality_ = 0;
+  int estimated_cardinality_ = 500000;
 
  private:
   DISALLOW_COPY_AND_MOVE(AbstractPlan);
