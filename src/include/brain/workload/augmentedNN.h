@@ -26,15 +26,24 @@ class TfSessionEntityOutput;
 using TfFloatIn = TfSessionEntityInput<float>;
 using TfFloatOut = TfSessionEntityOutput<float>;
 
+/**
+ * AugmentedNN is used to predict selectivity or cardinality
+ * for range predicates, e.g, 
+ *   SELECT * FROM table WHERE c1 >= l1 AND c1 <= u1
+ *                         AND c2 >= l2 AND c2 <= u2
+ *                         AND ... 
+ * Input is [l1, u1, l2, u2, ...]
+ * Output is selectivity or cardinality
+ */
 class AugmentedNN : public BaseTFModel {
  public:
   AugmentedNN(int ncol, int order, int nneuron,
               float learn_rate, int batch_size, int epochs);
   /**
    * Train the Tensorflow model
-   * @param mat: Contiguous time-series data
+   * @param mat: Training data
    * @return: Average Training loss
-   * Given a continuous sequence of data,
+   * Given a matrix of training data,
    * this function:
    * 1. breaks the data into batches('Batchify')
    * 2. prepares tensorflow-entity inputs/outputs
@@ -45,19 +54,27 @@ class AugmentedNN : public BaseTFModel {
   float TrainEpoch(const matrix_eig &mat);
 
   /**
-   * @param mat: Contiguous time-series data
-   * @param test_true: reference variable to which true values are returned
-   * @param test_pred: reference variable to which predicted values are returned
-   * @param return_preds: Whether to return predicted/true values
+   * @param mat: Validating data
    * @return: Average Validation Loss
    * This applies the same set of steps as TrainEpoch.
    * However instead of applying backprop it obtains predicted values.
-   * Then the validation loss is calculated for the relevant sequence
-   * - this is a function of segment and horizon.
+   * Then the validation loss is calculated.
    */
   float ValidateEpoch(const matrix_eig &mat); 
 
+  /**
+   * @param X: Input for the model
+   * @param y: Ground truth output corresponding to X
+   * @param bsz: Batchsize
+   * This function applies backprop once.
+   */ 
   void Fit(const matrix_eig &X, const matrix_eig &y, int bsz) override;
+
+  /**
+   * @param X: Input for the model
+   * @param bsz: Batchsize
+   * This function gets prediction for the input from the model.
+   */
   matrix_eig Predict(const matrix_eig &X, int bsz) const override;
 
   /**
@@ -75,10 +92,14 @@ class AugmentedNN : public BaseTFModel {
                 matrix_eig &data, matrix_eig &target);
   // Function to generate the args string to feed the python model
   std::string ConstructModelArgsString() const;
-  // Attributes needed for the Seq2Seq LSTM model(set by the user/settings.json)
-  int ncol_;
+
+  // Attributes needed for the AugmentedNN model
+  // number of columns used as input
+  int column_num_;
+  // max order for activation function
   int order_;
-  int nneuron_;
+  // number of neurons in hidden layer
+  int neuron_num_;
   float learn_rate_;
   int batch_size_;
   int epochs_;

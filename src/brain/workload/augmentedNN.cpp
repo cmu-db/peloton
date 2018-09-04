@@ -20,13 +20,13 @@
 namespace peloton {
 namespace brain {
 
-AugmentedNN::AugmentedNN(int ncol, int order, int nneuron,
+AugmentedNN::AugmentedNN(int column_num, int order, int neuron_num,
                             float learn_rate, int batch_size, int epochs)
     : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/AugmentedNN.py",
                   "src/brain/modelgen/AugmentedNN.pb"),
-      ncol_(ncol),
+      column_num_(column_num),
       order_(order),
-      nneuron_(nneuron),
+      neuron_num_(neuron_num),
       learn_rate_(learn_rate),
       batch_size_(batch_size),
       epochs_(epochs) {
@@ -39,9 +39,9 @@ AugmentedNN::AugmentedNN(int ncol, int order, int nneuron,
 
 std::string AugmentedNN::ConstructModelArgsString() const {
   std::stringstream args_str_builder;
-  args_str_builder << " --ncol " << ncol_;
+  args_str_builder << " --column_num " << column_num_;
   args_str_builder << " --order " << order_;
-  args_str_builder << " --nneuron " << nneuron_;
+  args_str_builder << " --neuron_num " << neuron_num_;
   args_str_builder << " --lr " << learn_rate_;
   args_str_builder << " " << this->modelgen_path_;
   return args_str_builder.str();
@@ -50,9 +50,9 @@ std::string AugmentedNN::ConstructModelArgsString() const {
 std::string AugmentedNN::ToString() const {
   std::stringstream model_str_builder;
   model_str_builder << "AugmentedNN(";
-  model_str_builder << "ncol = " << ncol_;
+  model_str_builder << "column_num = " << column_num_;
   model_str_builder << ", order = " << order_;
-  model_str_builder << ", nneuron = " << nneuron_;
+  model_str_builder << ", neuron_num = " << neuron_num_;
   model_str_builder << ", lr = " << learn_rate_;
   model_str_builder << ", batch_size = " << batch_size_;
   model_str_builder << ")";
@@ -86,7 +86,7 @@ float AugmentedNN::TrainEpoch(const matrix_eig &mat) {
   std::vector<float> losses;
   // Obtain relevant metadata
   int min_allowed_bsz = 1;
-  int bsz = std::max(batch_size_, min_allowed_bsz);
+  int bsz = std::min((int)mat.rows(), std::max(batch_size_, min_allowed_bsz));
   int number_of_batches = mat.rows() / bsz;
   int num_cols = mat.cols() - 1;
 
@@ -138,7 +138,7 @@ matrix_eig AugmentedNN::Predict(const matrix_eig &X, int bsz) const {
 float AugmentedNN::ValidateEpoch(const matrix_eig &mat) {
   // Obtain relevant metadata
   int min_allowed_bsz = 1;
-  int bsz = std::max(batch_size_, min_allowed_bsz);
+  int bsz = std::min((int)mat.rows(), std::max(batch_size_, min_allowed_bsz));
   int number_of_batches = mat.rows() / bsz;
   int num_cols = mat.cols() - 1;
 

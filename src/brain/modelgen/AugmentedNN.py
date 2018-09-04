@@ -29,13 +29,13 @@ def lazy_property(function):
 
 class AugmentedNN:
 
-    def __init__(self, ncol, order=1, nneuron=16, lr=0.1, **kwargs):
+    def __init__(self, column_num, order=1, neuron_num=16, lr=0.1, **kwargs):
         tf.reset_default_graph()
-        self.data = tf.placeholder(tf.float32, [None, ncol*2], name="data_")
+        self.data = tf.placeholder(tf.float32, [None, column_num*2], name="data_")
         self.target =  tf.placeholder(tf.float32, [None, 1], name="target_")
-        self._ncol = ncol
+        self._column_num = column_num
         self._order = order
-        self._nneuron = nneuron
+        self._neuron_num = neuron_num
         self._lr = tf.placeholder_with_default(lr, shape=None,
                                                name="learn_rate_")
         self.tf_init = tf.global_variables_initializer
@@ -44,10 +44,14 @@ class AugmentedNN:
         self.optimize
 
     @staticmethod
-    def jumpActivation(k):
-        def jumpActivationk(x):
+    def jump_activation(k):
+        """
+        This is an activation function used to learn discontinuous functions.
+        Reference: https://dl.acm.org/citation.cfm?id=2326898
+        """
+        def jump_activation_k(x):
             return tf.pow(tf.maximum(0.0, 1-tf.exp(-x)), k)
-        return jumpActivationk
+        return jump_activation_k
 
     @lazy_property
     def prediction(self):
@@ -59,14 +63,14 @@ class AugmentedNN:
 
             h1_layers = []
             for i in range(1, self._order+1):
-                h1 = tf.layers.dense(net, self._nneuron, 
-                                     activation=self.jumpActivation(i),
+                h1 = tf.layers.dense(net, self._neuron_num, 
+                                     activation=self.jump_activation(i),
                                      kernel_initializer=kernel_init)
                 h1_layers.append(h1)
             h1_layers = tf.concat(h1_layers, 1)        
         with tf.name_scope("output_layer"):
             net = tf.layers.dense(h1_layers, 1, 
-                                  activation=self.jumpActivation(1),
+                                  activation=self.jump_activation(1),
                                   kernel_initializer=kernel_init)
         net = tf.reshape(net, [bsz, -1], name="pred_")
         return net
@@ -91,20 +95,19 @@ class AugmentedNN:
             tf.train.write_graph(tf.get_default_graph(),
                                  dir, fname, False)
 
-
     def __repr__(self):
         return "AugmentedNN"
 
 def main():
     parser = argparse.ArgumentParser(description='AugmentedNN Model Generator')
 
-    parser.add_argument('--ncol', type=int, default=1, help='Number of augmentedNN Hidden units')
-    parser.add_argument('--order', type=int, default=4, help='Order of activation function')
-    parser.add_argument('--nneuron', type=int, default=20, help='Number of neurons in hidden layer')
+    parser.add_argument('--column_num', type=int, default=1, help='Number of augmentedNN Hidden units')
+    parser.add_argument('--order', type=int, default=3, help='Max order of activation function')
+    parser.add_argument('--neuron_num', type=int, default=20, help='Number of neurons in hidden layer')
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
     parser.add_argument('graph_out_path', type=str, help='Path to write graph output', nargs='+')
     args = parser.parse_args()
-    model = AugmentedNN(args.ncol, args.order, args.nneuron, args.lr)
+    model = AugmentedNN(args.column_num, args.order, args.neuron_num, args.lr)
     model.tf_init()
     model.write_graph(' '.join(args.graph_out_path))
 
