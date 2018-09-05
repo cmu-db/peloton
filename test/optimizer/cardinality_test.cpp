@@ -10,7 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "optimizer_test_util.cpp"
 #include <chrono>
 
@@ -18,19 +17,7 @@
 namespace peloton {
 namespace test {
 
-  class CardinalityTest : public OptimizerTestUtil {
-
-   public:
-
-    void SetUp() override {
-      OptimizerTestUtil::SetUp();
-    }
-
-    void TearDown() override {
-      OptimizerTestUtil::TearDown();
-    }
-  };
-
+class CardinalityTest : public OptimizerTestUtil {};
 
 TEST_F(CardinalityTest, EstimatedCardinalityTest) {
 
@@ -53,7 +40,6 @@ TEST_F(CardinalityTest, EstimatedCardinalityTestWithPredicate) {
 
   EXPECT_GE(num_rows, plan->GetCardinality());
 }
-
 
 }
 }

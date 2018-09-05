@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
 #include "optimizer/optimizer.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "binder/bind_node_visitor.h"
@@ -26,6 +24,7 @@ namespace test {
 
 class OptimizerTestUtil : public PelotonTest {
  public:
+  // If overriding, you must call SetUp and Teardown in overriding method to reset the optimizer object
   virtual void SetUp() override {
     // Call parent virtual function first
     PelotonTest::SetUp();
@@ -35,7 +34,6 @@ class OptimizerTestUtil : public PelotonTest {
 
     // Create Optimizer
     optimizer_.reset(new optimizer::Optimizer());
-
   }
 
   virtual void TearDown() override {
