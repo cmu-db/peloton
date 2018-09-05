@@ -66,9 +66,9 @@ struct KernelRegWorkloadDefaults {
 };
 
 struct AugmentedNNWorkloadDefaults {
-  static const int NCOL;
+  static const int COLUMN_NUM;
   static const int ORDER;
-  static const int NNEURON;
+  static const int NEURON_NUM;
   static const float LR;
   static const int BATCH_SIZE;
   static const int EPOCHS;

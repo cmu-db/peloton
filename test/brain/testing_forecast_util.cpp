@@ -156,9 +156,6 @@ void TestingAugmentedNNUtil::Test(
     if (epoch % val_interval == 0) {
       val_loss = model.ValidateEpoch(validate_data);
       train_loss = train_loss_avg.mean();
-      // Below check is not advisable - one off failure chance
-      // EXPECT_LE(val_loss, prev_valid_loss);
-      // An average on the other hand should surely pass
       EXPECT_LE(train_loss, prev_train_loss);
       LOG_DEBUG("Train Loss: %.10f, Valid Loss: %.10f", train_loss, val_loss);
       prev_train_loss = train_loss;

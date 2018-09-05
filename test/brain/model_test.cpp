@@ -138,9 +138,9 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
 
 TEST_F(ModelTests, DISABLED_AugmentedNNUniformTest) {
   auto model = std::unique_ptr<brain::AugmentedNN>(new brain::AugmentedNN(
-      brain::AugmentedNNWorkloadDefaults::NCOL,
+      brain::AugmentedNNWorkloadDefaults::COLUMN_NUM,
       brain::AugmentedNNWorkloadDefaults::ORDER,
-      brain::AugmentedNNWorkloadDefaults::NNEURON,
+      brain::AugmentedNNWorkloadDefaults::NEURON_NUM,
       brain::AugmentedNNWorkloadDefaults::LR,
       brain::AugmentedNNWorkloadDefaults::BATCH_SIZE,
       brain::AugmentedNNWorkloadDefaults::EPOCHS));
@@ -160,9 +160,9 @@ TEST_F(ModelTests, DISABLED_AugmentedNNUniformTest) {
 
 TEST_F(ModelTests, DISABLED_AugmentedNNSkewedTest) {
   auto model = std::unique_ptr<brain::AugmentedNN>(new brain::AugmentedNN(
-      brain::AugmentedNNWorkloadDefaults::NCOL,
+      brain::AugmentedNNWorkloadDefaults::COLUMN_NUM,
       brain::AugmentedNNWorkloadDefaults::ORDER,
-      brain::AugmentedNNWorkloadDefaults::NNEURON,
+      brain::AugmentedNNWorkloadDefaults::NEURON_NUM,
       brain::AugmentedNNWorkloadDefaults::LR,
       brain::AugmentedNNWorkloadDefaults::BATCH_SIZE,
       brain::AugmentedNNWorkloadDefaults::EPOCHS));
