@@ -65,14 +65,5 @@ struct KernelRegWorkloadDefaults {
   static const int BPTT;
 };
 
-struct AugmentedNNWorkloadDefaults {
-  static const int COLUMN_NUM;
-  static const int ORDER;
-  static const int NEURON_NUM;
-  static const float LR;
-  static const int BATCH_SIZE;
-  static const int EPOCHS;
-};
-
 }  // namespace brain
 }  // namespace peloton

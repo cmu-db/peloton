@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// augmentedNN.h
+// augmented_nn.h
 //
-// Identification: src/include/brain/workload/augmentedNN.h
+// Identification: src/include/brain/workload/augmented_nn.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //

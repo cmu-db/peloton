@@ -2,15 +2,15 @@
 //
 //                         Peloton
 //
-// augmentedNN.cpp
+// augmented_nn.cpp
 //
-// Identification: src/brain/workload/augmentedNN.cpp
+// Identification: src/brain/workload/augmented_nn.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "brain/workload/augmentedNN.h"
+#include "brain/selectivity/augmented_nn.h"
 #include "brain/util/model_util.h"
 #include "brain/util/tf_session_entity/tf_session_entity.h"
 #include "brain/util/tf_session_entity/tf_session_entity_input.h"
@@ -22,8 +22,8 @@ namespace brain {
 
 AugmentedNN::AugmentedNN(int column_num, int order, int neuron_num,
                             float learn_rate, int batch_size, int epochs)
-    : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/AugmentedNN.py",
-                  "src/brain/modelgen/AugmentedNN.pb"),
+    : BaseTFModel("src/brain/modelgen", "src/brain/modelgen/augmented_nn.py",
+                  "src/brain/modelgen/augmented_nn.pb"),
       column_num_(column_num),
       order_(order),
       neuron_num_(neuron_num),
@@ -49,7 +49,7 @@ std::string AugmentedNN::ConstructModelArgsString() const {
 
 std::string AugmentedNN::ToString() const {
   std::stringstream model_str_builder;
-  model_str_builder << "AugmentedNN(";
+  model_str_builder << "augmented_nn(";
   model_str_builder << "column_num = " << column_num_;
   model_str_builder << ", order = " << order_;
   model_str_builder << ", neuron_num = " << neuron_num_;
