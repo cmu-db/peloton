@@ -44,11 +44,11 @@ class OptimizerTestUtil : public PelotonTest {
     PelotonTest::TearDown();
   }
 
+  // Creates the following table: table_name(a INT PRIMARY KEY, b DECIMAL, c VARCHAR)
   void CreateTable(const std::string &table_name) {
     std::stringstream ss;
-    ss << "CREATE TABLE " << table_name << "(" << "a"
-       << " INT PRIMARY KEY, " << "b" << " DECIMAL, " << "c"
-       << " VARCHAR);";
+    ss << "CREATE TABLE " << table_name
+       << "(a INT PRIMARY KEY, b DECIMAL, c VARCHAR);";
     EXPECT_EQ(TestingSQLUtil::ExecuteSQLQuery(ss.str()), peloton::ResultType::SUCCESS);
   }
 

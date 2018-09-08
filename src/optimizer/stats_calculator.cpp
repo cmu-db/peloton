@@ -64,7 +64,7 @@ void StatsCalculator::Visit(const LogicalGet *op) {
         AddBaseTableStats(col, table_stats, predicate_stats, false);
       }
     }
-    // Use predicates to estimate cardinality
+    // Use predicates to estimate cardinality. If we were unable to find any column stats from the catalog, default to 0
     if (table_stats->GetColumnCount() == 0) {
       root_group->SetNumRows(0);
     } else {
