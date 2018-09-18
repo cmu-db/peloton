@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// cost_and_stats_calculator.h
+// child_stats_deriver.cpp
 //
-// Identification: src/optimizer/stats_calculator.cpp
+// Identification: src/optimizer/child_stats_deriver.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -67,7 +67,7 @@ void ChildStatsDeriver::PassDownColumn(expression::AbstractExpression *col) {
     auto child_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(idx));
     if (child_group->GetTableAliases().count(tv_expr->GetTableName()) &&
         // If we have not derived the column stats yet
-        child_group->HasColumnStats(tv_expr->GetColFullName())) {
+        !child_group->HasColumnStats(tv_expr->GetColFullName())) {
       output_[idx].insert(col);
       break;
     }
