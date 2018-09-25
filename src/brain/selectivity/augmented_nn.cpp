@@ -164,3 +164,4 @@ float AugmentedNN::ValidateEpoch(const matrix_eig &mat) {
 }
 }  // namespace brain
 }  // namespace peloton
+
