@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// operator_to_plan_transformer.cpp
+// plan_generator.cpp
 //
-// Identification: src/optimizer/operator_to_plan_transformer.cpp
+// Identification: src/optimizer/plan_generator.cpp
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -59,7 +59,8 @@ unique_ptr<planner::AbstractPlan> PlanGenerator::ConvertOpExpression(
     vector<expression::AbstractExpression *> required_cols,
     vector<expression::AbstractExpression *> output_cols,
     vector<unique_ptr<planner::AbstractPlan>> &children_plans,
-    vector<ExprMap> children_expr_map) {
+    vector<ExprMap> children_expr_map,
+    int estimated_cardinality) {
   required_props_ = move(required_props);
   required_cols_ = move(required_cols);
   output_cols_ = move(output_cols);
@@ -67,6 +68,7 @@ unique_ptr<planner::AbstractPlan> PlanGenerator::ConvertOpExpression(
   children_expr_map_ = move(children_expr_map);
   op->Op().Accept(this);
   BuildProjectionPlan();
+  output_plan_->SetCardinality(estimated_cardinality);
   return move(output_plan_);
 }
 

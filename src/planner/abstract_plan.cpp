@@ -6,7 +6,7 @@
 //
 // Identification: src/planner/abstract_plan.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -50,7 +50,8 @@ std::ostream &operator<<(std::ostream &os, const AbstractPlan &plan) {
 const std::string AbstractPlan::GetInfo() const {
   std::ostringstream os;
   os << PlanNodeTypeToString(GetPlanNodeType())
-     << " [NumChildren=" << children_.size() << "]";
+     << " [NumChildren=" << children_.size() << "]"
+     <<  " [Estimated Cardinality=" << GetCardinality() << "]";
   return os.str();
 }
 
