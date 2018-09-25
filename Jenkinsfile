@@ -5,7 +5,7 @@ pipeline {
             parallel {
                 // begin gcc builds
                 // NOTE: this next stage is special because it copies the test results out of the container
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Debug)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.9 (Debug)') {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
@@ -27,7 +27,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Release)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.9 (Release)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -43,7 +43,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Debug)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.9 (Debug)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -64,7 +64,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Release)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.9 (Release)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -85,7 +85,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (LOG_LEVEL_TRACE)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.9 (LOG_LEVEL_TRACE)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -101,7 +101,7 @@ pipeline {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
-                        sh 'cd build && cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
+                        sh 'cd build && cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.9 --prefix` -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
                         sh 'cd build && ASAN_OPTIONS=detect_container_overflow=0 make check -j4'
                         sh 'cd build && make install'
                         sh 'cd build && bash ../script/testing/psql/psql_test.sh'
