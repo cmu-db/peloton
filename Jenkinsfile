@@ -99,6 +99,7 @@ pipeline {
                     agent { label 'macos' }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
+                        sh 'export LLVM_DIR=/usr/local/Cellar/llvm@3.9/3.9.1_1/lib'
                         sh 'python script/validators/source_validator.py'
                         sh 'mkdir build'
                         sh 'cd build && cmake -DCMAKE_PREFIX_PATH=`llvm-config-3.9 --prefix` -DCMAKE_BUILD_TYPE=Debug -DUSE_SANITIZER=Address -DCOVERALLS=False .. && make -j4'
