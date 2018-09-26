@@ -102,11 +102,11 @@ function install_tf() {
 ## ------------------------------------------------
 if [ "$DISTRO" = "UBUNTU" ]; then
     MAJOR_VER=$(echo "$DISTRO_VER" | cut -d '.' -f 1)
-    # Fix for LLVM-3.9 on Ubuntu 14 + 17
+    # Fix for LLVM-3.7 on Ubuntu 14 + 17
     if [ "$MAJOR_VER" == "14" -o "$MAJOR_VER" == "17" ]; then
         if [ "$MAJOR_VER" == "14" ]; then
             LLVM_PKG_URL="http://llvm.org/apt/trusty/"
-            LLVM_PKG_TARGET="llvm-toolchain-trusty-3.9 main"
+            LLVM_PKG_TARGET="llvm-toolchain-trusty-3.7 main"
         fi
         if [ "$MAJOR_VER" == "17" ]; then
             LLVM_PKG_URL="http://apt.llvm.org/artful/"
@@ -129,8 +129,8 @@ if [ "$DISTRO" = "UBUNTU" ]; then
     sudo apt-get update
     FORCE_Y=""
     PKG_CMAKE="cmake"
-    PKG_LLVM="llvm-3.9"
-    PKG_CLANG="clang-3.9"
+    PKG_LLVM="llvm-3.7"
+    PKG_CLANG="clang-3.7"
     TF_VERSION="1.4.0"
 
     # Fix for cmake name change on Ubuntu 14.x and 16.x plus --force-yes deprecation

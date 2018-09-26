@@ -23,7 +23,7 @@ matrix:
           addons:
               apt:
                   sources:
-                      - llvm-toolchain-precise-3.9
+                      - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-5
@@ -43,7 +43,7 @@ matrix:
           addons:
               apt:
                   sources:
-                      - llvm-toolchain-precise-3.9
+                      - llvm-toolchain-precise-3.7
                       - ubuntu-toolchain-r-test
                   packages:
                     - g++-5
