@@ -85,7 +85,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7 (LOG_LEVEL_TRACE)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (LOG_LEVEL_TRACE)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
