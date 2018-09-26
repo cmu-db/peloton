@@ -5,7 +5,7 @@ pipeline {
             parallel {
                 // begin gcc builds
                 // NOTE: this next stage is special because it copies the test results out of the container
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7 (Debug)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Debug)') {
                     agent {
                         docker {
                             image 'ubuntu:xenial'
@@ -27,7 +27,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7 (Release)') {
+                stage('Ubuntu Xenial/gcc-5.4.0/llvm-3.7.1 (Release)') {
                     agent { docker { image 'ubuntu:xenial' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -43,7 +43,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7 (Debug)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Debug)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
@@ -64,7 +64,7 @@ pipeline {
                     }
                 }
 
-                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7 (Release)') {
+                stage('Ubuntu Trusty/gcc-5.4.0/llvm-3.7.1 (Release)') {
                     agent { docker { image 'ubuntu:trusty' } }
                     steps {
                         sh 'sudo /bin/bash -c "source ./script/installation/packages.sh"'
