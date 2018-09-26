@@ -1,7 +1,9 @@
 #include "brain/testing_forecast_util.h"
 #include <limits>
 #include "brain/util/model_util.h"
+#include "brain/util/eigen_util.h"
 #include "common/harness.h"
+#include <random>
 
 namespace peloton {
 namespace test {
@@ -24,7 +26,9 @@ void TestingForecastUtil::WorkloadTest(
   matrix_eig train_data = data.topRows(split_point);
   n.Fit(train_data);
   train_data = n.Transform(train_data);
-  matrix_eig test_data = n.Transform(data.bottomRows(split_point));
+  matrix_eig test_data = 
+      n.Transform(data.bottomRows(
+          static_cast<size_t>(data.rows() - split_point)));
 
   vector_eig train_loss_avg = vector_eig::Zero(val_interval);
   float prev_train_loss = std::numeric_limits<float>::max();
@@ -109,6 +113,7 @@ matrix_eig TestingForecastUtil::GetWorkload(WorkloadType w, size_t num_samples,
   }
   return data;
 }
+
 
 }  // namespace test
 }  // namespace peloton

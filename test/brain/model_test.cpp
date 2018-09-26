@@ -135,5 +135,6 @@ TEST_F(ModelTests, DISABLED_TimeSeriesEnsembleTest) {
                                     brain::CommonWorkloadDefaults::ESTOP_DELTA);
 }
 
+
 }  // namespace test
 }  // namespace peloton
