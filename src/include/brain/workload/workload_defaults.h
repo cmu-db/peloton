@@ -64,5 +64,6 @@ struct LinearRegWorkloadDefaults {
 struct KernelRegWorkloadDefaults {
   static const int BPTT;
 };
+
 }  // namespace brain
 }  // namespace peloton

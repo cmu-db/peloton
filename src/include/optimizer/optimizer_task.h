@@ -211,7 +211,7 @@ class OptimizeInputs : public OptimizerTask {
   GroupExpression *group_expr_;
   double cur_total_cost_;
   int cur_child_idx_ = -1;
-  int pre_child_idx_ = -1;
+  int prev_child_idx_ = -1;
   int cur_prop_pair_idx_ = 0;
 };
 

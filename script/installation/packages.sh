@@ -219,7 +219,7 @@ elif [ "$DISTRO" = "DARWIN" ]; then
     brew install lcov
     brew install libpqxx
     brew install libedit
-    brew install llvm@3.7
+    brew install llvm@3.9
     brew install postgresql
     brew install libffi
     brew install tbb

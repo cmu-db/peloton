@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// rule.h
+// optimizer_task.cpp
 //
 // Identification: src/optimizer/optimizer_task.cpp
 //
@@ -313,14 +313,13 @@ void OptimizeInputs::execute() {
         cur_total_cost_ += child_best_expr->GetCost(i_prop);
         // Pruning
         if (cur_total_cost_ > context_->cost_upper_bound) break;
-      } else if (pre_child_idx_ !=
-                 cur_child_idx_) {  // First time to optimize child group
-        pre_child_idx_ = cur_child_idx_;
+      } else if (prev_child_idx_ !=
+                 cur_child_idx_) {  // We haven't optimized child group
+        prev_child_idx_ = cur_child_idx_;
         PushTask(new OptimizeInputs(this));
         PushTask(new OptimizeGroup(
             child_group, std::make_shared<OptimizeContext>(
-                             context_->metadata, i_prop,
-                             context_->cost_upper_bound - cur_total_cost_)));
+                context_->metadata, i_prop, context_->cost_upper_bound - cur_total_cost_)));
         return;
       } else {  // If we return from OptimizeGroup, then there is no expr for
                 // the context
@@ -401,7 +400,7 @@ void OptimizeInputs::execute() {
     }
 
     // Reset child idx and total cost
-    pre_child_idx_ = -1;
+    prev_child_idx_ = -1;
     cur_child_idx_ = 0;
     cur_total_cost_ = 0;
   }
