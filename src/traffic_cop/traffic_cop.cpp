@@ -6,7 +6,7 @@
 //
 // Identification: src/traffic_cop/traffic_cop.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,6 +19,7 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
+#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
@@ -30,7 +31,7 @@ namespace tcop {
 TrafficCop::TrafficCop()
     : is_queuing_(false),
       rows_affected_(0),
-      optimizer_(new optimizer::Optimizer()),
+      optimizer_(new optimizer::Optimizer(optimizer::CostCalculatorFactory::CreateCostCalculator("DefaultCostCalculator"))),
       single_statement_txn_(true) {}
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)

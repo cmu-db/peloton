@@ -295,8 +295,7 @@ void OptimizeInputs::execute() {
       // Compute the cost of the root operator
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
-      CostCalculator cost_calculator;
-      cur_total_cost_ += cost_calculator.CalculateCost(
+      cur_total_cost_ += context_->metadata->cost_model->CalculateCost(
           group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
 

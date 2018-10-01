@@ -6,7 +6,7 @@
 //
 // Identification: src/include/optimizer/stats/column_stats.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -63,7 +63,9 @@ class ColumnStats {
     std::ostringstream os;
     os << "column_id :" << column_id << "\n"
        << "column_name :" << column_name << "\n"
-       << "num_rows :" << num_rows << "\n";
+       << "num_rows :" << num_rows << "\n"
+       << "cardinality: " << cardinality << "\n"
+       << "frac_null: " << frac_null << "\n";
     return os.str();
   }
 

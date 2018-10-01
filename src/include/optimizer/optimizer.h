@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
+#include "optimizer/abstract_cost_calculator.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
 
@@ -72,6 +73,7 @@ class Optimizer : public AbstractOptimizer {
   Optimizer &operator=(Optimizer &&) = delete;
 
   Optimizer();
+  Optimizer(std::unique_ptr<AbstractCostCalculator> cost_model);
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
@@ -164,6 +166,7 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
+  std::unique_ptr<AbstractCostCalculator> cost_model_;
 };
 
 }  // namespace optimizer
