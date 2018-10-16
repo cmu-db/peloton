@@ -9,7 +9,7 @@
 ## What Is Peloton?
 
 * A self-driving SQL database management system.
-* Integrated artificial intelligence components that enable autonomous optimization.
+* Integrated artificial intelligence(AI) components that enable autonomous optimization.
 * Native support for byte-addressable non-volatile memory (NVM) storage technology.
 * Lock-free multi-version concurrency control to support real-time analytics.
 * Postgres network-protocol and JDBC compatible.
