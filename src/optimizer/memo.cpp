@@ -43,8 +43,6 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   auto it = group_expressions_.find(gexpr.get());
 
   if (it != group_expressions_.end()) {
-    PELOTON_ASSERT(target_group == UNDEFINED_GROUP ||
-           target_group == (*it)->GetGroupID());
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
   } else {
@@ -68,6 +66,26 @@ std::vector<std::unique_ptr<Group>> &Memo::Groups() {
 }
 
 Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
+
+const std::string Memo::GetInfo(int num_indent) const {
+    std::ostringstream os;
+    os << StringUtil::Indent(num_indent) << "Memo::\n";
+    os << StringUtil::Indent(num_indent + 1) 
+       << "rule_set_size_: " << rule_set_size_ << std::endl;
+    
+    for (auto &group : groups_) {
+        auto groupInfo = group->GetInfo(num_indent + 2);
+        os << groupInfo;
+    }
+    return os.str();
+}
+
+const std::string Memo::GetInfo() const {
+    std::ostringstream os;
+    os << GetInfo(0);
+    return os.str();
+}
+
 
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();

@@ -27,7 +27,7 @@ class AppendPlan : public AbstractPlan {
 
   inline PlanNodeType GetPlanNodeType() const { return PlanNodeType::APPEND; }
 
-  const std::string GetInfo() const { return "Append"; }
+  const std::string GetInfo() const { return "AppendPlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     return std::unique_ptr<AbstractPlan>(new AppendPlan());

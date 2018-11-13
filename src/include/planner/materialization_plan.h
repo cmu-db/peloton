@@ -49,7 +49,7 @@ class MaterializationPlan : public AbstractPlan {
     return PlanNodeType::MATERIALIZE;
   }
 
-  const std::string GetInfo() const { return "Materialize"; }
+  const std::string GetInfo() const { return "MaterializePlan"; }
 
   std::unique_ptr<AbstractPlan> Copy() const {
     std::shared_ptr<const catalog::Schema> schema_copy(

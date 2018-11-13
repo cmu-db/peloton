@@ -103,11 +103,6 @@ class OrderByExecutor : public AbstractExecutor {
   size_t num_tuples_get_ = 0;
 
   // Copied from plan node
-  // Used to show that whether the output is has the same ordering with order by
-  // expression. If the so, we can directly used the output result without any
-  // additional sorting operation
-  bool underling_ordered_ = false;
-
   // Whether there is limit clause;
   bool limit_ = false;
 

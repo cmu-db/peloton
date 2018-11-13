@@ -58,6 +58,9 @@ class Memo {
 
   Group* GetGroupByID(GroupID id);
 
+  const std::string GetInfo(int num_indent) const;
+  const std::string GetInfo() const;
+
   inline void SetRuleSetSize(size_t rule_set_size) {
     rule_set_size_ = rule_set_size;
   }

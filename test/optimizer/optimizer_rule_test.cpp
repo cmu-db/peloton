@@ -261,5 +261,32 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   delete root_context;
 }
 
+TEST_F(OptimizerRuleTests, RuleBitmapTest) {
+  Optimizer optimizer;
+  auto &memo = optimizer.GetMetadata().memo;
+
+  auto dummy_operator = std::make_shared<OperatorExpression>(LogicalGet::make());
+  auto dummy_group = memo.InsertExpression(optimizer.GetMetadata().MakeGroupExpression(dummy_operator), false);
+
+  auto rule1 = new InnerJoinCommutativity();
+  auto rule2 = new GetToSeqScan();
+
+  EXPECT_FALSE(dummy_group->HasRuleExplored(rule1));
+  EXPECT_FALSE(dummy_group->HasRuleExplored(rule2));
+
+  dummy_group->SetRuleExplored(rule1);
+
+  EXPECT_TRUE(dummy_group->HasRuleExplored(rule1));
+  EXPECT_FALSE(dummy_group->HasRuleExplored(rule2));
+
+  dummy_group->SetRuleExplored(rule2);
+
+  EXPECT_TRUE(dummy_group->HasRuleExplored(rule1));
+  EXPECT_TRUE(dummy_group->HasRuleExplored(rule2));
+
+  delete rule1;
+  delete rule2;
+}
+
 }  // namespace test
 }  // namespace peloton

@@ -130,7 +130,7 @@ peloton::codegen::Value IfExprAST::Codegen(
     // Codegen the then statements
     if_result = then_stmt->Codegen(codegen, fb);
   }
-  entry_cond.ElseBlock("multipleValue");
+  entry_cond.ElseBlock();
   {
     // codegen the else statements
     else_result = else_stmt->Codegen(codegen, fb);

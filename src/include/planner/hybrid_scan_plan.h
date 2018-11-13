@@ -38,11 +38,11 @@ class HybridScanPlan : public AbstractScan {
 
   ~HybridScanPlan() {}
 
-  std::unique_ptr<AbstractPlan> Copy() const {
+  std::unique_ptr<AbstractPlan> Copy() const override {
     return std::unique_ptr<AbstractPlan>(nullptr);
   }
 
-  PlanNodeType GetPlanNodeType() const { return PlanNodeType::SEQSCAN; }
+  PlanNodeType GetPlanNodeType() const override { return PlanNodeType::SEQSCAN; }
 
   oid_t GetIndexId() const { return index_id_; }
 
@@ -61,6 +61,8 @@ class HybridScanPlan : public AbstractScan {
   }
 
   HybridScanType GetHybridType() const { return type_; }
+
+  const std::string GetInfo() const override { return "HybridScanPlan"; }
 
  private:
   HybridScanType type_ = HybridScanType::INVALID;

@@ -42,11 +42,11 @@ void Sorter::Init(CodeGen &codegen, llvm::Value *sorter_ptr,
                {sorter_ptr, executor_ctx, comparison_func, tuple_size});
 }
 
-void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
-                    const std::vector<codegen::Value> &tuple) const {
+void Sorter::StoreTuple(CodeGen &codegen, llvm::Value *sorter_ptr,
+                        const std::vector<codegen::Value> &tuple) const {
   // First, call Sorter::StoreInputTuple() to get a handle to a contiguous
   // chunk of free space large enough to materialize a single tuple.
-  auto *space = codegen.Call(SorterProxy::StoreInputTuple, {sorter_ptr});
+  auto *space = codegen.Call(SorterProxy::StoreTuple, {sorter_ptr});
 
   // Now, individually store the attributes of the tuple into the free space
   UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format_, space);
@@ -55,6 +55,26 @@ void Sorter::Append(CodeGen &codegen, llvm::Value *sorter_ptr,
                              null_bitmap);
   }
   null_bitmap.WriteBack(codegen);
+}
+
+void Sorter::StoreTupleForTopK(CodeGen &codegen, llvm::Value *sorter_ptr,
+                               const std::vector<codegen::Value> &tuple,
+                               uint64_t top_k) const {
+  // Allocate room
+  auto *space = codegen.Call(SorterProxy::StoreTupleForTopK,
+                             {sorter_ptr, codegen.Const64(top_k)});
+
+  // Serialize tuple
+  UpdateableStorage::NullBitmap null_bitmap(codegen, storage_format_, space);
+  for (uint32_t col_id = 0; col_id < tuple.size(); col_id++) {
+    storage_format_.SetValue(codegen, space, col_id, tuple[col_id],
+                             null_bitmap);
+  }
+  null_bitmap.WriteBack(codegen);
+
+  // Finish
+  codegen.Call(SorterProxy::StoreTupleForTopKFinish,
+               {sorter_ptr, codegen.Const64(top_k)});
 }
 
 void Sorter::Sort(CodeGen &codegen, llvm::Value *sorter_ptr) const {
@@ -68,6 +88,14 @@ void Sorter::SortParallel(CodeGen &codegen, llvm::Value *sorter_ptr,
   codegen.Call(SorterProxy::SortParallel, {sorter_ptr, thread_states, offset});
 }
 
+void Sorter::SortTopKParallel(CodeGen &codegen, llvm::Value *sorter_ptr,
+                              llvm::Value *thread_states,
+                              uint32_t sorter_offset, uint64_t top_k) const {
+  auto *offset = codegen.Const32(sorter_offset);
+  codegen.Call(SorterProxy::SortTopKParallel,
+               {sorter_ptr, thread_states, offset, codegen.Const64(top_k)});
+}
+
 void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
                      Sorter::IterateCallback &callback) const {
   struct TaatIterateCallback : VectorizedIterateCallback {
@@ -79,9 +107,9 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 
     void ProcessEntries(CodeGen &codegen, llvm::Value *start_index,
                         llvm::Value *end_index, SorterAccess &access) const {
-      lang::Loop loop{codegen,
+      lang::Loop loop(codegen,
                       codegen->CreateICmpULT(start_index, end_index),
-                      {{"start", start_index}}};
+                      {{"start", start_index}});
       {
         llvm::Value *curr_index = loop.GetLoopVar(0);
 
@@ -104,16 +132,24 @@ void Sorter::Iterate(CodeGen &codegen, llvm::Value *sorter_ptr,
 
   // Do a vectorized iteration using our callback adapter
   TaatIterateCallback taat_cb(GetStorageFormat(), callback);
-  VectorizedIterate(codegen, sorter_ptr, Vector::kDefaultVectorSize, taat_cb);
+  VectorizedIterate(codegen, sorter_ptr, Vector::kDefaultVectorSize, 0,
+                    taat_cb);
 }
 
 // Iterate over the tuples in the sorter in batches/vectors of the given size
 void Sorter::VectorizedIterate(
     CodeGen &codegen, llvm::Value *sorter_ptr, uint32_t vector_size,
-    Sorter::VectorizedIterateCallback &callback) const {
+    uint64_t offset, Sorter::VectorizedIterateCallback &callback) const {
   llvm::Value *start_pos = codegen.Load(SorterProxy::tuples_start, sorter_ptr);
   llvm::Value *num_tuples = NumTuples(codegen, sorter_ptr);
   num_tuples = codegen->CreateTrunc(num_tuples, codegen.Int32Type());
+
+  if (offset != 0) {
+    start_pos = codegen->CreateConstInBoundsGEP1_32(codegen.CharPtrType(),
+                                                    start_pos, offset);
+    num_tuples = codegen->CreateSub(num_tuples, codegen.Const32(offset));
+  }
+
   lang::VectorizedLoop loop(codegen, num_tuples, vector_size, {});
   {
     // Current loop range

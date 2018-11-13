@@ -644,7 +644,7 @@ TEST_F(OptimizerSQLTests, JoinTest) {
   TestUtil(
       "SELECT test.a, test.b+test2.b FROM TEST, TEST2 "
       "WHERE test.a = test2.a "
-      "ORDER BY test.c+test2.c LIMIT 3",
+      "ORDER BY test.a+test.c+test2.c LIMIT 3",
       {"1", "44", "2", "22", "4", "0"}, true);
 
   // Test group by with join
