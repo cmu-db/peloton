@@ -35,10 +35,6 @@ void File::Open(const std::string &name, File::AccessMode access_mode) {
       flags = O_RDWR;
       break;
     }
-      default: {
-          flags = O_RDWR;
-          break;
-      }
   }
 
   // Open
