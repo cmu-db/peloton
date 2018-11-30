@@ -120,12 +120,10 @@ double TableStats::GetCardinality(const std::string column_name) {
   return column_stats->cardinality;
 }
 
+// Returns true if we have column stats for a specific column
 bool TableStats::HasColumnStats(const std::string col_name) {
   auto it = col_name_to_stats_map_.find(col_name);
-  if (it == col_name_to_stats_map_.end()) {
-    return false;
-  }
-  return true;
+  return it != col_name_to_stats_map_.end();
 }
 
 std::shared_ptr<ColumnStats> TableStats::GetColumnStats(

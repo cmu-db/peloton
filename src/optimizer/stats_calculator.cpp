@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// cost_and_stats_calculator.h
+// stats_calculator.cpp
 //
 // Identification: src/optimizer/stats_calculator.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -64,18 +64,19 @@ void StatsCalculator::Visit(const LogicalGet *op) {
         AddBaseTableStats(col, table_stats, predicate_stats, false);
       }
     }
-    // Use predicates to update the stats accordingly
-    UpdateStatsForFilter(
-        table_stats->GetColumnCount() == 0 ? 0 : table_stats->num_rows,
-        predicate_stats, op->predicates);
+    // Use predicates to estimate cardinality. If we were unable to find any column stats from the catalog, default to 0
+    if (table_stats->GetColumnCount() == 0) {
+      root_group->SetNumRows(0);
+    } else {
+      root_group->SetNumRows(EstimateCardinalityForFilter(table_stats->num_rows, predicate_stats, op->predicates));
+    }
   }
   // Add the stats to the group
   for (auto &column_name_stats_pair : required_stats) {
     auto &column_name = column_name_stats_pair.first;
     auto &column_stats = column_name_stats_pair.second;
     column_stats->num_rows = root_group->GetNumRows();
-    memo_->GetGroupByID(gexpr_->GetGroupID())
-        ->AddStats(column_name, column_stats);
+    root_group->AddStats(column_name, column_stats);
   }
 }
 
@@ -233,7 +234,7 @@ void StatsCalculator::AddBaseTableStats(
   }
 }
 
-void StatsCalculator::UpdateStatsForFilter(
+size_t StatsCalculator::EstimateCardinalityForFilter(
     size_t num_rows,
     std::unordered_map<std::string, std::shared_ptr<ColumnStats>>
         &predicate_stats,
@@ -255,7 +256,7 @@ void StatsCalculator::UpdateStatsForFilter(
                                                     annotated_expr.expr.get());
   }
   // Update selectivity
-  memo_->GetGroupByID(gexpr_->GetGroupID())->SetNumRows(num_rows * selectivity);
+  return num_rows * selectivity;
 }
 
 // Calculate the selectivity given the predicate and the stats of columns in the

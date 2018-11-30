@@ -43,8 +43,6 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   auto it = group_expressions_.find(gexpr.get());
 
   if (it != group_expressions_.end()) {
-    PELOTON_ASSERT(target_group == UNDEFINED_GROUP ||
-           target_group == (*it)->GetGroupID());
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
   } else {
