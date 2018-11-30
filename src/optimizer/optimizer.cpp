@@ -6,7 +6,7 @@
 //
 // Identification: src/optimizer/optimizer.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -366,8 +366,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   PlanGenerator generator;
   auto plan = generator.ConvertOpExpression(op, required_props, required_cols,
                                             output_cols, children_plans,
-                                            children_expr_map);
-
+                                            children_expr_map, group->GetNumRows());
   LOG_TRACE("Finish Choosing best plan for group %d", id);
   return plan;
 }

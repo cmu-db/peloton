@@ -85,8 +85,8 @@ class AbstractPlan : public Printable {
   // Get the estimated cardinality of this plan
   int GetCardinality() const { return estimated_cardinality_; }
   
-  // TODO: This is only for testing now. When the optimizer is ready, we should
-  // delete this function and pass this information to constructor
+  // FOR TESTING ONLY. This function should only be called during construction of plan (ConvertOpExpression) or
+  // for tests.
   void SetCardinality(int cardinality) { estimated_cardinality_ = cardinality; }
 
   //===--------------------------------------------------------------------===//
@@ -152,9 +152,7 @@ class AbstractPlan : public Printable {
   std::vector<std::unique_ptr<AbstractPlan>> children_;
 
   AbstractPlan *parent_ = nullptr;
-  
-  // TODO: This field is harded coded now. This needs to be changed when
-  // optimizer has the cost model and cardinality estimation
+
   int estimated_cardinality_ = 500000;
 
  private:

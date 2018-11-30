@@ -14,7 +14,7 @@ matrix:
               - PELOTON_BUILD_TYPE=Debug
               - SANITIZER=Address
               - COVERALLS=Off
-
+              - LLVM_DIR=/usr/local/Cellar/llvm@3.9/3.9.1_1
         # Linux builds for gcc 5
         - os: linux
           sudo: required
@@ -71,7 +71,7 @@ script:
     - mkdir build
     - cd build
     # run cmake. NOTE: the PATH is made explicit to avoid automatic selection of the preinstalled llvm version in the Travis trusty image
-    - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_PREFIX_PATH=`llvm-config-3.7 --prefix` -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=$SANITIZER ..
+    - PATH=/usr/lib/llvm-3.7/bin:/usr/bin:$PATH cmake -DCOVERALLS=$COVERALLS -DCMAKE_BUILD_TYPE=$PELOTON_BUILD_TYPE -DUSE_SANITIZER=$SANITIZER ..
     # build
     - make -j4
     # run tests
