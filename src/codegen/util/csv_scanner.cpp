@@ -362,6 +362,9 @@ void CSVScanner::ProduceCSV(char *line) {
     cols_[col_idx].len = static_cast<uint32_t>(col_end - col_begin);
     cols_[col_idx].is_null = (cols_[col_idx].len == 0);
 
+    // Yoon-Min: replace delimiter to '\0' to fix a bug while comparing
+    // filter condition in a query and column value of VARCHAR type
+    *iter = 0;
     // Eat delimiter, moving to next column
     iter++;
   }
