@@ -55,7 +55,7 @@ class StatsUtil {
       case type::TypeId::VARCHAR:
       case type::TypeId::VARBINARY: {
         const char* key = value.GetData();
-        MurmurHash3_x64_128(key, (uint64_t)strlen(key), 0, hash);
+        MurmurHash3_x64_128(key, value.GetLength(), 0, hash);
       } break;
       case type::TypeId::BOOLEAN:
       case type::TypeId::TINYINT: {
@@ -90,7 +90,7 @@ class StatsUtil {
         // Hack for other data types.
         std::string value_str = value.ToString();
         const char* key = value_str.c_str();
-        MurmurHash3_x64_128(key, (uint64_t)strlen(key), 0, hash);
+        MurmurHash3_x64_128(key, value.GetLength(), 0, hash);
     }
     return hash[0];
   }
