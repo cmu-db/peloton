@@ -21,8 +21,8 @@
 #include "common/exception.h"
 
 #include "optimizer/cost_calculator.h"
+#include "optimizer/postgres_cost_calculator.h"
 #include "optimizer/binding.h"
-#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimize_context.h"
@@ -60,12 +60,14 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer() {
-  metadata_ = OptimizerMetadata(CostCalculatorFactory::CreateCostCalculator("DefaultCostCalculator"));
-}
-
-Optimizer::Optimizer(std::unique_ptr<AbstractCostCalculator> cost_model) {
-  metadata_ = OptimizerMetadata(std::move(cost_model));
+Optimizer::Optimizer(const CostModels cost_model) {
+  if (cost_model == CostModels::DEFAULT) {
+    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new CostCalculator));
+  } else if (cost_model == CostModels::POSTGRES) {
+    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new PostgresCostCalculator));
+  } else {
+    throw OptimizerException("Invalid cost model");
+  }
 }
 
 void Optimizer::OptimizeLoop(int root_group_id,

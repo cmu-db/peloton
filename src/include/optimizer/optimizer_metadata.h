@@ -14,7 +14,6 @@
 
 #include "common/timer.h"
 #include "optimizer/cost_calculator.h"
-#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/memo.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/rule.h"

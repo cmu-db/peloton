@@ -54,6 +54,8 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
+enum CostModels {DEFAULT, POSTGRES};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -72,8 +74,7 @@ class Optimizer : public AbstractOptimizer {
   Optimizer(Optimizer &&) = delete;
   Optimizer &operator=(Optimizer &&) = delete;
 
-  Optimizer();
-  Optimizer(std::unique_ptr<AbstractCostCalculator> cost_model);
+  Optimizer(const CostModels cost_model = CostModels::DEFAULT);
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,

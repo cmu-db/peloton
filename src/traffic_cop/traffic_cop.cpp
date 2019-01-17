@@ -19,7 +19,6 @@
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
 #include "expression/expression_util.h"
-#include "optimizer/cost_calculator_factory.h"
 #include "optimizer/optimizer.h"
 #include "planner/plan_util.h"
 #include "settings/settings_manager.h"
@@ -31,11 +30,11 @@ namespace tcop {
 TrafficCop::TrafficCop()
     : is_queuing_(false),
       rows_affected_(0),
-      optimizer_(new optimizer::Optimizer(optimizer::CostCalculatorFactory::CreateCostCalculator("DefaultCostCalculator"))),
+      optimizer_(new optimizer::Optimizer(optimizer::CostModels::POSTGRES)),
       single_statement_txn_(true) {}
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
-    : optimizer_(new optimizer::Optimizer()),
+    : optimizer_(new optimizer::Optimizer(optimizer::CostModels::POSTGRES)),
       single_statement_txn_(true),
       task_callback_(task_callback),
       task_callback_arg_(task_callback_arg) {}
