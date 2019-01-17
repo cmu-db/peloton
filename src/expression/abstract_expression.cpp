@@ -113,6 +113,13 @@ bool AbstractExpression::operator==(const AbstractExpression &rhs) const {
   if (exp_type_ != rhs.exp_type_ || children_.size() != rhs.children_.size())
     return false;
 
+  // TODO: Try sorting the children
+  // TODO: Extend this to other comparison predicates
+  if (exp_type_ == ExpressionType::COMPARE_EQUAL && children_.size() == 2 && rhs.children_.size() == 2) {
+    return (*children_[0] == *rhs.children_[0] && *children_[1] == *rhs.children_[1]) ||
+           (*children_[0] == *rhs.children_[1] && *children_[1] == *rhs.children_[0]);
+  }
+
   for (unsigned i = 0; i < children_.size(); i++) {
     if (*children_[i].get() != *rhs.children_[i].get()) return false;
   }
