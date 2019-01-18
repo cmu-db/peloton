@@ -43,7 +43,6 @@ class PostgresCostCalculator : public AbstractCostCalculator {
     memo_ = memo;
     txn_ = txn;
     gexpr_->Op().Accept(this);
-    printf("Using postgres cost model\n");
     return output_cost_;
   };
 
@@ -98,10 +97,10 @@ class PostgresCostCalculator : public AbstractCostCalculator {
         memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
     auto right_child_rows =
         memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-    printf("(NL) Left side rows: %d\n(NL) Right side rows: %d\n", left_child_rows, right_child_rows);
+    LOG_TRACE("(NL) Left side rows: %d\n(NL) Right side rows: %d\n", left_child_rows, right_child_rows);
 
     output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
-    printf("NL Output cost: %f\n", output_cost_);
+    LOG_TRACE("NL Output cost: %f\n", output_cost_);
 
   }
   void Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) override {}
