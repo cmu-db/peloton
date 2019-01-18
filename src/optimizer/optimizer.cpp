@@ -60,7 +60,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer(const CostModels cost_model) {
+Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) /* placeholder */ {
   if (cost_model == CostModels::DEFAULT) {
     metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new CostCalculator));
   } else if (cost_model == CostModels::POSTGRES) {

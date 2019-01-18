@@ -31,16 +31,11 @@ class RuleSet;
 
 class OptimizerMetadata {
  public:
-  OptimizerMetadata()
-      : timeout_limit(settings::SettingsManager::GetInt(
-            settings::SettingId::task_execution_timeout)),
-        timer(Timer<std::milli>()) {}
 
   OptimizerMetadata(std::unique_ptr<AbstractCostCalculator> cost_model)
       : cost_model(std::move(cost_model)), timeout_limit(settings::SettingsManager::GetInt(
       settings::SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
-
 
   Memo memo;
   RuleSet rule_set;
