@@ -150,6 +150,7 @@ class OptimizerTestUtil : public PelotonTest {
 
     if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
       auto scan = dynamic_cast<peloton::planner::AbstractScan *>(plan);
+      (void)scan; /* Used to avoid unused variable warning */
       LOG_DEBUG("%s%s(%s)", spacing.c_str(), scan->GetInfo().c_str(),
                 scan->GetTable()->GetName().c_str());
     } else {
