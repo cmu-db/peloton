@@ -14,7 +14,7 @@ matrix:
               - PELOTON_BUILD_TYPE=Debug
               - SANITIZER=Address
               - COVERALLS=Off
-              - LLVM_DIR=/usr/local/Cellar/llvm@3.9/3.9.1_1
+              - LLVM_DIR=/usr/local/Cellar/llvm@3.9/3.9.1_2
         # Linux builds for gcc 5
         - os: linux
           sudo: required
