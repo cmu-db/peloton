@@ -70,11 +70,11 @@ std::string Statement::GetQueryTypeString() const { return query_type_string_; }
 
 QueryType Statement::GetQueryType() const { return query_type_; }
 
-void Statement::SetParamTypes(const std::vector<int32_t>& param_types) {
+void Statement::SetParamTypes(const std::vector<PostgresValueType>& param_types) {
   param_types_ = param_types;
 }
 
-std::vector<int32_t> Statement::GetParamTypes() const { return param_types_; }
+std::vector<PostgresValueType> Statement::GetParamTypes() const { return param_types_; }
 
 void Statement::SetTupleDescriptor(
     const std::vector<FieldInfo>& tuple_descriptor) {

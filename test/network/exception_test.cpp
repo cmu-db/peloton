@@ -16,10 +16,8 @@
 #include "common/harness.h"
 #include "common/logger.h"
 #include "gtest/gtest.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 #include "network/peloton_server.h"
-#include "network/postgres_protocol_handler.h"
-#include "network/protocol_handler_factory.h"
 #include "util/string_util.h"
 
 namespace peloton {

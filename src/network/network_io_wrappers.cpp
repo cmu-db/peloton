@@ -19,46 +19,20 @@
 
 namespace peloton {
 namespace network {
-Transition NetworkIoWrapper::WritePacket(OutputPacket *pkt) {
-  // Write Packet Header
-  if (!pkt->skip_header_write) {
-    if (!wbuf_->HasSpaceFor(1 + sizeof(int32_t))) {
-      auto result = FlushWriteBuffer();
-      if (FlushWriteBuffer() != Transition::PROCEED)
-        // Unable to flush buffer, socket presumably not ready for write
-        return result;
-    }
-
-    wbuf_->Append(static_cast<unsigned char>(pkt->msg_type));
-    if (!pkt->single_type_pkt)
-      // Need to convert bytes to network order
-      wbuf_->Append(htonl(pkt->len + sizeof(int32_t)));
-    pkt->skip_header_write = true;
+Transition NetworkIoWrapper::FlushAllWrites() {
+  for (; out_->FlushHead() != nullptr; out_->MarkHeadFlushed()) {
+    auto result = FlushWriteBuffer(*out_->FlushHead());
+    if (result != Transition::PROCEED) return result;
   }
-
-  // Write Packet Content
-  for (size_t len = pkt->len; len != 0;) {
-    if (wbuf_->HasSpaceFor(len)) {
-      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, len);
-      break;
-    } else {
-      auto write_size = wbuf_->RemainingCapacity();
-      wbuf_->Append(std::begin(pkt->buf) + pkt->write_ptr, write_size);
-      len -= write_size;
-      pkt->write_ptr += write_size;
-      auto result = FlushWriteBuffer();
-      if (FlushWriteBuffer() != Transition::PROCEED)
-        // Unable to flush buffer, socket presumably not ready for write
-        return result;
-    }
-  }
+  out_->Reset();
   return Transition::PROCEED;
 }
 
 PosixSocketIoWrapper::PosixSocketIoWrapper(int sock_fd,
-                                           std::shared_ptr<ReadBuffer> rbuf,
-                                           std::shared_ptr<WriteBuffer> wbuf)
-    : NetworkIoWrapper(sock_fd, rbuf, wbuf) {
+                                           std::shared_ptr<ReadBuffer> in,
+                                           std::shared_ptr<WriteQueue> out)
+    : NetworkIoWrapper(sock_fd, std::move(in), std::move(out)) {
+
   // Set Non Blocking
   auto flags = fcntl(sock_fd_, F_GETFL);
   flags |= O_NONBLOCK;
@@ -71,12 +45,12 @@ PosixSocketIoWrapper::PosixSocketIoWrapper(int sock_fd,
 }
 
 Transition PosixSocketIoWrapper::FillReadBuffer() {
-  if (!rbuf_->HasMore()) rbuf_->Reset();
-  if (rbuf_->HasMore() && rbuf_->Full()) rbuf_->MoveContentToHead();
+  if (!in_->HasMore()) in_->Reset();
+  if (in_->HasMore() && in_->Full()) in_->MoveContentToHead();
   Transition result = Transition::NEED_READ;
   // Normal mode
-  while (!rbuf_->Full()) {
-    auto bytes_read = rbuf_->FillBufferFrom(sock_fd_);
+  while (!in_->Full()) {
+    auto bytes_read = in_->FillBufferFrom(sock_fd_);
     if (bytes_read > 0)
       result = Transition::PROCEED;
     else if (bytes_read == 0)
@@ -86,52 +60,44 @@ Transition PosixSocketIoWrapper::FillReadBuffer() {
         case EAGAIN:
           // Equal to EWOULDBLOCK
           return result;
-        case EINTR:
-          continue;
-        default:
-          LOG_ERROR("Error writing: %s", strerror(errno));
+        case EINTR:continue;
+        default:LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Error when filling read buffer " +
-                                        std::to_string(errno));
+              std::to_string(errno));
       }
   }
   return result;
 }
 
-Transition PosixSocketIoWrapper::FlushWriteBuffer() {
-  while (wbuf_->HasMore()) {
-    auto bytes_written = wbuf_->WriteOutTo(sock_fd_);
-    if (bytes_written < 0) switch (errno) {
-        case EINTR:
-          continue;
-        case EAGAIN:
-          return Transition::NEED_WRITE;
-        default:
-          LOG_ERROR("Error writing: %s", strerror(errno));
+Transition PosixSocketIoWrapper::FlushWriteBuffer(WriteBuffer &wbuf) {
+  while (wbuf.HasMore()) {
+    auto bytes_written = wbuf.WriteOutTo(sock_fd_);
+    if (bytes_written < 0)
+      switch (errno) {
+        case EINTR:continue;
+        case EAGAIN:return Transition::NEED_WRITE;
+        default:LOG_ERROR("Error writing: %s", strerror(errno));
           throw NetworkProcessException("Fatal error during write");
       }
   }
-  wbuf_->Reset();
+  wbuf.Reset();
   return Transition::PROCEED;
 }
 
 Transition SslSocketIoWrapper::FillReadBuffer() {
-  if (!rbuf_->HasMore()) rbuf_->Reset();
-  if (rbuf_->HasMore() && rbuf_->Full()) rbuf_->MoveContentToHead();
+  if (!in_->HasMore()) in_->Reset();
+  if (in_->HasMore() && in_->Full()) in_->MoveContentToHead();
   Transition result = Transition::NEED_READ;
-  while (!rbuf_->Full()) {
-    auto ret = rbuf_->FillBufferFrom(conn_ssl_context_);
+  while (!in_->Full()) {
+    auto ret = in_->FillBufferFrom(conn_ssl_context_);
     switch (ret) {
-      case SSL_ERROR_NONE:
-        result = Transition::PROCEED;
+      case SSL_ERROR_NONE:result = Transition::PROCEED;
         break;
-      case SSL_ERROR_ZERO_RETURN:
-        return Transition::TERMINATE;
+      case SSL_ERROR_ZERO_RETURN: return Transition::TERMINATE;
         // The SSL packet is partially loaded to the SSL buffer only,
         // More data is required in order to decode the wh`ole packet.
-      case SSL_ERROR_WANT_READ:
-        return result;
-      case SSL_ERROR_WANT_WRITE:
-        return Transition::NEED_WRITE;
+      case SSL_ERROR_WANT_READ: return result;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
       case SSL_ERROR_SYSCALL:
         if (errno == EINTR) {
           LOG_INFO("Error SSL Reading: EINTR");
@@ -145,16 +111,13 @@ Transition SslSocketIoWrapper::FillReadBuffer() {
   return result;
 }
 
-Transition SslSocketIoWrapper::FlushWriteBuffer() {
-  while (wbuf_->HasMore()) {
-    auto ret = wbuf_->WriteOutTo(conn_ssl_context_);
+Transition SslSocketIoWrapper::FlushWriteBuffer(WriteBuffer &wbuf) {
+  while (wbuf.HasMore()) {
+    auto ret = wbuf.WriteOutTo(conn_ssl_context_);
     switch (ret) {
-      case SSL_ERROR_NONE:
-        break;
-      case SSL_ERROR_WANT_WRITE:
-        return Transition::NEED_WRITE;
-      case SSL_ERROR_WANT_READ:
-        return Transition::NEED_READ;
+      case SSL_ERROR_NONE: break;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
+      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
       case SSL_ERROR_SYSCALL:
         // If interrupted, try again.
         if (errno == EINTR) {
@@ -162,12 +125,13 @@ Transition SslSocketIoWrapper::FlushWriteBuffer() {
           break;
         }
         // Intentional Fallthrough
-      default:
-        LOG_ERROR("SSL write error: %d, error code: %lu", ret, ERR_get_error());
+      default:LOG_ERROR("SSL write error: %d, error code: %lu",
+                        ret,
+                        ERR_get_error());
         throw NetworkProcessException("SSL write error");
     }
   }
-  wbuf_->Reset();
+  wbuf.Reset();
   return Transition::PROCEED;
 }
 
@@ -177,13 +141,10 @@ Transition SslSocketIoWrapper::Close() {
   if (ret != 0) {
     int err = SSL_get_error(conn_ssl_context_, ret);
     switch (err) {
-      case SSL_ERROR_WANT_WRITE:
-        return Transition::NEED_WRITE;
-      case SSL_ERROR_WANT_READ:
-        // More work to do before shutdown
-        return Transition::NEED_READ;
-      default:
-        LOG_ERROR("Error shutting down ssl session, err: %d", err);
+      // More work to do before shutdown
+      case SSL_ERROR_WANT_READ: return Transition::NEED_READ;
+      case SSL_ERROR_WANT_WRITE: return Transition::NEED_WRITE;
+      default: LOG_ERROR("Error shutting down ssl session, err: %d", err);
     }
   }
   // SSL context is explicitly deallocated here because socket wrapper

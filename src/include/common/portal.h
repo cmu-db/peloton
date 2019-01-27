@@ -31,18 +31,13 @@ class Portal {
   Portal &operator=(Portal &&) = delete;
 
   Portal(const std::string &portal_name, std::shared_ptr<Statement> statement,
-         std::vector<type::Value> bind_parameters,
-         std::shared_ptr<stats::QueryMetric::QueryParams> param_stat);
+         std::vector<type::Value> bind_parameters);
 
   ~Portal();
 
   std::shared_ptr<Statement> GetStatement() const;
 
   const std::vector<type::Value> &GetParameters() const;
-
-  inline std::shared_ptr<stats::QueryMetric::QueryParams> GetParamStat() const {
-    return param_stat_;
-  }
 
   // Portal name
   std::string portal_name_;
@@ -52,9 +47,6 @@ class Portal {
 
   // Values bound to the statement of this portal
   std::vector<type::Value> bind_parameters_;
-
-  // The serialized params for stats collection
-  std::shared_ptr<stats::QueryMetric::QueryParams> param_stat_;
 };
 
 }  // namespace peloton

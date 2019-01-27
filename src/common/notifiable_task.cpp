@@ -17,7 +17,7 @@
 
 namespace peloton {
 
-NotifiableTask::NotifiableTask(int task_id) : task_id_(task_id) {
+NotifiableTask::NotifiableTask(size_t task_id) : task_id_(task_id) {
   base_ = EventUtil::EventBaseNew();
   // For exiting a loop
   terminate_ = RegisterManualEvent([](int, short, void *arg) {

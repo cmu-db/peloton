@@ -2,9 +2,9 @@
 //
 //                         Peloton
 //
-// network_state.h
+// network_types.h
 //
-// Identification: src/include/network/network_state.h
+// Identification: src/include/network/network_types.h
 //
 // Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
@@ -41,5 +41,6 @@ enum class Transition {
   NEED_SSL_HANDSHAKE,
   NEED_WRITE
 };
+
 }  // namespace network
 }  // namespace peloton

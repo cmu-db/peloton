@@ -25,7 +25,6 @@
 #include "optimizer/rule.h"
 #include "parser/postgresparser.h"
 #include "planner/seq_scan_plan.h"
-#include "traffic_cop/traffic_cop.h"
 
 #include "gtest/gtest.h"
 #include "statistics/testing_stats_util.h"
@@ -49,14 +48,16 @@ TEST_F(CopyTests, Copying) {
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer);
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
-                              &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::Tcop::GetInstance();
+  auto callback = [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  };
+  tcop::ClientProcessState state;
 
   // Create a table without primary key
   TestingStatsUtil::CreateTable(false);
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   std::string short_string = "eeeeeeeeee";
   std::string long_string =
       short_string + short_string + short_string + short_string + short_string +
@@ -89,18 +90,18 @@ TEST_F(CopyTests, Copying) {
     // Execute insert
     auto statement = TestingStatsUtil::GetInsertStmt(12345, insert_str);
     std::vector<type::Value> params;
-    std::vector<int> result_format(statement->GetTupleDescriptor().size(), 0);
-    std::vector<ResultValue> result;
-
+    std::vector<PostgresDataFormat> result_format(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
     TestingSQLUtil::counter_.store(1);
-    executor::ExecutionResult status = traffic_cop.ExecuteHelper(
-        statement->GetPlanTree(), params, result, result_format);
-
-    if (traffic_cop.GetQueuing()) {
+    state.statement_ = statement;
+    state.param_values_ = params;
+    state.result_format_ = result_format;
+    executor::ExecutionResult status = traffic_cop.ExecuteHelper(state, callback);
+    if (state.is_queuing_) {
       TestingSQLUtil::ContinueAfterComplete();
-      traffic_cop.ExecuteStatementPlanGetResult();
-      status = traffic_cop.p_status_;
-      traffic_cop.SetQueuing(false);
+      traffic_cop.ExecuteStatementPlanGetResult(state);
+      status = state.p_status_;
+      state.is_queuing_ = false;
     }
 
     EXPECT_EQ(status.m_result, peloton::ResultType::SUCCESS);
@@ -108,7 +109,7 @@ TEST_F(CopyTests, Copying) {
               ResultTypeToString(status.m_result).c_str());
   }
   LOG_TRACE("Tuples inserted!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // Now Copying end-to-end
   LOG_TRACE("Copying a table...");

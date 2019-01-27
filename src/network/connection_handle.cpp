@@ -15,10 +15,8 @@
 
 #include "network/connection_dispatcher_task.h"
 #include "network/connection_handle.h"
-#include "network/network_io_wrapper_factory.h"
+#include "network/connection_handle_factory.h"
 #include "network/peloton_server.h"
-#include "network/postgres_protocol_handler.h"
-#include "network/protocol_handler_factory.h"
 
 #include "common/utility.h"
 #include "settings/settings_manager.h"
@@ -112,9 +110,9 @@ DEF_TRANSITION_GRAPH
         ON(WAKEUP) SET_STATE_TO(READ) AND_INVOKE(TryRead)
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
         ON(NEED_READ) SET_STATE_TO(READ) AND_WAIT_ON_READ
-          // This case happens only when we use SSL and are blocked on a write
-          // during handshake. From peloton's perspective we are still waiting
-          // for reads.
+        // This case happens only when we use SSL and are blocked on a write
+        // during handshake. From peloton's perspective we are still waiting
+        // for reads.
         ON(NEED_WRITE) SET_STATE_TO(READ) AND_WAIT_ON_WRITE
     END_STATE_DEF
 
@@ -137,19 +135,19 @@ DEF_TRANSITION_GRAPH
 
     DEFINE_STATE(WRITE)
         ON(WAKEUP) SET_STATE_TO(WRITE) AND_INVOKE(TryWrite)
-          // This happens when doing ssl-rehandshake with client
+        // This happens when doing ssl-rehandshake with client
         ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
         ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
         ON(PROCEED) SET_STATE_TO(PROCESS) AND_INVOKE(Process)
     END_STATE_DEF
 
     DEFINE_STATE(CLOSING)
-      ON(WAKEUP) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection)
-      ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
-      ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
+        ON(WAKEUP) SET_STATE_TO(CLOSING) AND_INVOKE(TryCloseConnection)
+        ON(NEED_READ) SET_STATE_TO(WRITE) AND_WAIT_ON_READ
+        ON(NEED_WRITE) SET_STATE_TO(WRITE) AND_WAIT_ON_WRITE
     END_STATE_DEF
 END_DEF
-    // clang-format on
+// clang-format on
 
 void ConnectionHandle::StateMachine::Accept(Transition action,
                                             ConnectionHandle &connection) {
@@ -161,74 +159,55 @@ void ConnectionHandle::StateMachine::Accept(Transition action,
       next = result.second(connection);
     } catch (NetworkProcessException &e) {
       LOG_ERROR("%s\n", e.what());
-      connection.TryCloseConnection();
-      return;
+      next = Transition::TERMINATE;
     }
   }
 }
 
+// TODO(Tianyu): Maybe use a factory to initialize protocol_interpreter here
 ConnectionHandle::ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler)
     : conn_handler_(handler),
-      io_wrapper_(NetworkIoWrapperFactory::GetInstance().NewNetworkIoWrapper(sock_fd)) {}
+      io_wrapper_{new PosixSocketIoWrapper(sock_fd)},
+      protocol_interpreter_{new PostgresProtocolInterpreter(conn_handler_->Id())} {}
 
-Transition ConnectionHandle::TryWrite() {
-  for (; next_response_ < protocol_handler_->responses_.size();
-       next_response_++) {
-    auto result = io_wrapper_->WritePacket(
-        protocol_handler_->responses_[next_response_].get());
-    if (result != Transition::PROCEED) return result;
-  }
-  protocol_handler_->responses_.clear();
-  next_response_ = 0;
-  if (protocol_handler_->GetFlushFlag()) return io_wrapper_->FlushWriteBuffer();
-  protocol_handler_->SetFlushFlag(false);
-  return Transition::PROCEED;
-}
-
-Transition ConnectionHandle::Process() {
-  // TODO(Tianyu): Just use Transition instead of ProcessResult, this looks
-  // like a 1 - 1 mapping between the two types.
-  if (protocol_handler_ == nullptr)
-    // TODO(Tianyi) Check the rbuf here before we create one if we have
-    // another protocol handler
-    protocol_handler_ = ProtocolHandlerFactory::CreateProtocolHandler(
-        ProtocolHandlerType::Postgres, &tcop_);
-
-  ProcessResult status = protocol_handler_->Process(
-      *(io_wrapper_->rbuf_), (size_t)conn_handler_->Id());
-
-  switch (status) {
-    case ProcessResult::MORE_DATA_REQUIRED:
-      return Transition::NEED_READ;
-    case ProcessResult::COMPLETE:
-      return Transition::PROCEED;
-    case ProcessResult::PROCESSING:
-      return Transition::NEED_RESULT;
-    case ProcessResult::TERMINATE:
-      throw NetworkProcessException("Error when processing");
-    case ProcessResult::NEED_SSL_HANDSHAKE:
-      return Transition::NEED_SSL_HANDSHAKE;
-    default:
-      LOG_ERROR("Unknown process result");
-      throw NetworkProcessException("Unknown process result");
-  }
-}
 
 Transition ConnectionHandle::GetResult() {
   EventUtil::EventAdd(network_event_, nullptr);
-  protocol_handler_->GetResult();
-  tcop_.SetQueuing(false);
+  protocol_interpreter_->GetResult(io_wrapper_->GetWriteQueue());
   return Transition::PROCEED;
 }
 
 Transition ConnectionHandle::TrySslHandshake() {
-  // Flush out all the response first
-  if (HasResponse()) {
-    auto write_ret = TryWrite();
-    if (write_ret != Transition::PROCEED) return write_ret;
+  // TODO(Tianyu): Do we really need to flush here?
+  auto ret = io_wrapper_->FlushAllWrites();
+  if (ret != Transition::PROCEED) return ret;
+  SSL *context;
+  if (!io_wrapper_->SslAble()) {
+    context = SSL_new(PelotonServer::ssl_context);
+    if (context == nullptr)
+      throw NetworkProcessException("ssl context for conn failed");
+    SSL_set_session_id_context(context, nullptr, 0);
+    if (SSL_set_fd(context, io_wrapper_->sock_fd_) == 0)
+      throw NetworkProcessException("Failed to set ssl fd");
+    io_wrapper_.reset(new SslSocketIoWrapper(std::move(*io_wrapper_), context));
+  } else
+    context = dynamic_cast<SslSocketIoWrapper *>(io_wrapper_.get())->conn_ssl_context_;
+
+  // The wrapper already uses SSL methods.
+  // Yuchen: "Post-connection verification?"
+  ERR_clear_error();
+  int ssl_accept_ret = SSL_accept(context);
+  if (ssl_accept_ret > 0) return Transition::PROCEED;
+
+  int err = SSL_get_error(context, ssl_accept_ret);
+  switch (err) {
+    case SSL_ERROR_WANT_READ:
+      return Transition::NEED_READ;
+    case SSL_ERROR_WANT_WRITE:
+      return Transition::NEED_WRITE;
+    default:
+      throw NetworkProcessException("SSL Error, error code" + std::to_string(err));
   }
-  return NetworkIoWrapperFactory::GetInstance().PerformSslHandshake(
-      io_wrapper_);
 }
 
 Transition ConnectionHandle::TryCloseConnection() {
@@ -242,10 +221,6 @@ Transition ConnectionHandle::TryCloseConnection() {
   // connection handle and we will need to destruct and exit.
   conn_handler_->UnregisterEvent(network_event_);
   conn_handler_->UnregisterEvent(workpool_event_);
-  // This object is essentially managed by libevent (which unfortunately does
-  // not accept shared_ptrs.) and thus as we shut down we need to manually
-  // deallocate this object.
-  delete this;
   return Transition::NONE;
 }
 }  // namespace network

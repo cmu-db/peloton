@@ -65,13 +65,13 @@ class Statement : public Printable {
 
   QueryType GetQueryType() const;
 
-  void SetParamTypes(const std::vector<int32_t> &param_types);
+  void SetParamTypes(const std::vector<PostgresValueType> &param_types);
 
-  std::vector<int32_t> GetParamTypes() const;
+  std::vector<PostgresValueType> GetParamTypes() const;
 
   void SetTupleDescriptor(const std::vector<FieldInfo> &tuple_descriptor);
 
-  void SetReferencedTables(const std::set<oid_t> table_ids);
+  void SetReferencedTables(std::set<oid_t> table_ids);
 
   const std::set<oid_t> GetReferencedTables() const;
 
@@ -79,7 +79,7 @@ class Statement : public Printable {
 
   const std::shared_ptr<planner::AbstractPlan> &GetPlanTree() const;
 
-  std::unique_ptr<parser::SQLStatementList> const &GetStmtParseTreeList() {
+  const std::unique_ptr<parser::SQLStatementList> &GetStmtParseTreeList() {
     return sql_stmt_list_;
   }
 
@@ -113,7 +113,7 @@ class Statement : public Printable {
   std::string query_type_string_;
 
   // format codes of the parameters
-  std::vector<int32_t> param_types_;
+  std::vector<PostgresValueType> param_types_;
 
   // schema of result tuple
   std::vector<FieldInfo> tuple_descriptor_;

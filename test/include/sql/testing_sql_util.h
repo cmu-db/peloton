@@ -15,7 +15,7 @@
 #include <atomic>
 
 #include "common/statement.h"
-#include "traffic_cop/traffic_cop.h"
+#include "traffic_cop/tcop.h"
 
 namespace peloton {
 
@@ -95,7 +95,7 @@ class TestingSQLUtil {
   static int GetRandomInteger(const int lower_bound, const int upper_bound);
   static void UtilTestTaskCallback(void *arg);
 
-  static tcop::TrafficCop traffic_cop_;
+  static tcop::ClientProcessState state_;
   static std::atomic_int counter_;
   //  inline static void SetTrafficCopCounter() {
   //    counter_.store(1);

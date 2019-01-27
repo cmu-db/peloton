@@ -33,8 +33,9 @@
 #include "marshal.h"
 #include "network/connection_handler_task.h"
 #include "network/network_io_wrappers.h"
-#include "network_state.h"
-#include "protocol_handler.h"
+#include "network/network_types.h"
+#include "network/protocol_interpreter.h"
+#include "network/postgres_protocol_interpreter.h"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -43,18 +44,22 @@ namespace peloton {
 namespace network {
 
 /**
- * @brief A ConnectionHandle encapsulates all information about a client
- * connection for its entire duration. This includes a state machine and the
- * necessary libevent infrastructure for a handler to work on this connection.
+ * A ConnectionHandle encapsulates all information we need to do IO about
+ * a client connection for its entire duration. This includes a state machine
+ * and the necessary libevent infrastructure for a handler to work on this
+ * connection.
  */
 class ConnectionHandle {
  public:
+
   /**
    * Constructs a new ConnectionHandle
    * @param sock_fd Client's connection fd
    * @param handler The handler responsible for this handle
    */
   ConnectionHandle(int sock_fd, ConnectionHandlerTask *handler);
+
+  DISALLOW_COPY_AND_MOVE(ConnectionHandle);
 
   /**
    * @brief Signal to libevent that this ConnectionHandle is ready to handle
@@ -70,14 +75,6 @@ class ConnectionHandle {
     workpool_event_ = conn_handler_->RegisterManualEvent(
         METHOD_AS_CALLBACK(ConnectionHandle, HandleEvent), this);
 
-    // TODO(Tianyi): should put the initialization else where.. check
-    // correctness first.
-    tcop_.SetTaskCallback(
-        [](void *arg) {
-          struct event *event = static_cast<struct event *>(arg);
-          event_active(event, EV_WRITE, 0);
-        },
-        workpool_event_);
 
     network_event_ = conn_handler_->RegisterEvent(
         io_wrapper_->GetSocketFd(), EV_READ | EV_PERSIST,
@@ -94,8 +91,20 @@ class ConnectionHandle {
   /* State Machine Actions */
   // TODO(Tianyu): Write some documentation when feeling like it
   inline Transition TryRead() { return io_wrapper_->FillReadBuffer(); }
-  Transition TryWrite();
-  Transition Process();
+
+  inline Transition TryWrite() {
+    if (io_wrapper_->ShouldFlush())
+      return io_wrapper_->FlushAllWrites();
+    return Transition::PROCEED;
+  }
+
+  inline Transition Process() {
+    return protocol_interpreter_->
+        Process(io_wrapper_->GetReadBuffer(),
+                io_wrapper_->GetWriteQueue(),
+                [=] { event_active(workpool_event_, EV_WRITE, 0); });
+  }
+
   Transition GetResult();
   Transition TrySslHandshake();
   Transition TryCloseConnection();
@@ -173,26 +182,15 @@ class ConnectionHandle {
   };
 
   friend class StateMachine;
-  friend class NetworkIoWrapperFactory;
+  friend class ConnectionHandleFactory;
 
-  /**
-   * @brief: Determine if there is still responses in the buffer
-   * @return true if there is still responses to flush out in either wbuf or
-   * responses
-   */
-  inline bool HasResponse() {
-    return (protocol_handler_->responses_.size() != 0) ||
-           (io_wrapper_->wbuf_->size_ != 0);
-  }
-
+  // A raw pointer is used here because references cannot be rebound.
   ConnectionHandlerTask *conn_handler_;
-  std::shared_ptr<NetworkIoWrapper> io_wrapper_;
-  StateMachine state_machine_;
+  std::unique_ptr<NetworkIoWrapper> io_wrapper_;
+  // TODO(Tianyu): Probably use a factory for this
+  std::unique_ptr<ProtocolInterpreter> protocol_interpreter_;
+  StateMachine state_machine_{};
   struct event *network_event_ = nullptr, *workpool_event_ = nullptr;
-  std::unique_ptr<ProtocolHandler> protocol_handler_ = nullptr;
-  tcop::TrafficCop tcop_;
-  // TODO(Tianyu): Put this into protocol handler in a later refactor
-  unsigned int next_response_ = 0;
 };
 }  // namespace network
 }  // namespace peloton

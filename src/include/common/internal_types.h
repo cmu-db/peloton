@@ -874,10 +874,10 @@ enum class ResultType {
   SUCCESS = 1,
   FAILURE = 2,
   ABORTED = 3,  // aborted
-  NOOP = 4,     // no op
-  UNKNOWN = 5,
-  QUEUING = 6,
-  TO_ABORT = 7,
+  NOOP = 4,     // no op  // TODO Remove this type
+  UNKNOWN = 5,            // TODO Remove this type
+  QUEUING = 6,            // TODO Remove this type
+  TO_ABORT = 7,           // TODO Remove this type
 };
 std::string ResultTypeToString(ResultType type);
 ResultType StringToResultType(const std::string &str);
@@ -1432,24 +1432,13 @@ typedef std::map<oid_t, std::pair<oid_t, oid_t>> column_map_type;
 //===--------------------------------------------------------------------===//
 // Wire protocol typedefs
 //===--------------------------------------------------------------------===//
-#define SOCKET_BUFFER_SIZE 8192
+#define SOCKET_BUFFER_CAPACITY 8192
 
 /* byte type */
 typedef unsigned char uchar;
 
 /* type for buffer of bytes */
 typedef std::vector<uchar> ByteBuf;
-
-//===--------------------------------------------------------------------===//
-// Packet Manager: ProcessResult
-//===--------------------------------------------------------------------===//
-enum class ProcessResult {
-  COMPLETE,
-  TERMINATE,
-  PROCESSING,
-  MORE_DATA_REQUIRED,
-  NEED_SSL_HANDSHAKE,
-};
 
 enum class NetworkProtocolType {
   POSTGRES_JDBC,
@@ -1460,6 +1449,19 @@ enum class SSLLevel {
   SSL_DISABLE = 0,
   SSL_PREFER = 1,
   SSL_VERIIFY = 2,
+};
+
+using CallbackFunc = std::function<void(void)>;
+using BindParameter = std::pair<type::TypeId, std::string>;
+
+enum class PostgresDataFormat : int16_t {
+  TEXT = 0,
+  BINARY = 1
+};
+
+enum class PostgresNetworkObjectType : uchar {
+  PORTAL = 'P',
+  STATEMENT = 'S'
 };
 
 // Eigen/Matrix types used in brain

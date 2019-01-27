@@ -26,7 +26,6 @@ class AggregateSQLTests : public PelotonTest {};
 
 TEST_F(AggregateSQLTests, EmptyTableTest) {
   PELOTON_ASSERT(&TestingSQLUtil::counter_);
-  PELOTON_ASSERT(&TestingSQLUtil::traffic_cop_);
   auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
   auto txn = txn_manager.BeginTransaction();
   catalog::Catalog::GetInstance()->CreateDatabase(txn, DEFAULT_DB_NAME);

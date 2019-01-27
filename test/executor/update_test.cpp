@@ -47,7 +47,6 @@
 #include "planner/update_plan.h"
 #include "storage/data_table.h"
 #include "storage/tile_group_factory.h"
-#include "traffic_cop/traffic_cop.h"
 #include "type/value.h"
 #include "type/value_factory.h"
 
@@ -165,9 +164,12 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   std::unique_ptr<optimizer::AbstractOptimizer> optimizer(
       new optimizer::Optimizer);
-  auto &traffic_cop = tcop::TrafficCop::GetInstance();
-  traffic_cop.SetTaskCallback(TestingSQLUtil::UtilTestTaskCallback,
-                              &TestingSQLUtil::counter_);
+  auto &traffic_cop = tcop::Tcop::GetInstance();
+  auto callback = [] {
+    TestingSQLUtil::UtilTestTaskCallback(&TestingSQLUtil::counter_);
+  };
+  tcop::ClientProcessState state;
+
   // Create a table first
   LOG_INFO("Creating a table...");
   auto id_column = catalog::Column(
@@ -208,17 +210,17 @@ TEST_F(UpdateTests, UpdatingOld) {
 
   // Inserting a tuple end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
   LOG_INFO("Inserting a tuple...");
   LOG_INFO(
       "Query: INSERT INTO department_table(dept_id,manager_id,dept_name) "
       "VALUES (1,12,'hello_1');");
-  std::unique_ptr<Statement> statement;
-  statement.reset(new Statement("INSERT",
-                                "INSERT INTO "
-                                "department_table(dept_id,manager_id,dept_name)"
-                                " VALUES (1,12,'hello_1');"));
+  auto statement = std::make_shared<Statement>(
+      "INSERT",
+      "INSERT INTO "
+      "department_table(dept_id,manager_id,dept_name)"
+      " VALUES (1,12,'hello_1');");
   auto &peloton_parser = parser::PostgresParser::GetInstance();
   LOG_INFO("Building parse tree...");
   auto insert_stmt = peloton_parser.BuildParseTree(
@@ -237,31 +239,33 @@ TEST_F(UpdateTests, UpdatingOld) {
   statement->SetPlanTree(optimizer->BuildPelotonPlanTree(insert_stmt, txn));
   LOG_INFO("Building plan tree completed!");
   std::vector<type::Value> params;
-  std::vector<ResultValue> result;
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
 
-  std::vector<int> result_format;
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  std::vector<PostgresDataFormat> result_format(statement->GetTupleDescriptor().size(),
+                                                PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  executor::ExecutionResult status = traffic_cop.ExecuteHelper(
-      statement->GetPlanTree(), params, result, result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  executor::ExecutionResult status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple inserted!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Now Updating end-to-end
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
   LOG_INFO("Updating a tuple...");
   LOG_INFO(
@@ -286,25 +290,29 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
   LOG_INFO("Updating another tuple...");
   LOG_INFO(
@@ -331,25 +339,29 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
   LOG_INFO("Updating primary key...");
   LOG_INFO("Query: UPDATE department_table SET dept_id = 2 WHERE dept_id = 1");
   statement.reset(new Statement(
@@ -370,26 +382,30 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple Updated!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   LOG_INFO("%s", table->GetInfo().c_str());
 
   // Deleting now
   txn = txn_manager.BeginTransaction();
-  traffic_cop.SetTcopTxnState(txn);
+  state.Reset();
+  state.tcop_txn_state_.emplace(txn, ResultType::SUCCESS);
 
   LOG_INFO("Deleting a tuple...");
   LOG_INFO("Query: DELETE FROM department_table WHERE dept_name = 'CS'");
@@ -412,20 +428,23 @@ TEST_F(UpdateTests, UpdatingOld) {
   LOG_INFO("Building plan tree completed!");
   LOG_INFO("Executing plan...\n%s",
            planner::PlanUtil::GetInfo(statement->GetPlanTree().get()).c_str());
-  result_format = std::vector<int>(statement->GetTupleDescriptor().size(), 0);
+  result_format = std::vector<PostgresDataFormat>(statement->GetTupleDescriptor().size(),
+                                                  PostgresDataFormat::TEXT);
   TestingSQLUtil::counter_.store(1);
-  status = traffic_cop.ExecuteHelper(statement->GetPlanTree(), params, result,
-                                     result_format);
-  if (traffic_cop.GetQueuing()) {
+  state.statement_ = statement;
+  state.param_values_ = params;
+  state.result_format_ = result_format;
+  status = traffic_cop.ExecuteHelper(state, callback);
+  if (state.is_queuing_) {
     TestingSQLUtil::ContinueAfterComplete();
-    traffic_cop.ExecuteStatementPlanGetResult();
-    status = traffic_cop.p_status_;
-    traffic_cop.SetQueuing(false);
+    traffic_cop.ExecuteStatementPlanGetResult(state);
+    status = state.p_status_;
+    state.is_queuing_ = false;
   }
   LOG_INFO("Statement executed. Result: %s",
            ResultTypeToString(status.m_result).c_str());
   LOG_INFO("Tuple deleted!");
-  traffic_cop.CommitQueryHelper();
+  traffic_cop.CommitQueryHelper(state);
 
   // free the database just created
   txn = txn_manager.BeginTransaction();

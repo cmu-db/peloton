@@ -17,6 +17,7 @@
 #include <utility>
 #include "common/exception.h"
 #include "common/utility.h"
+#include "network/network_types.h"
 #include "network/marshal.h"
 
 namespace peloton {
@@ -35,35 +36,40 @@ namespace network {
  * class. @see NetworkIoWrapperFactory
  */
 class NetworkIoWrapper {
-  friend class NetworkIoWrapperFactory;
-
  public:
   virtual bool SslAble() const = 0;
   // TODO(Tianyu): Change and document after we refactor protocol handler
   virtual Transition FillReadBuffer() = 0;
-  virtual Transition FlushWriteBuffer() = 0;
+  virtual Transition FlushWriteBuffer(WriteBuffer &wbuf) = 0;
   virtual Transition Close() = 0;
 
   inline int GetSocketFd() { return sock_fd_; }
-  Transition WritePacket(OutputPacket *pkt);
+  inline std::shared_ptr<ReadBuffer> GetReadBuffer() { return in_; }
+  inline std::shared_ptr<WriteQueue> GetWriteQueue() { return out_; }
+  Transition FlushAllWrites();
+  inline bool ShouldFlush() { return out_->ShouldFlush(); }
   // TODO(Tianyu): Make these protected when protocol handler refactor is
   // complete
-  NetworkIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> &rbuf,
-                   std::shared_ptr<WriteBuffer> &wbuf)
+  NetworkIoWrapper(int sock_fd,
+                   std::shared_ptr<ReadBuffer> in,
+                   std::shared_ptr<WriteQueue> out)
       : sock_fd_(sock_fd),
-        rbuf_(std::move(rbuf)),
-        wbuf_(std::move(wbuf)) {
-    rbuf_->Reset();
-    wbuf_->Reset();
+        in_(std::move(in)),
+        out_(std::move(out)) {
+    in_->Reset();
+    out_->Reset();
   }
 
-  DISALLOW_COPY(NetworkIoWrapper)
+  DISALLOW_COPY(NetworkIoWrapper);
 
-  NetworkIoWrapper(NetworkIoWrapper &&other) = default;
+  NetworkIoWrapper(NetworkIoWrapper &&other) noexcept
+      : NetworkIoWrapper(other.sock_fd_,
+                         std::move(other.in_),
+                         std::move(other.out_)) {}
 
   int sock_fd_;
-  std::shared_ptr<ReadBuffer> rbuf_;
-  std::shared_ptr<WriteBuffer> wbuf_;
+  std::shared_ptr<ReadBuffer> in_;
+  std::shared_ptr<WriteQueue> out_;
 };
 
 /**
@@ -71,13 +77,22 @@ class NetworkIoWrapper {
  */
 class PosixSocketIoWrapper : public NetworkIoWrapper {
  public:
-  PosixSocketIoWrapper(int sock_fd, std::shared_ptr<ReadBuffer> rbuf,
-                       std::shared_ptr<WriteBuffer> wbuf);
+  explicit PosixSocketIoWrapper(int sock_fd,
+                                std::shared_ptr<ReadBuffer> in =
+                                    std::make_shared<ReadBuffer>(),
+                                std::shared_ptr<WriteQueue> out =
+                                    std::make_shared<WriteQueue>());
 
+  explicit PosixSocketIoWrapper(NetworkIoWrapper &&other)
+      : PosixSocketIoWrapper(other.sock_fd_,
+                             std::move(other.in_),
+                             std::move(other.out_)) {}
+
+  DISALLOW_COPY_AND_MOVE(PosixSocketIoWrapper);
 
   inline bool SslAble() const override { return false; }
   Transition FillReadBuffer() override;
-  Transition FlushWriteBuffer() override;
+  Transition FlushWriteBuffer(WriteBuffer &wbuf) override;
   inline Transition Close() override {
     peloton_close(sock_fd_);
     return Transition::PROCEED;
@@ -92,15 +107,17 @@ class SslSocketIoWrapper : public NetworkIoWrapper {
   // Realistically, an SslSocketIoWrapper is always derived from a
   // PosixSocketIoWrapper, as the handshake process happens over posix sockets.
   SslSocketIoWrapper(NetworkIoWrapper &&other, SSL *ssl)
-    : NetworkIoWrapper(std::move(other)), conn_ssl_context_(ssl) {}
+      : NetworkIoWrapper(std::move(other)), conn_ssl_context_(ssl) {}
+
+  DISALLOW_COPY_AND_MOVE(SslSocketIoWrapper);
 
   inline bool SslAble() const override { return true; }
   Transition FillReadBuffer() override;
-  Transition FlushWriteBuffer() override;
+  Transition FlushWriteBuffer(WriteBuffer &wbuf) override;
   Transition Close() override;
 
  private:
-  friend class NetworkIoWrapperFactory;
+  friend class ConnectionHandle;
   SSL *conn_ssl_context_;
 };
 }  // namespace network

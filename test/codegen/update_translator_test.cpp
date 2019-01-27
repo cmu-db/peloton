@@ -26,7 +26,6 @@
 #include "planner/create_plan.h"
 #include "planner/seq_scan_plan.h"
 #include "planner/plan_util.h"
-#include "traffic_cop/traffic_cop.h"
 
 namespace peloton {
 namespace test {
