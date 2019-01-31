@@ -54,7 +54,7 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
-enum CostModels {DEFAULT, POSTGRES};
+enum CostModels {DEFAULT, POSTGRES, TRIVIAL};
 
 //===--------------------------------------------------------------------===//
 // Optimizer

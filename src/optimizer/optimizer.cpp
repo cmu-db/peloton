@@ -22,6 +22,7 @@
 
 #include "optimizer/cost_calculator.h"
 #include "optimizer/postgres_cost_calculator.h"
+#include "optimizer/trivial_cost_calculator.h"
 #include "optimizer/binding.h"
 #include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
@@ -65,6 +66,8 @@ Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) /* placeh
     metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new CostCalculator));
   } else if (cost_model == CostModels::POSTGRES) {
     metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new PostgresCostCalculator));
+  } else if (cost_model == CostModels::TRIVIAL) {
+    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new TrivialCostCalculator));
   } else {
     throw OptimizerException("Invalid cost model");
   }
