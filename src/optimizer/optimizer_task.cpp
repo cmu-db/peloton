@@ -17,8 +17,8 @@
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/cost_calculator.h"
-#include "optimizer/stats_calculator.h"
-#include "optimizer/child_stats_deriver.h"
+#include "optimizer/stats/stats_calculator.h"
+#include "optimizer/stats/child_stats_deriver.h"
 
 namespace peloton {
 namespace optimizer {

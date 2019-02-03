@@ -2,32 +2,25 @@
 //
 //                         Peloton
 //
-// stats.h
+// tuple_sample.cpp
 //
-// Identification: src/include/optimizer/stats.h
+// Identification: src/optimizer/tuple_sample.cpp
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#pragma once
-
-#include "optimizer/tuple_sample.h"
+#include "optimizer/stats/tuple_sample.h"
 
 namespace peloton {
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
-// Stats
+// TupleSample
 //===--------------------------------------------------------------------===//
-class Stats {
- public:
-  Stats(TupleSample *sample) : sample_(sample){};
-  virtual ~Stats() {}
-
- private:
-  TupleSample *sample_;
-};
+TupleSample::TupleSample(std::vector<Column *> columns,
+                         storage::TileGroup *sampled_tuples)
+    : columns(columns), sampled_tuples(sampled_tuples) {}
 
 }  // namespace optimizer
 }  // namespace peloton

@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/child_stats_deriver.h"
+#include "optimizer/stats/child_stats_deriver.h"
 
 #include "expression/expression_util.h"
 #include "expression/tuple_value_expression.h"

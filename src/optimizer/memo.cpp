@@ -13,7 +13,7 @@
 #include "optimizer/group_expression.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
-#include "optimizer/stats_calculator.h"
+#include "optimizer/stats/stats_calculator.h"
 
 namespace peloton {
 namespace optimizer {
