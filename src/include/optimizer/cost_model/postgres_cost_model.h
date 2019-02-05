@@ -13,14 +13,11 @@
 
 #pragma once
 
-#include "optimizer/abstract_cost_calculator.h"
-#include "abstract_cost_calculator.h"
-
+#include "optimizer/cost_model/abstract_cost_model.h"
 #include "expression/tuple_value_expression.h"
 #include "catalog/table_catalog.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
-#include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/table_stats.h"
 
@@ -33,9 +30,9 @@ namespace optimizer {
 
 class Memo;
 // Derive cost for a physical group expression
-class PostgresCostCalculator : public AbstractCostCalculator {
+class PostgresCostModel : public AbstractCostModel {
  public:
-  PostgresCostCalculator(){};
+  PostgresCostModel(){};
 
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
                        concurrency::TransactionContext *txn) override {
@@ -94,13 +91,16 @@ class PostgresCostCalculator : public AbstractCostCalculator {
 
   void Visit(UNUSED_ATTRIBUTE const PhysicalInnerNLJoin *op) override {
     auto left_child_rows =
-        memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
+        std::max(0, memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows());
     auto right_child_rows =
-        memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-    LOG_TRACE("(NL) Left side rows: %d\n(NL) Right side rows: %d\n", left_child_rows, right_child_rows);
-
+        std::max(0, memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows());
     output_cost_ = left_child_rows * right_child_rows * DEFAULT_TUPLE_COST;
-    LOG_TRACE("NL Output cost: %f\n", output_cost_);
+    LOG_DEBUG("----------NL Join Output--------");
+    LOG_DEBUG("Left: %s | Rows: %d", GetTableName(op->left_keys).c_str(), left_child_rows);
+    LOG_DEBUG("Right: %s | Rows: %d", GetTableName(op->right_keys).c_str(), right_child_rows);
+    LOG_DEBUG("Cost: %f", output_cost_);
+    LOG_DEBUG("--------------------------------");
+
 
   }
   void Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) override {}
@@ -157,18 +157,24 @@ class PostgresCostCalculator : public AbstractCostCalculator {
           frac_est = 1.0;
         }
         bucket_size_frac = std::min(bucket_size_frac, frac_est);
-        LOG_DEBUG("Bucket_size_frac: %f\n", bucket_size_frac);
+        LOG_DEBUG("Bucket_size_frac: %f", bucket_size_frac);
       }
     }
 
     auto left_child_rows =
-        memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows();
+        std::max(0, memo_->GetGroupByID(gexpr_->GetChildGroupId(0))->GetNumRows());
     auto right_child_rows =
-        memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows();
-    LOG_TRACE("(Hash) Left side rows: %d\n(Hash) Right side rows: %d\n", left_child_rows, right_child_rows);
-    output_cost_ = (left_child_rows * (right_child_rows * bucket_size_frac)) *
-        DEFAULT_TUPLE_COST;
-    LOG_TRACE("Hash Join Output cost: %f\n", output_cost_);
+        std::max(0, memo_->GetGroupByID(gexpr_->GetChildGroupId(1))->GetNumRows());
+
+
+    output_cost_ = (left_child_rows + (right_child_rows * bucket_size_frac)) * DEFAULT_TUPLE_COST;
+    LOG_DEBUG("---------Hash Join Output-------");
+    LOG_DEBUG("Left: %s | Rows: %d", GetTableName(op->left_keys).c_str(), left_child_rows);
+    LOG_DEBUG("Right: %s | Rows: %d", GetTableName(op->right_keys).c_str(), right_child_rows);
+    LOG_DEBUG("Cost: %f", output_cost_);
+    LOG_DEBUG("--------------------------------");
+
+
   }
 
   void Visit(UNUSED_ATTRIBUTE const PhysicalLeftHashJoin *op) override {}
@@ -244,6 +250,32 @@ class PostgresCostCalculator : public AbstractCostCalculator {
       seen_set.insert(tv_expr->GetTableName());
     }
     return seen_set.size() == 1;
+  }
+
+  // Returns string of tables, used for debugging
+  std::string GetTableName(const std::vector<std::unique_ptr<expression::AbstractExpression>> &keys) {
+    std::unordered_set<std::string> table_set;
+    for (auto &expr : keys) {
+      if (expr->GetExpressionType() != ExpressionType::VALUE_TUPLE) continue;
+
+      auto tv_expr =
+          reinterpret_cast<expression::TupleValueExpression *>(expr.get());
+      table_set.insert(tv_expr->GetTableName());
+    }
+
+    std::stringstream stream;
+    if (table_set.size() == 1) {
+      stream << *table_set.begin();
+    } else {
+      for (auto table : table_set) {
+        if (!stream.str().empty()) {
+          stream << ",";
+        }
+        stream << table;
+      }
+    }
+
+    return stream.str();
   }
 
 };

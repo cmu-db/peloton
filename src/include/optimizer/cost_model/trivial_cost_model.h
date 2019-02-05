@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "optimizer/abstract_cost_calculator.h"
-#include "abstract_cost_calculator.h"
+#include "optimizer/cost_model/abstract_cost_model.h"
+#include "abstract_cost_model.h"
 
 #include "expression/tuple_value_expression.h"
 #include "catalog/table_catalog.h"
@@ -32,9 +32,9 @@ namespace peloton {
 namespace optimizer {
 
 class Memo;
-class TrivialCostCalculator : public AbstractCostCalculator {
+class TrivialCostModel : public AbstractCostModel {
  public:
-  TrivialCostCalculator(){};
+  TrivialCostModel(){};
 
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
                        concurrency::TransactionContext *txn) override {

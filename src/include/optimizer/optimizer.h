@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
-#include "optimizer/abstract_cost_calculator.h"
+#include "optimizer/cost_model/abstract_cost_model.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
 
@@ -167,7 +167,7 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
-  std::unique_ptr<AbstractCostCalculator> cost_model_;
+  std::unique_ptr<AbstractCostModel> cost_model_;
 };
 
 }  // namespace optimizer

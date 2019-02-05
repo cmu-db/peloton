@@ -16,7 +16,6 @@
 #include "optimizer/optimizer_metadata.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
-#include "optimizer/cost_calculator.h"
 #include "optimizer/stats/stats_calculator.h"
 #include "optimizer/stats/child_stats_deriver.h"
 

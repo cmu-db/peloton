@@ -32,7 +32,7 @@ static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
 // query.
 static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
-class AbstractCostCalculator : public OperatorVisitor {
+class AbstractCostModel : public OperatorVisitor {
  public:
   virtual double CalculateCost(GroupExpression *gexpr, Memo *memo,
                                concurrency::TransactionContext *txn) = 0;

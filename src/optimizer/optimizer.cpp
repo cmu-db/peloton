@@ -20,9 +20,9 @@
 
 #include "common/exception.h"
 
-#include "optimizer/cost_calculator.h"
-#include "optimizer/postgres_cost_calculator.h"
-#include "optimizer/trivial_cost_calculator.h"
+#include "optimizer/cost_model/default_cost_model.h"
+#include "optimizer/cost_model/postgres_cost_model.h"
+#include "optimizer/cost_model/trivial_cost_model.h"
 #include "optimizer/binding.h"
 #include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
@@ -61,15 +61,23 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) /* placeholder */ {
-  if (cost_model == CostModels::DEFAULT) {
-    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new CostCalculator));
-  } else if (cost_model == CostModels::POSTGRES) {
-    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new PostgresCostCalculator));
-  } else if (cost_model == CostModels::TRIVIAL) {
-    metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostCalculator>(new TrivialCostCalculator));
-  } else {
-    throw OptimizerException("Invalid cost model");
+Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) {
+
+  switch (cost_model) {
+    case CostModels::DEFAULT: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new DefaultCostModel));
+      break;
+    }
+    case CostModels::POSTGRES: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new PostgresCostModel));
+      break;
+    }
+    case CostModels::TRIVIAL: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new TrivialCostModel));
+      break;
+    }
+    default:
+      throw OptimizerException("Invalid cost model");
   }
 }
 

@@ -13,7 +13,7 @@
 #pragma once
 
 #include "common/timer.h"
-#include "optimizer/cost_calculator.h"
+#include "optimizer/cost_model/default_cost_model.h"
 #include "optimizer/memo.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/rule.h"
@@ -32,7 +32,7 @@ class RuleSet;
 class OptimizerMetadata {
  public:
 
-  OptimizerMetadata(std::unique_ptr<AbstractCostCalculator> cost_model)
+  OptimizerMetadata(std::unique_ptr<AbstractCostModel> cost_model)
       : cost_model(std::move(cost_model)), timeout_limit(settings::SettingsManager::GetInt(
       settings::SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
@@ -40,7 +40,7 @@ class OptimizerMetadata {
   Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
-  std::unique_ptr<AbstractCostCalculator> cost_model;
+  std::unique_ptr<AbstractCostModel> cost_model;
   catalog::CatalogCache *catalog_cache;
   unsigned int timeout_limit;
   Timer<std::milli> timer;
