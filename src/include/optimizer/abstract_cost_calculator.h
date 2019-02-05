@@ -19,6 +19,19 @@ namespace optimizer {
 
 class Memo;
 
+// Default cost when cost model cannot compute correct cost.
+static constexpr double DEFAULT_COST = 1;
+
+// Estimate the cost of processing each row during a query.
+static constexpr double DEFAULT_TUPLE_COST = 0.01;
+
+// Estimate the cost of processing each index entry during an index scan.
+static constexpr double DEFAULT_INDEX_TUPLE_COST = 0.005;
+
+// Estimate the cost of processing each operator or function executed during a
+// query.
+static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
+
 class AbstractCostCalculator : public OperatorVisitor {
  public:
   virtual double CalculateCost(GroupExpression *gexpr, Memo *memo,

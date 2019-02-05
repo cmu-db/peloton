@@ -17,7 +17,6 @@
 #include "catalog/table_catalog.h"
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
-#include "optimizer/stats/cost.h"
 #include "optimizer/stats/stats_storage.h"
 #include "optimizer/stats/table_stats.h"
 
