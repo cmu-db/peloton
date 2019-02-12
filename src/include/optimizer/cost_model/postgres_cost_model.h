@@ -100,8 +100,6 @@ class PostgresCostModel : public AbstractCostModel {
     LOG_DEBUG("Right: %s | Rows: %d", GetTableName(op->right_keys).c_str(), right_child_rows);
     LOG_DEBUG("Cost: %f", output_cost_);
     LOG_DEBUG("--------------------------------");
-
-
   }
   void Visit(UNUSED_ATTRIBUTE const PhysicalLeftNLJoin *op) override {}
   void Visit(UNUSED_ATTRIBUTE const PhysicalRightNLJoin *op) override {}

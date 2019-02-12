@@ -45,9 +45,6 @@ TEST_F(PlanTest, PlanEqualityTest) {
   auto plan2 = OptimizerTestUtil::GeneratePlan(query2);
 
   EXPECT_EQ(*plan1, *plan2);
-
-  OptimizerTestUtil::PrintPlan(plan1);
-  OptimizerTestUtil::PrintPlan(plan2);
 }
 
 
@@ -181,9 +178,7 @@ TEST_F(PlanTest, TrivialTwoJoinOrderTestSmall2) {
   EXPECT_EQ(test2_table_name, right_scan->GetTable()->GetName().c_str());
 }
 
-// TODO: Run callgrind to figure out slowness
-// TODO: Why does this break
-TEST_F(PlanTest, DISABLED_PostgresTwoJoinOrderTestLarge) {
+TEST_F(PlanTest, PostgresTwoJoinOrderTestLarge) {
 
   // Set cost model to postgres cost model
   OptimizerTestUtil::SetCostModel(optimizer::CostModels::POSTGRES);
@@ -225,8 +220,7 @@ TEST_F(PlanTest, DISABLED_PostgresTwoJoinOrderTestLarge) {
   EXPECT_EQ(test1_table_name, right_scan->GetTable()->GetName().c_str());
 }
 
-//TODO: Verify correctness of this test
-TEST_F(PlanTest, DISABLED_PostgresThreeJoinOrderTestSmall) {
+TEST_F(PlanTest, PostgresThreeJoinOrderTestSmall) {
 
   // Set cost model to postgres cost model
   OptimizerTestUtil::SetCostModel(optimizer::CostModels::POSTGRES);
@@ -256,46 +250,35 @@ TEST_F(PlanTest, DISABLED_PostgresThreeJoinOrderTestSmall) {
 
   auto plan = OptimizerTestUtil::GeneratePlan(query);
 
-  EXPECT_TRUE(plan->GetPlanNodeType() == PlanNodeType::HASHJOIN);
+  EXPECT_EQ(PlanNodeType::NESTLOOP, plan->GetPlanNodeType());
   EXPECT_EQ(2, plan->GetChildren().size());
 
 
-  LOG_DEBUG("%s", plan->GetInfo().c_str());
+  OptimizerTestUtil::PrintPlan(plan);
 
-
-  // Get join Scan
-  EXPECT_EQ(PlanNodeType::HASHJOIN, plan->GetChildren()[0]->GetPlanNodeType());
-  EXPECT_EQ(2, plan->GetChildren()[0]->GetChildren().size());
-  auto left_join = plan->GetChildren()[0].get();
 
   // Get Left Scan
-  auto left_scan = dynamic_cast<peloton::planner::AbstractScan *>(left_join->GetChildren()[0].get());
+  auto left_scan = dynamic_cast<peloton::planner::AbstractScan *>(plan->GetChildren()[0].get());
   EXPECT_EQ(PlanNodeType::SEQSCAN, left_scan->GetPlanNodeType());
 
+  // Get right join Scan
+  EXPECT_EQ(PlanNodeType::HASHJOIN, plan->GetChildren()[1]->GetPlanNodeType());
+  EXPECT_EQ(2, plan->GetChildren()[1]->GetChildren().size());
+  auto right_join = plan->GetChildren()[1].get();
+
   // Get Middle Scan
-  auto middle_scan = dynamic_cast<peloton::planner::AbstractScan *>(left_join->GetChildren()[1]->GetChildren()[0].get());
+  auto middle_scan = dynamic_cast<peloton::planner::AbstractScan *>(right_join->GetChildren()[0].get());
   EXPECT_EQ(PlanNodeType::SEQSCAN, middle_scan->GetPlanNodeType());
 
   // Get Right Scan
-  auto right_scan = dynamic_cast<peloton::planner::AbstractScan *>(plan->GetChildren()[1]->GetChildren()[0].get());
+  EXPECT_EQ(PlanNodeType::HASH, right_join->GetChildren()[1]->GetPlanNodeType());
+  auto right_scan = dynamic_cast<peloton::planner::AbstractScan *>(right_join->GetChildren()[1]->GetChildren()[0].get());
   EXPECT_EQ(PlanNodeType::SEQSCAN, right_scan->GetPlanNodeType());
 
-  //TODO: Determine what the optimal ordering is
-  // Actually: (test 1 X test2) X (test 3)
-  EXPECT_EQ(test1_table_name, left_scan->GetTable()->GetName().c_str());
-  EXPECT_EQ(test2_table_name, middle_scan->GetTable()->GetName().c_str());
+  // Optimal Should be: (test2) x (test1 x test3)
+  EXPECT_EQ(test2_table_name, left_scan->GetTable()->GetName().c_str());
+  EXPECT_EQ(test1_table_name, middle_scan->GetTable()->GetName().c_str());
   EXPECT_EQ(test3_table_name, right_scan->GetTable()->GetName().c_str());
-
-//  // Get Right Scan
-//  EXPECT_EQ(PlanNodeType::HASH, plan->GetChildren()[1]->GetPlanNodeType());
-//  EXPECT_EQ(1, plan->GetChildren()[1]->GetChildren().size());
-//  auto right_scan =
-//      dynamic_cast<peloton::planner::AbstractScan *>(plan->GetChildren()[1]->GetChildren()[0].get());
-//  EXPECT_EQ(PlanNodeType::SEQSCAN, right_scan->GetPlanNodeType());
-//
-    // Check our join is
-//  EXPECT_EQ(test1_table_name, left_scan->GetTable()->GetName().c_str());
-//  EXPECT_EQ(test2_table_name, right_scan->GetTable()->GetName().c_str());
 }
 
 
