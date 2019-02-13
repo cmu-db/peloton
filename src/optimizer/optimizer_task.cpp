@@ -16,9 +16,8 @@
 #include "optimizer/optimizer_metadata.h"
 #include "optimizer/binding.h"
 #include "optimizer/child_property_deriver.h"
-#include "optimizer/cost_calculator.h"
-#include "optimizer/stats_calculator.h"
-#include "optimizer/child_stats_deriver.h"
+#include "optimizer/stats/stats_calculator.h"
+#include "optimizer/stats/child_stats_deriver.h"
 
 namespace peloton {
 namespace optimizer {
@@ -41,7 +40,6 @@ void OptimizerTask::ConstructValidRules(
     if (root_pattern_mismatch || already_explored || child_pattern_mismatch) {
       continue;
     }
-
     auto promise = rule->Promise(group_expr, context);
     if (promise > 0) valid_rules.emplace_back(rule.get(), promise);
   }
@@ -98,7 +96,7 @@ void OptimizeExpression::execute() {
                       GetRuleSet().GetImplementationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
-  LOG_TRACE("OptimizeExpression::execute() op %d, valid rules : %lu",
+  LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
             static_cast<int>(group_expr_->Op().GetType()), valid_rules.size());
   // Apply rule
   for (auto &r : valid_rules) {
@@ -171,7 +169,7 @@ void ExploreExpression::execute() {
 // ApplyRule
 //===--------------------------------------------------------------------===//
 void ApplyRule::execute() {
-  LOG_TRACE("ApplyRule::execute() ");
+  LOG_TRACE("ApplyRule::execute() for rule: %d", rule_->GetRuleIdx());
   if (group_expr_->HasRuleExplored(rule_)) return;
 
   GroupExprBindingIterator iterator(GetMemo(), group_expr_,
@@ -295,8 +293,7 @@ void OptimizeInputs::execute() {
       // Compute the cost of the root operator
       // 1. Collect stats needed and cache them in the group
       // 2. Calculate cost based on children's stats
-      CostCalculator cost_calculator;
-      cur_total_cost_ += cost_calculator.CalculateCost(
+      cur_total_cost_ += context_->metadata->cost_model->CalculateCost(
           group_expr_, &context_->metadata->memo, context_->metadata->txn);
     }
 
@@ -369,8 +366,7 @@ void OptimizeInputs::execute() {
           // Cost the enforced expression
           auto extended_prop_set =
               std::make_shared<PropertySet>(extended_output_properties);
-          CostCalculator cost_calculator;
-          cur_total_cost_ += cost_calculator.CalculateCost(
+          cur_total_cost_ += context_->metadata->cost_model->CalculateCost(
               memo_enforced_expr, &context_->metadata->memo,
               context_->metadata->txn);
 

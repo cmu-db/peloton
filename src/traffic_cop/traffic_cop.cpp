@@ -6,7 +6,7 @@
 //
 // Identification: src/traffic_cop/traffic_cop.cpp
 //
-// Copyright (c) 2015-17, Carnegie Mellon University Database Group
+// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,11 +30,11 @@ namespace tcop {
 TrafficCop::TrafficCop()
     : is_queuing_(false),
       rows_affected_(0),
-      optimizer_(new optimizer::Optimizer()),
+      optimizer_(new optimizer::Optimizer(optimizer::CostModels::TRIVIAL)),
       single_statement_txn_(true) {}
 
 TrafficCop::TrafficCop(void (*task_callback)(void *), void *task_callback_arg)
-    : optimizer_(new optimizer::Optimizer()),
+    : optimizer_(new optimizer::Optimizer(optimizer::CostModels::TRIVIAL)),
       single_statement_txn_(true),
       task_callback_(task_callback),
       task_callback_arg_(task_callback_arg) {}
