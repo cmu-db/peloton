@@ -16,8 +16,7 @@
 #include "common/harness.h"
 #include "sql/testing_sql_util.h"
 #include "parser/postgresparser.h"
-
-
+#include "planner/abstract_scan_plan.h"
 
 namespace peloton {
 namespace test {
@@ -42,6 +41,10 @@ class OptimizerTestUtil : public PelotonTest {
 
     // Call parent virtual function
     PelotonTest::TearDown();
+  }
+
+  void SetCostModel(optimizer::CostModels cost_model) {
+    optimizer_ = std::unique_ptr<optimizer::Optimizer>(new optimizer::Optimizer(cost_model));
   }
 
   // Creates the following table: table_name(a INT PRIMARY KEY, b DECIMAL, c VARCHAR)
@@ -85,6 +88,80 @@ class OptimizerTestUtil : public PelotonTest {
 
   std::shared_ptr<planner::AbstractPlan> GeneratePlan(const std::string query, concurrency::TransactionContext *txn) {
     return GeneratePlanHelper(optimizer_, query, txn);
+  }
+
+
+  std::string CreateTwoWayJoinQuery(const std::string &table_1,
+                                    const std::string &table_2,
+                                    const std::string &column_1,
+                                    const std::string &column_2) {
+    return CreateTwoWayJoinQuery(table_1, table_2, column_1, column_2, "", "");
+  }
+
+  std::string CreateTwoWayJoinQuery(const std::string &table_1,
+                                    const std::string &table_2,
+                                    const std::string &column_1,
+                                    const std::string &column_2,
+                                    const std::string &order_by_table,
+                                    const std::string &order_by_column) {
+    std::stringstream ss;
+    ss << "SELECT * FROM " << table_1 << ", " << table_2 << " WHERE " << table_1
+       << "." << column_1 << " = " << table_2 << "." << column_2;
+    if (!order_by_column.empty() and !order_by_table.empty()) {
+      ss << " ORDER BY " << order_by_table << "." << order_by_column;
+    }
+    ss << ";";
+    return ss.str();
+  }
+
+  std::string CreateThreeWayJoinQuery(const std::string &table_1,
+                                      const std::string &table_2,
+                                      const std::string &table_3,
+                                      const std::string &column_1,
+                                      const std::string &column_2,
+                                      const std::string &column_3) {
+    return CreateThreeWayJoinQuery(table_1, table_2, table_3, column_1,
+                                   column_2, column_3, "", "");
+  }
+
+  std::string CreateThreeWayJoinQuery(
+      const std::string &table_1, const std::string &table_2,
+      const std::string &table_3, const std::string &column_1,
+      const std::string &column_2, const std::string &column_3,
+      const std::string &order_by_table, const std::string &order_by_column) {
+    std::stringstream ss;
+    ss << "SELECT * FROM " << table_1 << ", " << table_2 << "," << table_3
+       << " WHERE " << table_1 << "." << column_1 << " = " << table_2 << "."
+       << column_2 << " AND " << table_2 << "." << column_2 << " = " << table_3
+       << "." << column_3;
+    if (!order_by_column.empty() and !order_by_table.empty()) {
+      ss << " ORDER BY " << order_by_table << "." << order_by_column;
+    }
+    ss << ";";
+    return ss.str();
+  }
+
+  void PrintPlan(std::shared_ptr<planner::AbstractPlan> plan, int level = 0) {
+    PrintPlan(plan.get(), level);
+  }
+
+  void PrintPlan(planner::AbstractPlan *plan, int level = 0) {
+    auto spacing = std::string(level, '\t');
+
+    if (plan->GetPlanNodeType() == PlanNodeType::SEQSCAN) {
+      auto scan = dynamic_cast<peloton::planner::AbstractScan *>(plan);
+      (void)scan; /* Used to avoid unused variable warning */
+      LOG_DEBUG("%s%s(%s)", spacing.c_str(), scan->GetInfo().c_str(),
+                scan->GetTable()->GetName().c_str());
+    } else {
+      LOG_DEBUG("%s%s", spacing.c_str(), plan->GetInfo().c_str());
+    }
+
+    for (size_t i = 0; i < plan->GetChildren().size(); i++) {
+      PrintPlan(plan->GetChildren()[i].get(), level + 1);
+    }
+
+    return;
   }
 
  private:

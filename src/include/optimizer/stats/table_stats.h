@@ -16,7 +16,7 @@
 
 #include "common/macros.h"
 #include "index/index.h"
-#include "optimizer/stats.h"
+#include "optimizer/stats/stats.h"
 #include "common/internal_types.h"
 #include "optimizer/stats/tuple_sampler.h"
 

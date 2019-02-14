@@ -2,15 +2,17 @@
 //
 //                         Peloton
 //
-// stats.cpp
+// stats.h
 //
-// Identification: src/optimizer/stats.cpp
+// Identification: src/include/optimizer/stats.h
 //
 // Copyright (c) 2015-16, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/stats.h"
+#pragma once
+
+#include "optimizer/stats/tuple_sample.h"
 
 namespace peloton {
 namespace optimizer {
@@ -18,6 +20,14 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Stats
 //===--------------------------------------------------------------------===//
+class Stats {
+ public:
+  Stats(TupleSample *sample) : sample_(sample){};
+  virtual ~Stats() {}
+
+ private:
+  TupleSample *sample_;
+};
 
 }  // namespace optimizer
 }  // namespace peloton

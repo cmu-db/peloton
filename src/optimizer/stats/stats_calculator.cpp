@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "optimizer/stats_calculator.h"
+#include "optimizer/stats/stats_calculator.h"
 
 #include <cmath>
 

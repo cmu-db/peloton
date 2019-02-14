@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "optimizer/abstract_optimizer.h"
+#include "optimizer/cost_model/abstract_cost_model.h"
 #include "optimizer/property_set.h"
 #include "optimizer/optimizer_metadata.h"
 
@@ -53,6 +54,8 @@ struct QueryInfo {
   std::shared_ptr<PropertySet> physical_props;
 };
 
+enum CostModels {DEFAULT, POSTGRES, TRIVIAL};
+
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
@@ -71,7 +74,7 @@ class Optimizer : public AbstractOptimizer {
   Optimizer(Optimizer &&) = delete;
   Optimizer &operator=(Optimizer &&) = delete;
 
-  Optimizer();
+  Optimizer(const CostModels cost_model = CostModels::DEFAULT);
 
   std::shared_ptr<planner::AbstractPlan> BuildPelotonPlanTree(
       const std::unique_ptr<parser::SQLStatementList> &parse_tree_list,
@@ -164,6 +167,7 @@ class Optimizer : public AbstractOptimizer {
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
   OptimizerMetadata metadata_;
+  std::unique_ptr<AbstractCostModel> cost_model_;
 };
 
 }  // namespace optimizer

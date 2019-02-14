@@ -13,7 +13,7 @@
 #pragma once
 
 #include "optimizer/operator_node.h"
-#include "optimizer/stats.h"
+#include "optimizer/stats/stats.h"
 #include "optimizer/util.h"
 #include "optimizer/property_set.h"
 #include "common/internal_types.h"

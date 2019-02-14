@@ -20,6 +20,9 @@
 
 #include "common/exception.h"
 
+#include "optimizer/cost_model/default_cost_model.h"
+#include "optimizer/cost_model/postgres_cost_model.h"
+#include "optimizer/cost_model/trivial_cost_model.h"
 #include "optimizer/binding.h"
 #include "optimizer/input_column_deriver.h"
 #include "optimizer/operator_visitor.h"
@@ -58,7 +61,25 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Optimizer
 //===--------------------------------------------------------------------===//
-Optimizer::Optimizer() {}
+Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) {
+
+  switch (cost_model) {
+    case CostModels::DEFAULT: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new DefaultCostModel));
+      break;
+    }
+    case CostModels::POSTGRES: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new PostgresCostModel));
+      break;
+    }
+    case CostModels::TRIVIAL: {
+      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new TrivialCostModel));
+      break;
+    }
+    default:
+      throw OptimizerException("Invalid cost model");
+  }
+}
 
 void Optimizer::OptimizeLoop(int root_group_id,
                              std::shared_ptr<PropertySet> required_props) {
@@ -136,7 +157,9 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
   }
 }
 
-void Optimizer::Reset() { metadata_ = OptimizerMetadata(); }
+void Optimizer::Reset() {
+  metadata_ = OptimizerMetadata(std::move(metadata_.cost_model));
+}
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
     parser::SQLStatement *tree, bool &is_ddl_stmt,
