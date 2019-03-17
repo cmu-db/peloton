@@ -6,6 +6,14 @@
 [![Jenkins Status](http://jenkins.db.cs.cmu.edu:8080/job/peloton/job/master/badge/icon)](http://jenkins.db.cs.cmu.edu:8080/job/peloton/)
 [![Coverage Status](https://coveralls.io/repos/github/cmu-db/peloton/badge.svg?branch=master)](https://coveralls.io/github/cmu-db/peloton?branch=master)
 
+## UPDATE 2019-03-17
+
+The Peloton project is **dead**. We have abandoned this repository and moved on to build a new DBMS. There are a several engineering techniques and designs that we learned from this first system on how to support autonomous operations that we are doing a much better job at implementing in the second system.
+
+We will not accept pull requests for this repository. We will also not respond to questions or problems that you may have with running with this software.
+
+We will announce the new system later in 2019.
+
 ## What Is Peloton?
 
 * A self-driving SQL database management system.
