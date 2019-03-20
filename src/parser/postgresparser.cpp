@@ -1526,31 +1526,35 @@ parser::CopyStatement *PostgresParser::CopyTransform(CopyStmt *root) {
 
   // Handle options
   ListCell *cell = nullptr;
-  for_each_cell(cell, root->options->head) {
-    auto *def_elem = reinterpret_cast<DefElem *>(cell->data.ptr_value);
 
-    // Check delimiter
-    if (strncmp(def_elem->defname, kDelimiterTok, sizeof(kDelimiterTok)) == 0) {
-      auto *delimiter_val = reinterpret_cast<value *>(def_elem->arg);
-      result->delimiter = *delimiter_val->val.str;
-    }
+  if (root->options != nullptr) {
+    for_each_cell(cell, root->options->head) {
+      auto *def_elem = reinterpret_cast<DefElem *>(cell->data.ptr_value);
 
-    // Check format
-    if (strncmp(def_elem->defname, kFormatTok, sizeof(kFormatTok)) == 0) {
-      auto *format_val = reinterpret_cast<value *>(def_elem->arg);
-      result->format = StringToExternalFileFormat(format_val->val.str);
-    }
+      // Check delimiter
+      if (strncmp(def_elem->defname, kDelimiterTok, sizeof(kDelimiterTok)) ==
+          0) {
+        auto *delimiter_val = reinterpret_cast<value *>(def_elem->arg);
+        result->delimiter = *delimiter_val->val.str;
+      }
 
-    // Check quote
-    if (strncmp(def_elem->defname, kQuoteTok, sizeof(kQuoteTok)) == 0) {
-      auto *quote_val = reinterpret_cast<value *>(def_elem->arg);
-      result->quote = *quote_val->val.str;
-    }
+      // Check format
+      if (strncmp(def_elem->defname, kFormatTok, sizeof(kFormatTok)) == 0) {
+        auto *format_val = reinterpret_cast<value *>(def_elem->arg);
+        result->format = StringToExternalFileFormat(format_val->val.str);
+      }
 
-    // Check escape
-    if (strncmp(def_elem->defname, kEscapeTok, sizeof(kEscapeTok)) == 0) {
-      auto *escape_val = reinterpret_cast<value *>(def_elem->arg);
-      result->escape = *escape_val->val.str;
+      // Check quote
+      if (strncmp(def_elem->defname, kQuoteTok, sizeof(kQuoteTok)) == 0) {
+        auto *quote_val = reinterpret_cast<value *>(def_elem->arg);
+        result->quote = *quote_val->val.str;
+      }
+
+      // Check escape
+      if (strncmp(def_elem->defname, kEscapeTok, sizeof(kEscapeTok)) == 0) {
+        auto *escape_val = reinterpret_cast<value *>(def_elem->arg);
+        result->escape = *escape_val->val.str;
+      }
     }
   }
 
