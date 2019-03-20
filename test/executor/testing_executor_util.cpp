@@ -440,7 +440,7 @@ storage::DataTable *TestingExecutorUtil::CreateTableUpdateCatalog(
                        std::move(table_schema),
                        table_name,
                        is_catalog,
-                       tuples_per_tilegroup_count);
+                       (uint32_t)tuples_per_tilegroup_count);
   txn_manager.CommitTransaction(txn);
 
   txn = txn_manager.BeginTransaction();

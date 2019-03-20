@@ -24,6 +24,7 @@
 namespace peloton {
 
 namespace storage {
+class Database;
 class DataTable;
 }
 
@@ -40,10 +41,6 @@ class StatsStorage {
   static StatsStorage *GetInstance();
 
   StatsStorage();
-
-  /* Functions for managing stats table and schema */
-
-  void CreateStatsTableInCatalog();
 
   /* Functions for adding, updating and quering stats */
 
@@ -72,6 +69,7 @@ class StatsStorage {
   /* Functions for triggerring stats collection */
 
   ResultType AnalyzeStatsForAllTables(
+      storage::Database *database,
       concurrency::TransactionContext *txn = nullptr);
 
   ResultType AnalyzeStatsForTable(

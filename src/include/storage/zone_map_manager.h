@@ -48,8 +48,6 @@ class ZoneMapManager {
 
   ZoneMapManager();
 
-  void CreateZoneMapTableInCatalog();
-
   void CreateZoneMapsForTable(storage::DataTable *table,
                               concurrency::TransactionContext *txn);
 
@@ -119,8 +117,6 @@ class ZoneMapManager {
   // Data Members
   //===--------------------------------------------------------------------===//
   std::unique_ptr<type::AbstractPool> pool_;
-
-  bool zone_map_table_exists;
 };
 
 }  // namespace storage

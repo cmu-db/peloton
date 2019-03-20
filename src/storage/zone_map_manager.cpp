@@ -17,6 +17,7 @@
 #include "catalog/database_catalog.h"
 #include "concurrency/transaction_context.h"
 #include "concurrency/transaction_manager_factory.h"
+#include "settings/settings_manager.h"
 #include "storage/storage_manager.h"
 #include "storage/data_table.h"
 #include "type/ephemeral_pool.h"
@@ -33,20 +34,7 @@ ZoneMapManager *ZoneMapManager::GetInstance() {
 }
 
 ZoneMapManager::ZoneMapManager() {
-  zone_map_table_exists = false;
   pool_.reset(new type::EphemeralPool());
-}
-
-/**
- * @brief The function creates the zone map table in catalog
- */
-void ZoneMapManager::CreateZoneMapTableInCatalog() {
-  LOG_DEBUG("Create the Zone Map table");
-  auto &txn_manager = concurrency::TransactionManagerFactory::GetInstance();
-  auto txn = txn_manager.BeginTransaction();
-  catalog::ZoneMapCatalog::GetInstance(txn);
-  txn_manager.CommitTransaction(txn);
-  zone_map_table_exists = true;
 }
 
 /**
@@ -283,7 +271,9 @@ bool ZoneMapManager::ShouldScanTileGroup(
  *
  * @return  True if the zone map table in catalog exists and vice versa
  */
-bool ZoneMapManager::ZoneMapTableExists() { return zone_map_table_exists; }
+bool ZoneMapManager::ZoneMapTableExists() {
+  return settings::SettingsManager::GetBool(settings::SettingId::zone_map);
+}
 
 }  // namespace storage
 }  // namespace peloton

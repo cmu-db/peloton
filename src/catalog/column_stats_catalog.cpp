@@ -21,17 +21,11 @@
 namespace peloton {
 namespace catalog {
 
-ColumnStatsCatalog *ColumnStatsCatalog::GetInstance(
-    concurrency::TransactionContext *txn) {
-  static ColumnStatsCatalog column_stats_catalog{txn};
-  return &column_stats_catalog;
-}
-
-ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
-    : AbstractCatalog(txn, "CREATE TABLE " CATALOG_DATABASE_NAME
+ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn,
+                                       const std::string &database_name)
+    : AbstractCatalog(txn, "CREATE TABLE " + database_name +
                            "." CATALOG_SCHEMA_NAME "." COLUMN_STATS_CATALOG_NAME
                            " ("
-                           "database_id    INT NOT NULL, "
                            "table_id       INT NOT NULL, "
                            "column_id      INT NOT NULL, "
                            "num_rows        INT NOT NULL, "
@@ -44,20 +38,20 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
                            "has_index         BOOLEAN);") {
   // unique key: (database_id, table_id, column_id)
   Catalog::GetInstance()->CreateIndex(txn,
-                                      CATALOG_DATABASE_NAME,
+                                      database_name,
                                       CATALOG_SCHEMA_NAME,
                                       COLUMN_STATS_CATALOG_NAME,
                                       COLUMN_STATS_CATALOG_NAME "_skey0",
-                                      {0, 1, 2},
+                                      {ColumnId::TABLE_ID, ColumnId::COLUMN_ID},
                                       true,
                                       IndexType::BWTREE);
   // non-unique key: (database_id, table_id)
   Catalog::GetInstance()->CreateIndex(txn,
-                                      CATALOG_DATABASE_NAME,
+                                      database_name,
                                       CATALOG_SCHEMA_NAME,
                                       COLUMN_STATS_CATALOG_NAME,
                                       COLUMN_STATS_CATALOG_NAME "_skey1",
-                                      {0, 1},
+                                      {ColumnId::TABLE_ID},
                                       false,
                                       IndexType::BWTREE);
 }
@@ -65,7 +59,6 @@ ColumnStatsCatalog::ColumnStatsCatalog(concurrency::TransactionContext *txn)
 ColumnStatsCatalog::~ColumnStatsCatalog() {}
 
 bool ColumnStatsCatalog::InsertColumnStats(concurrency::TransactionContext *txn,
-                                           oid_t database_id,
                                            oid_t table_id,
                                            oid_t column_id,
                                            std::string column_name,
@@ -80,7 +73,6 @@ bool ColumnStatsCatalog::InsertColumnStats(concurrency::TransactionContext *txn,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  auto val_db_id = type::ValueFactory::GetIntegerValue(database_id);
   auto val_table_id = type::ValueFactory::GetIntegerValue(table_id);
   auto val_column_id = type::ValueFactory::GetIntegerValue(column_id);
   auto val_num_row = type::ValueFactory::GetIntegerValue(num_rows);
@@ -110,7 +102,6 @@ bool ColumnStatsCatalog::InsertColumnStats(concurrency::TransactionContext *txn,
       type::ValueFactory::GetVarcharValue(column_name);
   type::Value val_has_index = type::ValueFactory::GetBooleanValue(has_index);
 
-  tuple->SetValue(ColumnId::DATABASE_ID, val_db_id, nullptr);
   tuple->SetValue(ColumnId::TABLE_ID, val_table_id, nullptr);
   tuple->SetValue(ColumnId::COLUMN_ID, val_column_id, nullptr);
   tuple->SetValue(ColumnId::NUM_ROWS, val_num_row, nullptr);
@@ -127,13 +118,11 @@ bool ColumnStatsCatalog::InsertColumnStats(concurrency::TransactionContext *txn,
 }
 
 bool ColumnStatsCatalog::DeleteColumnStats(concurrency::TransactionContext *txn,
-                                           oid_t database_id,
                                            oid_t table_id,
                                            oid_t column_id) {
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
@@ -141,7 +130,6 @@ bool ColumnStatsCatalog::DeleteColumnStats(concurrency::TransactionContext *txn,
 }
 
 std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(concurrency::TransactionContext *txn,
-                                                                             oid_t database_id,
                                                                              oid_t table_id,
                                                                              oid_t column_id) {
   std::vector<oid_t> column_ids(
@@ -151,7 +139,6 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(con
   oid_t index_offset = IndexId::SECONDARY_KEY_0;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(column_id).Copy());
 
@@ -194,7 +181,6 @@ std::unique_ptr<std::vector<type::Value>> ColumnStatsCatalog::GetColumnStats(con
 
 // Return value: number of column stats
 size_t ColumnStatsCatalog::GetTableStats(concurrency::TransactionContext *txn,
-                                         oid_t database_id,
                                          oid_t table_id,
                                          std::map<oid_t,
                               std::unique_ptr<std::vector<type::Value>>> &column_stats_map) {
@@ -206,7 +192,6 @@ size_t ColumnStatsCatalog::GetTableStats(concurrency::TransactionContext *txn,
   oid_t index_offset = IndexId::SECONDARY_KEY_1;  // Secondary key index
 
   std::vector<type::Value> values;
-  values.push_back(type::ValueFactory::GetIntegerValue(database_id).Copy());
   values.push_back(type::ValueFactory::GetIntegerValue(table_id).Copy());
 
   auto result_tiles =
