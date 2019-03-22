@@ -13,7 +13,9 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -51,6 +53,9 @@ class WorkerPool {
    * @return The number of worker threads assigned to this pool
    */
   uint32_t NumWorkers() const { return num_workers_; }
+
+  std::mutex cv_lock;
+  std::condition_variable not_empty;
 
  private:
   // The name of this pool
