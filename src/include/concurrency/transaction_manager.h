@@ -219,13 +219,19 @@ class TransactionManager {
     current_txn->SetResult(result);
   }
 
-  TransactionContext *BeginTransaction(const IsolationLevelType type) {
-    return BeginTransaction(0, type, false);
+  TransactionContext *BeginTransaction() { return BeginTransaction(false); }
+
+  TransactionContext *BeginTransaction(const size_t thread_id) {
+    return BeginTransaction(false, thread_id, isolation_level_);
   }
 
-  TransactionContext *BeginTransaction(const size_t thread_id = 0,
-                                const IsolationLevelType type = isolation_level_,
-                                bool read_only = false);
+  TransactionContext *BeginTransaction(const IsolationLevelType type) {
+    return BeginTransaction(false, 0, type);
+  }
+
+  TransactionContext *BeginTransaction(
+      bool read_only, const size_t thread_id = 0,
+      const IsolationLevelType type = isolation_level_);
 
   /**
    * @brief      Ends a transaction.

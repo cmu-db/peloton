@@ -619,6 +619,14 @@ ResultType TimestampOrderingTransactionManager::CommitTransaction(
     gc_object_set->emplace_back(database_oid, table_oid, index_oid);
   }
 
+  // see if we can end early
+  if (!current_txn->IsWritten()) {
+    LOG_TRACE("Transaction not yet written, ending transaction.");
+    log_manager.StopLogging();
+    EndTransaction(current_txn);
+    return ResultType::SUCCESS;
+  }
+
   // install everything.
   // 1. install a new version for update operations;
   // 2. install an empty version for delete operations;

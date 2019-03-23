@@ -44,11 +44,12 @@ class TransactionContext : public Printable {
   TransactionContext(TransactionContext const &) = delete;
 
  public:
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id);
+  TransactionContext(bool read_only, const size_t thread_id,
+                     const IsolationLevelType isolation, const cid_t &read_id);
 
-  TransactionContext(const size_t thread_id, const IsolationLevelType isolation,
-              const cid_t &read_id, const cid_t &commit_id);
+  TransactionContext(bool read_only, const size_t thread_id,
+                     const IsolationLevelType isolation, const cid_t &read_id,
+                     const cid_t &commit_id);
 
   /**
    * @brief      Destroys the object.
@@ -56,13 +57,14 @@ class TransactionContext : public Printable {
   ~TransactionContext() = default;
 
  private:
-  void Init(const size_t thread_id, const IsolationLevelType isolation,
-            const cid_t &read_id) {
-    Init(thread_id, isolation, read_id, read_id);
+  void Init(bool read_only, const size_t thread_id,
+            const IsolationLevelType isolation, const cid_t &read_id) {
+    Init(read_only, thread_id, isolation, read_id, read_id);
   }
 
-  void Init(const size_t thread_id, const IsolationLevelType isolation,
-            const cid_t &read_id, const cid_t &commit_id);
+  void Init(bool read_only, const size_t thread_id,
+            const IsolationLevelType isolation, const cid_t &read_id,
+            const cid_t &commit_id);
 
  public:
   //===--------------------------------------------------------------------===//
@@ -264,12 +266,11 @@ class TransactionContext : public Printable {
   }
 
   /**
-   * @brief      mark this context as read only
+   * @brief      Determines if already written.
    *
+   * @return     True if already written, False otherwise.
    */
-  void SetReadOnly() {
-    read_only_ = true;
-  }
+  bool IsWritten() const { return is_written_; }
 
   /**
    * @brief      Gets the isolation level.
