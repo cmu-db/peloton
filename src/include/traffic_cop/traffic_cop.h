@@ -142,6 +142,7 @@ class TrafficCop {
   executor::ExecutionResult p_status_;
 
   void SetDefaultDatabaseName(std::string default_database_name) {
+    // check before changing the value!
     default_database_name_ = std::move(default_database_name);
   }
 
