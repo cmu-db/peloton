@@ -905,52 +905,15 @@ oid_t DataTable::AddDefaultTileGroup(const size_t &active_tile_group_id) {
   return tile_group_id;
 }
 
-void DataTable::AddTileGroupWithOidForRecovery(const oid_t &tile_group_id) {
-  PELOTON_ASSERT(tile_group_id);
-
-  std::vector<catalog::Schema> schemas;
-  schemas.push_back(*schema);
-  std::shared_ptr<const Layout> layout = nullptr;
-
-  // The TileGroup for recovery is always added in ROW layout,
-  // This was a part of the previous design. If you are planning
-  // to change this, make sure the layout is added to the catalog
-  if (default_layout_->IsRowStore()) {
-    layout = default_layout_;
-  } else {
-    layout = std::shared_ptr<const Layout>(
-        new const Layout(schema->GetColumnCount()));
-  }
-
-  std::shared_ptr<TileGroup> tile_group(TileGroupFactory::GetTileGroup(
-      database_oid, table_oid, tile_group_id, this, schemas, layout,
-      tuples_per_tilegroup_));
-
-  auto tile_groups_exists = tile_groups_.Contains(tile_group_id);
-
-  if (tile_groups_exists == false) {
-    tile_groups_.Append(tile_group_id);
-
-    LOG_TRACE("Added a tile group ");
-
-    // add tile group metadata in locator
-    storage::StorageManager::GetInstance()->AddTileGroup(tile_group_id,
-                                                         tile_group);
-
-    // we must guarantee that the compiler always add tile group before adding
-    // tile_group_count_.
-    COMPILER_MEMORY_FENCE;
-
-    tile_group_count_++;
-
-    LOG_TRACE("Recording tile group : %u ", tile_group_id);
-  }
-}
-
 // NOTE: This function is only used in test cases.
 void DataTable::AddTileGroup(const std::shared_ptr<TileGroup> &tile_group) {
   size_t active_tile_group_id = number_of_tuples_ % active_tilegroup_count_;
+  AddTileGroup(tile_group, active_tile_group_id);
+}
 
+void DataTable::AddTileGroup(
+    const std::shared_ptr<TileGroup> &tile_group,
+    const size_t &active_tile_group_id) {
   active_tile_groups_[active_tile_group_id] = tile_group;
 
   oid_t tile_group_id = tile_group->GetTileGroupId();
@@ -1004,8 +967,10 @@ void DataTable::DropTileGroups() {
   }
 
   // Clear array
+  active_tile_groups_.clear();
   tile_groups_.Clear();
 
+  active_tile_groups_.resize(active_tilegroup_count_);
   tile_group_count_ = 0;
 }
 

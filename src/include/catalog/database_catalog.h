@@ -43,7 +43,8 @@ class DatabaseCatalogEntry {
 
  public:
   DatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                       executor::LogicalTile *tile);
+                        executor::LogicalTile *tile,
+                        int tupleId = 0);
 
   void EvictAllTableCatalogEntries();
 
@@ -105,6 +106,7 @@ class DatabaseCatalog : public AbstractCatalog {
   friend class TableCatalog;
   friend class CatalogCache;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   ~DatabaseCatalog();
@@ -132,11 +134,16 @@ class DatabaseCatalog : public AbstractCatalog {
   //===--------------------------------------------------------------------===//
   // Read Related API
   //===--------------------------------------------------------------------===//
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                                                                oid_t database_oid);
+  std::shared_ptr<DatabaseCatalogEntry>
+  GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                          oid_t database_oid);
 
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                                                                const std::string &database_name);
+  std::shared_ptr<DatabaseCatalogEntry>
+  GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                          const std::string &database_name);
+
+  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogEntry>>
+  GetDatabaseCatalogEntries(concurrency::TransactionContext *txn);
 
   DatabaseCatalog(concurrency::TransactionContext *txn,
                   storage::Database *pg_catalog,

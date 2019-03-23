@@ -80,7 +80,7 @@ bool TriggerCatalog::InsertTrigger(concurrency::TransactionContext *txn,
   std::unique_ptr<storage::Tuple> tuple(
       new storage::Tuple(catalog_table_->GetSchema(), true));
 
-  LOG_INFO("type of trigger inserted:%d", trigger_type);
+  LOG_TRACE("type of trigger inserted:%d", trigger_type);
 
   auto val0 = type::ValueFactory::GetIntegerValue(GetNextOid());
   auto val1 = type::ValueFactory::GetIntegerValue(table_oid);
@@ -182,9 +182,9 @@ std::unique_ptr<trigger::TriggerList> TriggerCatalog::GetTriggersByType(concurre
                              values);
   // carefull! the result tile could be null!
   if (result_tiles == nullptr) {
-    LOG_INFO("no trigger on table %d", table_oid);
+    LOG_TRACE("no trigger on table %d", table_oid);
   } else {
-    LOG_INFO("size of the result tiles = %lu", result_tiles->size());
+    LOG_TRACE("size of the result tiles = %lu", result_tiles->size());
   }
 
   // create the trigger list

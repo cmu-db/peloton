@@ -56,7 +56,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
         table_name = delete_stmt.GetTableName();
         schema_name = delete_stmt.GetSchemaName();
       }
-      auto indexes_map = catalog_cache.GetDatabaseObject(db_name)
+      auto indexes_map = catalog_cache.GetDatabaseCatalogEntry(db_name)
           ->GetTableCatalogEntry(table_name, schema_name)
           ->GetIndexCatalogEntries();
       for (auto &index : indexes_map) {
@@ -69,7 +69,7 @@ const std::set<oid_t> PlanUtil::GetAffectedIndexes(
       db_name = update_stmt.table->GetDatabaseName();
       table_name = update_stmt.table->GetTableName();
       schema_name = update_stmt.table->GetSchemaName();
-      auto table_object = catalog_cache.GetDatabaseObject(db_name)
+      auto table_object = catalog_cache.GetDatabaseCatalogEntry(db_name)
           ->GetTableCatalogEntry(table_name, schema_name);
 
       auto &update_clauses = update_stmt.updates;
@@ -133,7 +133,7 @@ const std::vector<col_triplet> PlanUtil::GetIndexableColumns(
       try {
         auto plan = optimizer->BuildPelotonPlanTree(sql_stmt_list, txn);
 
-        auto db_object = catalog_cache.GetDatabaseObject(db_name);
+        auto db_object = catalog_cache.GetDatabaseCatalogEntry(db_name);
         database_id = db_object->GetDatabaseOid();
 
         // Perform a breadth first search on plan tree

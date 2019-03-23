@@ -37,6 +37,7 @@ size_t CONNECTION_THREAD_COUNT = 1;
 size_t LOGGING_THREAD_COUNT = 1;
 size_t GC_THREAD_COUNT = 1;
 size_t EPOCH_THREAD_COUNT = 1;
+size_t CHECKPOINTING_THREAD_COUNT = 1;
 
 //===--------------------------------------------------------------------===//
 // DatePart <--> String Utilities
@@ -2725,8 +2726,11 @@ std::string CheckpointingTypeToString(CheckpointingType type) {
     case CheckpointingType::OFF: {
       return "OFF";
     }
-    case CheckpointingType::ON: {
-      return "ON";
+    case CheckpointingType::LOGICAL: {
+      return "LOGICAL";
+    }
+    case CheckpointingType::TIMESTAMP: {
+      return "TIMESTAMP";
     }
     default: {
       throw ConversionException(StringUtil::Format(
@@ -2743,8 +2747,10 @@ CheckpointingType StringToCheckpointingType(const std::string &str) {
     return CheckpointingType::INVALID;
   } else if (upper_str == "OFF") {
     return CheckpointingType::OFF;
-  } else if (upper_str == "ON") {
-    return CheckpointingType::ON;
+  } else if (upper_str == "LOGICAL") {
+    return CheckpointingType::LOGICAL;
+  } else if (upper_str == "TIMESTAMP") {
+    return CheckpointingType::TIMESTAMP;
   } else {
     throw ConversionException(StringUtil::Format(
         "No CheckpointingType conversion from string '%s'", upper_str.c_str()));

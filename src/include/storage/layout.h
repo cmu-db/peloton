@@ -16,6 +16,7 @@
 
 #include "common/internal_types.h"
 #include "common/printable.h"
+#include "type/serializeio.h"
 
 namespace peloton {
 
@@ -70,6 +71,9 @@ class Layout : public Printable {
 
   /** @brief  Check whether this layout is a hybrid store. */
   bool IsHybridStore() const { return (layout_type_ == LayoutType::HYBRID); }
+
+  /** @brief  Return the layout_type_ of this object. */
+  LayoutType GetLayoutType() const { return layout_type_; }
 
   /** @brief  Return the layout_oid_ of this object. */
   oid_t GetOid() const { return layout_oid_; }

@@ -26,11 +26,14 @@ namespace peloton {
 namespace catalog {
 
 DatabaseCatalogEntry::DatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                                           executor::LogicalTile *tile)
-    : database_oid_(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_OID)
-                       .GetAs<oid_t>()),
-      database_name_(tile->GetValue(0, DatabaseCatalog::ColumnId::DATABASE_NAME)
-                        .ToString()),
+                                           executor::LogicalTile *tile,
+                                           int tupleId)
+    : database_oid_(
+          tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_OID)
+              .GetAs<oid_t>()),
+      database_name_(
+          tile->GetValue(tupleId, DatabaseCatalog::ColumnId::DATABASE_NAME)
+              .ToString()),
       table_catalog_entries_cache_(),
       table_catalog_entries_cache_by_name(),
       valid_table_catalog_entries(false),
@@ -180,7 +183,7 @@ DatabaseCatalogEntry::GetTableCatalogEntries(const std::string &schema_name) {
     // insert every table object into cache
     pg_table->GetTableCatalogEntries(txn_);
   }
-  // make sure to check IsValidTableObjects() before getting table objects
+  // make sure to check IsValidTableCatalogEntries() before getting table objects
   PELOTON_ASSERT(valid_table_catalog_entries);
   std::vector<std::shared_ptr<TableCatalogEntry>> result;
   for (auto it : table_catalog_entries_cache_) {
@@ -206,7 +209,7 @@ DatabaseCatalogEntry::GetTableCatalogEntries(bool cached_only) {
                         ->GetTableCatalog();
     return pg_table->GetTableCatalogEntries(txn_);
   }
-  // make sure to check IsValidTableObjects() before getting table objects
+  // make sure to check IsValidTableCatalogEntries() before getting table objects
   PELOTON_ASSERT(valid_table_catalog_entries);
   return table_catalog_entries_cache_;
 }
@@ -324,7 +327,7 @@ bool DatabaseCatalog::DeleteDatabase(concurrency::TransactionContext *txn, oid_t
   values.push_back(type::ValueFactory::GetIntegerValue(database_oid).Copy());
 
   // evict cache
-  txn->catalog_cache.EvictDatabaseObject(database_oid);
+  txn->catalog_cache.EvictDatabaseCatalogEntry(database_oid);
 
   return DeleteWithIndexScan(txn, index_offset, values);
 }
@@ -336,7 +339,7 @@ std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid);
+  auto database_object = txn->catalog_cache.GetDatabaseCatalogEntry(database_oid);
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
@@ -355,7 +358,7 @@ std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
     auto database_object =
         std::make_shared<DatabaseCatalogEntry>(txn, (*result_tiles)[0].get());
     // insert into cache
-    bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+    bool success = txn->catalog_cache.InsertDatabaseCatalogEntry(database_object);
     PELOTON_ASSERT(success == true);
     (void)success;
     return database_object;
@@ -379,7 +382,7 @@ std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_name);
+  auto database_object = txn->catalog_cache.GetDatabaseCatalogEntry(database_name);
   if (database_object) return database_object;
 
   // cache miss, get from pg_database
@@ -400,7 +403,7 @@ std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
         std::make_shared<DatabaseCatalogEntry>(txn, (*result_tiles)[0].get());
     if (database_object) {
       // insert into cache
-      bool success = txn->catalog_cache.InsertDatabaseObject(database_object);
+      bool success = txn->catalog_cache.InsertDatabaseCatalogEntry(database_object);
       PELOTON_ASSERT(success == true);
       (void)success;
     }
@@ -409,6 +412,36 @@ std::shared_ptr<DatabaseCatalogEntry> DatabaseCatalog::GetDatabaseCatalogEntry(
 
   // return empty object if not found
   return nullptr;
+}
+
+std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogEntry>>
+DatabaseCatalog::GetDatabaseCatalogEntries(concurrency::TransactionContext *txn) {
+  if (txn == nullptr) {
+    throw CatalogException("Transaction is invalid!");
+  }
+
+  // try get from cache
+  if (txn->catalog_cache.IsValidDatabaseCatalogEntries()) {
+    return txn->catalog_cache.GetDatabaseCatalogEntries();
+  }
+
+  // get from pg_database
+  std::vector<oid_t> column_ids(all_column_ids_);
+  auto result_tiles = this->GetResultWithSeqScan(txn, nullptr, column_ids);
+
+  for (auto &tile : (*result_tiles)) {
+    for (auto tuple_id : *tile) {
+      auto database_object =
+          std::make_shared<DatabaseCatalogEntry>(txn, tile.get(), tuple_id);
+      if (database_object) {
+        // insert into cache
+        txn->catalog_cache.InsertDatabaseCatalogEntry(database_object);
+      }
+    }
+  }
+
+  txn->catalog_cache.SetValidDatabaseCatalogEntries(true);
+  return txn->catalog_cache.GetDatabaseCatalogEntries();
 }
 
 }  // namespace catalog

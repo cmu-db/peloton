@@ -50,6 +50,8 @@ class LanguageCatalogEntry {
 };
 
 class LanguageCatalog : public AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   ~LanguageCatalog();
 

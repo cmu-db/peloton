@@ -978,8 +978,9 @@ std::ostream &operator<<(std::ostream &os, const LogRecordType &type);
 
 enum class CheckpointingType {
   INVALID = INVALID_TYPE_ID,
-  OFF = 1,  // turn off GC
-  ON = 2    // turn on GC
+  OFF = 1,  // turn off checkpoints
+  LOGICAL = 2,  // turn on logical checkpoints
+  TIMESTAMP = 3    // turn on timestamp checkpoints
 };
 std::string CheckpointingTypeToString(CheckpointingType type);
 CheckpointingType StringToCheckpointingType(const std::string &str);
@@ -1197,6 +1198,7 @@ extern size_t CONNECTION_THREAD_COUNT;
 extern size_t LOGGING_THREAD_COUNT;
 extern size_t GC_THREAD_COUNT;
 extern size_t EPOCH_THREAD_COUNT;
+extern size_t CHECKPOINTING_THREAD_COUNT;
 
 //===--------------------------------------------------------------------===//
 // TupleMetadata

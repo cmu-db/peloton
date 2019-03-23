@@ -42,6 +42,8 @@ namespace peloton {
 namespace catalog {
 
 class QueryMetricsCatalog : public AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   QueryMetricsCatalog(concurrency::TransactionContext *txn,
                       const std::string &database_name);

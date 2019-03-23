@@ -40,6 +40,10 @@ namespace index {
 class Index;
 }  // namespace index
 
+namespace logging {
+class TimestampCheckpointManager;
+}  // namespace logging
+
 namespace storage {
 class Database;
 class DataTable;
@@ -78,6 +82,8 @@ struct FunctionData {
 };
 
 class Catalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   // Global Singleton
   static Catalog *GetInstance();
@@ -303,11 +309,17 @@ class Catalog {
    * get it from storage layer using table_oid,
    * throw exception and abort txn if not exists/invisible
    * */
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                                                                const std::string &database_name);
+  std::shared_ptr<DatabaseCatalogEntry>
+  GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                          const std::string &database_name);
 
-  std::shared_ptr<DatabaseCatalogEntry> GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
-                                                                oid_t database_oid);
+  std::shared_ptr<DatabaseCatalogEntry>
+  GetDatabaseCatalogEntry(concurrency::TransactionContext *txn,
+                          oid_t database_oid);
+
+  std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogEntry>>
+  GetDatabaseCatalogEntries(concurrency::TransactionContext *txn,
+                            bool cached_only = false);
 
   /* Check table from pg_table with table_name using txn,
    * get it from storage layer using table_oid,
@@ -325,7 +337,8 @@ class Catalog {
   /*
    * Using database oid to get system catalog object
    */
-  std::shared_ptr<SystemCatalogs> GetSystemCatalogs(oid_t database_oid);
+    std::shared_ptr<SystemCatalogs> GetSystemCatalogs(oid_t database_oid);
+
   //===--------------------------------------------------------------------===//
   // DEPRECATED FUNCTIONS
   //===--------------------------------------------------------------------===//

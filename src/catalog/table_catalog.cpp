@@ -611,8 +611,8 @@ bool TableCatalog::DeleteTable(concurrency::TransactionContext *txn, oid_t table
   values.push_back(type::ValueFactory::GetIntegerValue(table_oid).Copy());
 
   // evict from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid_,
-  		                                                        table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableCatalogEntry(database_oid_,
+                                                                    table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance(nullptr,
@@ -637,8 +637,8 @@ std::shared_ptr<TableCatalogEntry> TableCatalog::GetTableCatalogEntry(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid_,
-  		                                                        table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableCatalogEntry(database_oid_,
+                                                                    table_oid);
   if (table_object) return table_object;
 
   // cache miss, get from pg_table
@@ -691,7 +691,7 @@ std::shared_ptr<TableCatalogEntry> TableCatalog::GetTableCatalogEntry(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto database_object = txn->catalog_cache.GetDatabaseObject(database_oid_);
+  auto database_object = txn->catalog_cache.GetDatabaseCatalogEntry(database_oid_);
   if (database_object) {
     auto table_object =
         database_object->GetTableCatalogEntry(table_name, schema_name, true);
@@ -798,8 +798,8 @@ bool TableCatalog::UpdateVersionId(concurrency::TransactionContext *txn,
       type::ValueFactory::GetIntegerValue(update_val).Copy());
 
   // get table object, then evict table object
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid_,
-  		                                                        table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableCatalogEntry(database_oid_,
+                                                                    table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance(nullptr,
@@ -836,8 +836,8 @@ bool TableCatalog::UpdateDefaultLayoutOid(concurrency::TransactionContext *txn,
       type::ValueFactory::GetIntegerValue(update_val).Copy());
 
   // get table object, then evict table object
-  auto table_object = txn->catalog_cache.GetCachedTableObject(database_oid_,
-  		                                                        table_oid);
+  auto table_object = txn->catalog_cache.GetCachedTableCatalogEntry(database_oid_,
+                                                                    table_oid);
   if (table_object) {
     auto database_object =
         DatabaseCatalog::GetInstance(nullptr,

@@ -31,6 +31,10 @@ namespace expression {
 class AbstractExpression;
 }
 
+namespace logging {
+class TimestampCheckpointManager;
+}
+
 namespace storage {
 class Database;
 class DataTable;
@@ -40,6 +44,7 @@ class Tuple;
 namespace catalog {
 
 class AbstractCatalog {
+
  public:
   virtual ~AbstractCatalog() {}
 

@@ -457,7 +457,8 @@ TEST_F(InternalTypesTests, LoggingTypeTest) {
 
 TEST_F(InternalTypesTests, CheckpointingTypeTest) {
   std::vector<CheckpointingType> list = {
-      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::ON
+      CheckpointingType::INVALID, CheckpointingType::OFF, CheckpointingType::LOGICAL,
+      CheckpointingType::TIMESTAMP
   };
 
   // Make sure that ToString and FromString work

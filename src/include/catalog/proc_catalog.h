@@ -77,6 +77,8 @@ class ProcCatalogEntry {
 // The pg_proc catalog table.
 //===----------------------------------------------------------------------===//
 class ProcCatalog : public AbstractCatalog {
+  friend class logging::TimestampCheckpointManager;
+
  public:
   ~ProcCatalog();
 

@@ -71,6 +71,7 @@ class IndexCatalog : public AbstractCatalog {
   friend class IndexCatalogEntry;
   friend class TableCatalogEntry;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   IndexCatalog(concurrency::TransactionContext *txn,

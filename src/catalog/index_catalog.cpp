@@ -186,12 +186,12 @@ bool IndexCatalog::DeleteIndex(concurrency::TransactionContext *txn,
   std::vector<type::Value> values;
   values.push_back(type::ValueFactory::GetIntegerValue(index_oid).Copy());
 
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-                                                              index_oid);
+  auto index_object = txn->catalog_cache.GetCachedIndexCatalogEntry(database_oid,
+                                                                    index_oid);
   if (index_object) {
     auto table_object =
-        txn->catalog_cache.GetCachedTableObject(database_oid,
-                                                index_object->GetTableOid());
+        txn->catalog_cache.GetCachedTableCatalogEntry(database_oid,
+                                                      index_object->GetTableOid());
     table_object->EvictAllIndexCatalogEntries();
   }
 
@@ -206,8 +206,8 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexCatalogEntry(
     throw CatalogException("Transaction is invalid!");
   }
   // try get from cache
-  auto index_object = txn->catalog_cache.GetCachedIndexObject(database_oid,
-                                                              index_oid);
+  auto index_object = txn->catalog_cache.GetCachedIndexCatalogEntry(database_oid,
+                                                                    index_oid);
   if (index_object) {
     return index_object;
   }
@@ -254,9 +254,9 @@ std::shared_ptr<IndexCatalogEntry> IndexCatalog::GetIndexCatalogEntry(
   }
   // try get from cache
   auto index_object =
-      txn->catalog_cache.GetCachedIndexObject(database_name,
-                                              schema_name,
-                                              index_name);
+      txn->catalog_cache.GetCachedIndexCatalogEntry(database_name,
+                                                    schema_name,
+                                                    index_name);
   if (index_object) {
     return index_object;
   }

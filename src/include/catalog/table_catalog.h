@@ -181,6 +181,7 @@ class TableCatalog : public AbstractCatalog {
   friend class LayoutCatalog;
   friend class ConstraintCatalog;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   TableCatalog(concurrency::TransactionContext *txn,

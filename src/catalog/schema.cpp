@@ -21,11 +21,10 @@ namespace peloton {
 namespace catalog {
 
 // Helper function for creating TupleSchema
-void Schema::CreateTupleSchema(
-    const std::vector<type::TypeId> &column_types,
-    const std::vector<oid_t> &column_lengths,
-    const std::vector<std::string> &column_names,
-    const std::vector<bool> &is_inlined) {
+void Schema::CreateTupleSchema(const std::vector<type::TypeId> &column_types,
+                               const std::vector<oid_t> &column_lengths,
+                               const std::vector<std::string> &column_names,
+                               const std::vector<bool> &is_inlined) {
   bool tup_is_inlined = true;
   oid_t num_columns = column_types.size();
   oid_t column_offset = 0;

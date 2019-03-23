@@ -54,6 +54,7 @@ class SchemaCatalogEntry {
 class SchemaCatalog : public AbstractCatalog {
   friend class SchemaCatalogEntry;
   friend class Catalog;
+  friend class logging::TimestampCheckpointManager;
 
  public:
   SchemaCatalog(concurrency::TransactionContext *txn,

@@ -958,7 +958,8 @@ ResultType Catalog::AddUniqueConstraint(concurrency::TransactionContext *txn,
                     ->GetSchema();
 
   // Create index
-  std::stringstream index_name(table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << table_object->GetTableName();
   for (auto column_id : column_ids)
     index_name << "_" + schema->GetColumn(column_id).GetName();
   index_name << "_UNIQ";
@@ -1033,7 +1034,8 @@ ResultType Catalog::AddForeignKeyConstraint(concurrency::TransactionContext *txn
                                 ->GetTableCatalogEntry(txn, src_table_oid);
   auto src_schema = src_table->GetSchema();
 
-  std::stringstream index_name(src_table_object->GetTableName());
+  std::stringstream index_name;
+  index_name << src_table_object->GetTableName();
   for (auto col_id : src_col_ids)
     index_name << "_" << src_schema->GetColumn(col_id).GetName();
   index_name << "_fkey";
@@ -1658,6 +1660,26 @@ std::shared_ptr<DatabaseCatalogEntry> Catalog::GetDatabaseCatalogEntry(
   }
 
   return database_object;
+}
+
+/* Get database catalog object from cache (cached_only == true),
+ * or all the way from storage (cached_only == false)
+ * throw exception and abort txn if not exists/invisible
+ * */
+std::unordered_map<oid_t, std::shared_ptr<DatabaseCatalogEntry>>
+Catalog::GetDatabaseCatalogEntries(concurrency::TransactionContext *txn,
+                                   bool cached_only) {
+  if (txn == nullptr) {
+    throw CatalogException("Do not have transaction to get database objects");
+  }
+
+  if (!cached_only && !txn->catalog_cache.valid_database_catalog_entry_) {
+    // cache miss get from pg_table
+    return DatabaseCatalog::GetInstance()->GetDatabaseCatalogEntries(txn);
+  }
+  // make sure to check IsValidTableObjects() before getting table objects
+  PELOTON_ASSERT(txn->catalog_cache.valid_database_catalog_entry_);
+  return txn->catalog_cache.database_catalog_entries_cache_;
 }
 
 /* Check table from pg_table with table_name  & schema_name using txn,

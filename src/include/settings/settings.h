@@ -132,6 +132,22 @@ SETTING_int(min_parallel_table_scan_size,
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// CHECKPOINTS
+//===----------------------------------------------------------------------===//
+
+SETTING_bool(checkpointing,
+             "Enable Checkpointing and recovery (default: false)", false,
+             false, false)
+
+SETTING_int(checkpoint_interval,
+            "Checkpoint interval in seconds (default: 30 second)", 30,
+            0, 31536000, false, false)
+
+SETTING_string(checkpoint_dir,
+               "Direcotry for checkpoints (default: ./checkpoints)",
+               "./data/checkpoints", false, false)
+
+//===----------------------------------------------------------------------===//
 // ERROR REPORTING AND LOGGING
 //===----------------------------------------------------------------------===//
 
@@ -229,11 +245,9 @@ SETTING_bool(hash_join_bloom_filter,
 
 SETTING_int(task_execution_timeout,
             "Maximum allowed length of time (in ms) for task "
-                "execution step of optimizer, "
-                "assuming one plan has been found (default 5000)",
-            5000,
-	    1000, 60000,
-	    true, true)
+            "execution step of optimizer, "
+            "assuming one plan has been found (default 5000)",
+            5000, 1000, 60000, true, true)
 
 //===----------------------------------------------------------------------===//
 // GENERAL
