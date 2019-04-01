@@ -27,6 +27,8 @@ class AggregatePlan;
 
 namespace optimizer {
 class OperatorExpression;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
 }
 
@@ -44,8 +46,9 @@ class InputColumnDeriver : public OperatorVisitor {
   std::pair<std::vector<expression::AbstractExpression *>,
             std::vector<std::vector<expression::AbstractExpression *>>>
   DeriveInputColumns(
-      GroupExpression *gexpr, std::shared_ptr<PropertySet> properties,
-      std::vector<expression::AbstractExpression *> required_cols, Memo *memo);
+      GroupExpression<Operator,OpType,OperatorExpression> *gexpr, std::shared_ptr<PropertySet> properties,
+      std::vector<expression::AbstractExpression *> required_cols,
+      Memo<Operator,OpType,OperatorExpression> *memo);
 
   void Visit(const DummyScan *) override;
 
@@ -108,8 +111,8 @@ class InputColumnDeriver : public OperatorVisitor {
    * property
    */
   void Passdown();
-  GroupExpression *gexpr_;
-  Memo *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
 
   /**
    * @brief The derived output columns and input columns, note that the current

@@ -21,15 +21,19 @@ class AbstractExpression;
 }
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
+
+class OperatorExpression;
 
 // Derive child stats that has not yet been calculated for a logical group
 // expression
 class ChildStatsDeriver : public OperatorVisitor {
  public:
   std::vector<ExprSet> DeriveInputStats(
-      GroupExpression *gexpr,
-      ExprSet required_cols, Memo *memo);
+      GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+      ExprSet required_cols,
+      Memo<Operator,OpType,OperatorExpression> *memo);
 
   void Visit(const LogicalQueryDerivedGet *) override;
   void Visit(const LogicalInnerJoin *) override;
@@ -43,8 +47,8 @@ class ChildStatsDeriver : public OperatorVisitor {
   void PassDownRequiredCols();
   void PassDownColumn(expression::AbstractExpression* col);
   ExprSet required_cols_;
-  GroupExpression *gexpr_;
-  Memo *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
 
   std::vector<ExprSet> output_;
 };

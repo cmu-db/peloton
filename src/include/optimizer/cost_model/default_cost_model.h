@@ -23,14 +23,17 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
+
 // Derive cost for a physical group expression
 class DefaultCostModel : public AbstractCostModel {
  public:
   DefaultCostModel(){};
 
-  double CalculateCost(GroupExpression *gexpr, Memo *memo,
-                                       concurrency::TransactionContext *txn) {
+  double CalculateCost(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                       Memo<Operator,OpType,OperatorExpression> *memo,
+                       concurrency::TransactionContext *txn) {
     gexpr_ = gexpr;
     memo_ = memo;
     txn_ = txn;
@@ -151,8 +154,8 @@ class DefaultCostModel : public AbstractCostModel {
     return child_num_rows * DEFAULT_TUPLE_COST;
   }
 
-  GroupExpression *gexpr_;
-  Memo *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
   concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
 };

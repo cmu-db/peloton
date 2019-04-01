@@ -13,10 +13,12 @@
 #pragma once
 #include <memory>
 #include "optimizer/operator_visitor.h"
+#include "optimizer/operator_expression.h"
 
 namespace peloton {
 
 namespace optimizer {
+template <class Node, class OpType, class OperatorExpr>
 class Memo;
 }
 
@@ -33,8 +35,10 @@ class ChildPropertyDeriver : public OperatorVisitor {
  public:
   std::vector<std::pair<std::shared_ptr<PropertySet>,
                         std::vector<std::shared_ptr<PropertySet>>>>
-  GetProperties(GroupExpression *gexpr,
-                std::shared_ptr<PropertySet> requirements, Memo *memo);
+
+  GetProperties(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                std::shared_ptr<PropertySet> requirements,
+                Memo<Operator,OpType,OperatorExpression> *memo);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -74,8 +78,8 @@ class ChildPropertyDeriver : public OperatorVisitor {
    * @brief We need the memo and gexpr because some property may depend on
    *  child's schema
    */
-  Memo *memo_;
-  GroupExpression *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
 };
 
 }  // namespace optimizer

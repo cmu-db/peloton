@@ -65,15 +65,15 @@ Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) {
 
   switch (cost_model) {
     case CostModels::DEFAULT: {
-      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new DefaultCostModel));
+      metadata_ = OptimizerMetadata<Operator,OpType,OperatorExpression>(std::unique_ptr<AbstractCostModel>(new DefaultCostModel));
       break;
     }
     case CostModels::POSTGRES: {
-      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new PostgresCostModel));
+      metadata_ = OptimizerMetadata<Operator,OpType,OperatorExpression>(std::unique_ptr<AbstractCostModel>(new PostgresCostModel));
       break;
     }
     case CostModels::TRIVIAL: {
-      metadata_ = OptimizerMetadata(std::unique_ptr<AbstractCostModel>(new TrivialCostModel));
+      metadata_ = OptimizerMetadata<Operator,OpType,OperatorExpression>(std::unique_ptr<AbstractCostModel>(new TrivialCostModel));
       break;
     }
     default:
@@ -83,17 +83,17 @@ Optimizer::Optimizer(const CostModels cost_model) : metadata_(nullptr) {
 
 void Optimizer::OptimizeLoop(int root_group_id,
                              std::shared_ptr<PropertySet> required_props) {
-  std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&metadata_, required_props);
+  std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context =
+      std::make_shared<OptimizeContext<Operator,OpType,OperatorExpression>>(&metadata_, required_props);
   auto task_stack =
-      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+      std::unique_ptr<OptimizerTaskStack<Operator,OpType,OperatorExpression>>(new OptimizerTaskStack<Operator,OpType,OperatorExpression>());
   metadata_.SetTaskPool(task_stack.get());
 
   // Perform rewrite first
-  task_stack->Push(new TopDownRewrite(root_group_id, root_context,
+  task_stack->Push(new TopDownRewrite<Operator,OpType,OperatorExpression>(root_group_id, root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
-  task_stack->Push(new BottomUpRewrite(
+  task_stack->Push(new BottomUpRewrite<Operator,OpType,OperatorExpression>(
       root_group_id, root_context, RewriteRuleSetName::UNNEST_SUBQUERY, false));
 
   ExecuteTaskStack(*task_stack, root_group_id, root_context);
@@ -132,7 +132,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 
   metadata_.txn = txn;
   // Generate initial operator tree from query tree
-  shared_ptr<GroupExpression> gexpr = InsertQueryTree(parse_tree, txn);
+  shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr = InsertQueryTree(parse_tree, txn);
   GroupID root_id = gexpr->GetGroupID();
   // Get the physical properties the final plan must output
   auto query_info = GetQueryInfo(parse_tree);
@@ -158,7 +158,7 @@ shared_ptr<planner::AbstractPlan> Optimizer::BuildPelotonPlanTree(
 }
 
 void Optimizer::Reset() {
-  metadata_ = OptimizerMetadata(std::move(metadata_.cost_model));
+  metadata_ = OptimizerMetadata<Operator,OpType,OperatorExpression>(std::move(metadata_.cost_model));
 }
 
 unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
@@ -247,12 +247,12 @@ unique_ptr<planner::AbstractPlan> Optimizer::HandleDDLStatement(
   return ddl_plan;
 }
 
-shared_ptr<GroupExpression> Optimizer::InsertQueryTree(
+shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> Optimizer::InsertQueryTree(
     parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
   QueryToOperatorTransformer converter(txn);
   shared_ptr<OperatorExpression> initial =
       converter.ConvertToOpExpression(tree);
-  shared_ptr<GroupExpression> gexpr;
+  shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr;
   metadata_.RecordTransformedExpression(initial, gexpr);
   return gexpr;
 }
@@ -323,7 +323,7 @@ const std::string Optimizer::GetOperatorInfo(
     int num_indent) {
     std::ostringstream os;
 
-    Group *group = metadata_.memo.GetGroupByID(id);
+    Group<Operator,OpType,OperatorExpression> *group = metadata_.memo.GetGroupByID(id);
     auto gexpr = group->GetBestExpression(required_props);
     
     os << std::endl << StringUtil::Indent(num_indent) << "operator name: "
@@ -347,7 +347,7 @@ const std::string Optimizer::GetOperatorInfo(
 unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
     GroupID id, std::shared_ptr<PropertySet> required_props,
     std::vector<expression::AbstractExpression *> required_cols) {
-  Group *group = metadata_.memo.GetGroupByID(id);
+  Group<Operator,OpType,OperatorExpression> *group = metadata_.memo.GetGroupByID(id);
   LOG_TRACE("Choosing with property : %s", required_props->ToString().c_str());
   auto gexpr = group->GetBestExpression(required_props);
 
@@ -395,8 +395,8 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
 }
 
 void Optimizer::ExecuteTaskStack(
-    OptimizerTaskStack &task_stack, int root_group_id,
-    std::shared_ptr<OptimizeContext> root_context) {
+    OptimizerTaskStack<Operator,OpType,OperatorExpression> &task_stack, int root_group_id,
+    std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context) {
   auto root_group = metadata_.memo.GetGroupByID(root_group_id);
   auto &timer = metadata_.timer;
   const auto timeout_limit = metadata_.timeout_limit;

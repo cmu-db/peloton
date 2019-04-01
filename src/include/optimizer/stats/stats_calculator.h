@@ -17,8 +17,10 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
 class TableStats;
+class OperatorExpression;
 
 /**
  * @brief Derive stats for the root group using a group expression's children's
@@ -26,8 +28,10 @@ class TableStats;
  */
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
-                      Memo *memo, concurrency::TransactionContext* txn);
+  void CalculateStats(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                      ExprSet required_cols,
+                      Memo<Operator,OpType,OperatorExpression> *memo,
+                      concurrency::TransactionContext* txn);
 
   void Visit(const LogicalGet *) override;
   void Visit(const LogicalQueryDerivedGet *) override;
@@ -72,9 +76,9 @@ class StatsCalculator : public OperatorVisitor {
       const std::shared_ptr<TableStats> predicate_table_stats,
       const expression::AbstractExpression *expr);
 
-  GroupExpression *gexpr_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
   ExprSet required_cols_;
-  Memo *memo_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
   concurrency::TransactionContext* txn_;
 };
 

@@ -28,13 +28,16 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
+
 // Derive cost for a physical group expression
 class PostgresCostModel : public AbstractCostModel {
  public:
   PostgresCostModel(){};
 
-  double CalculateCost(GroupExpression *gexpr, Memo *memo,
+  double CalculateCost(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                       Memo<Operator,OpType,OperatorExpression> *memo,
                        concurrency::TransactionContext *txn) override {
     gexpr_ = gexpr;
     memo_ = memo;
@@ -230,8 +233,8 @@ class PostgresCostModel : public AbstractCostModel {
   }
 
 
-  GroupExpression *gexpr_;
-  Memo *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
   concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
 

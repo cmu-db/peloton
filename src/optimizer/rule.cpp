@@ -16,7 +16,24 @@
 namespace peloton {
 namespace optimizer {
 
-int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+template <class Node, class OperatorType, class OperatorExpr>
+int Rule<Node,OperatorType,OperatorExpr>::Promise(
+  GroupExpression<Node, OperatorType, OperatorExpr> *group_expr,
+  OptimizeContext<Node, OperatorType, OperatorExpr> *context) const {
+
+  //(TODO): handle general/AbstractExpression case
+  PELOTON_ASSERT(group_expr);
+  PELOTON_ASSERT(context);
+  PELOTON_ASSERT(0);
+  return 0;
+}
+
+// Specialization due to OpType
+template <>
+int Rule<Operator,OpType,OperatorExpression>::Promise(
+  GroupExpression<Operator,OpType,OperatorExpression> *group_expr,
+  OptimizeContext<Operator,OpType,OperatorExpression> *context) const {
+
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
@@ -27,7 +44,14 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   return LOG_PROMISE;
 }
 
-RuleSet::RuleSet() {
+template <class Operator, class OperatorType, class OperatorExpr>
+RuleSet<Operator,OperatorType,OperatorExpr>::RuleSet() {
+  //(TODO): handle general/AbstractExpression case
+  PELOTON_ASSERT(0);
+}
+
+template <>
+RuleSet<Operator,OpType, OperatorExpression>::RuleSet() {
   AddTransformationRule(new InnerJoinCommutativity());
   AddTransformationRule(new InnerJoinAssociativity());
   AddImplementationRule(new LogicalDeleteToPhysical());

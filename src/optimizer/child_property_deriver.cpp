@@ -31,9 +31,9 @@ namespace peloton {
 namespace optimizer {
 
 vector<pair<shared_ptr<PropertySet>, vector<shared_ptr<PropertySet>>>>
-ChildPropertyDeriver::GetProperties(GroupExpression *gexpr,
+ChildPropertyDeriver::GetProperties(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
                                     shared_ptr<PropertySet> requirements,
-                                    Memo *memo) {
+                                    Memo<Operator,OpType,OperatorExpression> *memo) {
   requirements_ = requirements;
   output_.clear();
   memo_ = memo;
@@ -218,7 +218,7 @@ void ChildPropertyDeriver::DeriveForJoin() {
     if (prop->Type() == PropertyType::SORT) {
       auto sort_prop = prop->As<PropertySort>();
       size_t sort_col_size = sort_prop->GetSortColumnSize();
-      Group *probe_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
+      Group<Operator,OpType,OperatorExpression> *probe_group = memo_->GetGroupByID(gexpr_->GetChildGroupId(1));
       bool can_pass_down = true;
       for (size_t idx = 0; idx < sort_col_size; ++idx) {
         ExprSet tuples;

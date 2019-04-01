@@ -21,41 +21,51 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
-GroupExpression::GroupExpression(Operator op, std::vector<GroupID> child_groups)
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr>::GroupExpression(Node op, std::vector<GroupID> child_groups)
     : group_id(UNDEFINED_GROUP),
       op(op),
       child_groups(child_groups),
       stats_derived_(false) {}
 
-GroupID GroupExpression::GetGroupID() const { return group_id; }
+template <class Node, class OperatorType, class OperatorExpr>
+GroupID GroupExpression<Node,OperatorType,OperatorExpr>::GetGroupID() const { return group_id; }
 
-void GroupExpression::SetGroupID(GroupID id) { group_id = id; }
+template <class Node, class OperatorType, class OperatorExpr>
+void GroupExpression<Node,OperatorType,OperatorExpr>::SetGroupID(GroupID id) { group_id = id; }
 
-void GroupExpression::SetChildGroupID(int child_group_idx, GroupID group_id) {
+template <class Node, class OperatorType, class OperatorExpr>
+void GroupExpression<Node,OperatorType,OperatorExpr>::SetChildGroupID(int child_group_idx, GroupID group_id) {
   child_groups[child_group_idx] = group_id;
 }
 
-const std::vector<GroupID> &GroupExpression::GetChildGroupIDs() const {
+template <class Node, class OperatorType, class OperatorExpr>
+const std::vector<GroupID> &GroupExpression<Node,OperatorType,OperatorExpr>::GetChildGroupIDs() const {
   return child_groups;
 }
 
-GroupID GroupExpression::GetChildGroupId(int child_idx) const {
+template <class Node, class OperatorType, class OperatorExpr>
+GroupID GroupExpression<Node,OperatorType,OperatorExpr>::GetChildGroupId(int child_idx) const {
   return child_groups[child_idx];
 }
 
-Operator GroupExpression::Op() const { return op; }
+template <class Node, class OperatorType, class OperatorExpr>
+Node GroupExpression<Node,OperatorType,OperatorExpr>::Op() const { return op; }
 
-double GroupExpression::GetCost(
+template <class Node, class OperatorType, class OperatorExpr>
+double GroupExpression<Node,OperatorType,OperatorExpr>::GetCost(
     std::shared_ptr<PropertySet> &requirements) const {
   return std::get<0>(lowest_cost_table_.find(requirements)->second);
 }
 
-std::vector<std::shared_ptr<PropertySet>> GroupExpression::GetInputProperties(
+template <class Node, class OperatorType, class OperatorExpr>
+std::vector<std::shared_ptr<PropertySet>> GroupExpression<Node,OperatorType,OperatorExpr>::GetInputProperties(
     std::shared_ptr<PropertySet> requirements) const {
   return std::get<1>(lowest_cost_table_.find(requirements)->second);
 }
 
-void GroupExpression::SetLocalHashTable(
+template <class Node, class OperatorType, class OperatorExpr>
+void GroupExpression<Node,OperatorType,OperatorExpr>::SetLocalHashTable(
     const std::shared_ptr<PropertySet> &output_properties,
     const std::vector<std::shared_ptr<PropertySet>> &input_properties_list,
     double cost) {
@@ -73,7 +83,8 @@ void GroupExpression::SetLocalHashTable(
   }
 }
 
-hash_t GroupExpression::Hash() const {
+template <class Node, class OperatorType, class OperatorExpr>
+hash_t GroupExpression<Node,OperatorType,OperatorExpr>::Hash() const {
   size_t hash = op.Hash();
 
   for (size_t i = 0; i < child_groups.size(); ++i) {
@@ -84,17 +95,23 @@ hash_t GroupExpression::Hash() const {
   return hash;
 }
 
-bool GroupExpression::operator==(const GroupExpression &r) {
+template <class Node, class OperatorType, class OperatorExpr>
+bool GroupExpression<Node,OperatorType,OperatorExpr>::operator==(const GroupExpression<Node,OperatorType,OperatorExpr> &r) {
   return (op == r.Op()) && (child_groups == r.child_groups);
 }
 
-void GroupExpression::SetRuleExplored(Rule *rule) {
+template <class Node, class OperatorType, class OperatorExpr>
+void GroupExpression<Node,OperatorType,OperatorExpr>::SetRuleExplored(Rule<Node,OperatorType,OperatorExpr> *rule) {
   rule_mask_.set(rule->GetRuleIdx(), true);
 }
 
-bool GroupExpression::HasRuleExplored(Rule *rule) {
+template <class Node, class OperatorType, class OperatorExpr>
+bool GroupExpression<Node,OperatorType,OperatorExpr>::HasRuleExplored(Rule<Node,OperatorType,OperatorExpr> *rule) {
   return rule_mask_.test(rule->GetRuleIdx());
 }
+
+// Explicitly instantiate to prevent linker errors
+template class GroupExpression<Operator,OpType,OperatorExpression>;
 
 }  // namespace optimizer
 }  // namespace peloton

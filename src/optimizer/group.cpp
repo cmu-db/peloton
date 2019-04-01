@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/group.h"
+#include "optimizer/operator_expression.h"
 
 #include "common/logger.h"
 
@@ -20,13 +21,18 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group
 //===--------------------------------------------------------------------===//
-Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
+template <class Node, class OperatorType, class OperatorExpr>
+Group<Node, OperatorType, OperatorExpr>::Group(GroupID id, std::unordered_set<std::string> table_aliases)
     : id_(id), table_aliases_(std::move(table_aliases)) {
   has_explored_ = false;
 }
 
-void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
-                          bool enforced) {
+template <class Node, class OperatorType, class OperatorExpr>
+void Group<Node, OperatorType, OperatorExpr>::AddExpression(
+  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> expr,
+  bool enforced) {
+
+  //(TODO): rethink how separation works with AbstractExpressions
   // Do duplicate detection
   expr->SetGroupID(id_);
   if (enforced)
@@ -37,8 +43,12 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
     logical_expressions_.push_back(expr);
 }
 
-bool Group::SetExpressionCost(GroupExpression *expr, double cost,
-                              std::shared_ptr<PropertySet> &properties) {
+template <class Node, class OperatorType, class OperatorExpr>
+bool Group<Node, OperatorType, OperatorExpr>::SetExpressionCost(
+  GroupExpression<Node,OperatorType,OperatorExpr> *expr,
+  double cost,
+  std::shared_ptr<PropertySet> &properties) {
+
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
             expr->GetGroupID(), expr->Op().GetName().c_str(),
             properties->ToString().c_str());
@@ -51,8 +61,11 @@ bool Group::SetExpressionCost(GroupExpression *expr, double cost,
   }
   return false;
 }
-GroupExpression *Group::GetBestExpression(
+
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr> *Group<Node, OperatorType, OperatorExpr>::GetBestExpression(
     std::shared_ptr<PropertySet> &properties) {
+
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
@@ -62,20 +75,22 @@ GroupExpression *Group::GetBestExpression(
   return nullptr;
 }
 
-bool Group::HasExpressions(
-    const std::shared_ptr<PropertySet> &properties) const {
+template <class Node, class OperatorType, class OperatorExpr>
+bool Group<Node, OperatorType, OperatorExpr>::HasExpressions(const std::shared_ptr<PropertySet> &properties) const {
   const auto &it = lowest_cost_expressions_.find(properties);
   return (it != lowest_cost_expressions_.end());
 }
 
-std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
+template <class Node, class OperatorType, class OperatorExpr>
+std::shared_ptr<ColumnStats> Group<Node, OperatorType, OperatorExpr>::GetStats(std::string column_name) {
   if (!stats_.count(column_name)) {
     return nullptr;
   }
   return stats_[column_name];
 }
 
-const std::string Group::GetInfo(int num_indent) const {
+template <class Node, class OperatorType, class OperatorExpr>
+const std::string Group<Node, OperatorType, OperatorExpr>::GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent)
        << "GroupID: " << GetID() << std::endl;
@@ -134,22 +149,28 @@ const std::string Group::GetInfo(int num_indent) const {
     return os.str();
 }
 
-const std::string Group::GetInfo() const {
+template <class Node, class OperatorType, class OperatorExpr>
+const std::string Group<Node, OperatorType, OperatorExpr>::GetInfo() const {
     std::ostringstream os;
     os << GetInfo(0);
     return os.str();
 }
 
 
-void Group::AddStats(std::string column_name,
+template <class Node, class OperatorType, class OperatorExpr>
+void Group<Node, OperatorType, OperatorExpr>::AddStats(std::string column_name,
                      std::shared_ptr<ColumnStats> stats) {
   PELOTON_ASSERT((size_t)GetNumRows() == stats->num_rows);
   stats_[column_name] = stats;
 }
 
-bool Group::HasColumnStats(std::string column_name) {
+template <class Node, class OperatorType, class OperatorExpr>
+bool Group<Node, OperatorType, OperatorExpr>::HasColumnStats(std::string column_name) {
   return stats_.count(column_name);
 }
+
+// Explicitly instantiate
+template class Group<Operator,OpType,OperatorExpression>;
 
 }  // namespace optimizer
 }  // namespace peloton

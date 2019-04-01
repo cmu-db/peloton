@@ -25,6 +25,7 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Rule;
 
 using GroupID = int32_t;
@@ -32,9 +33,10 @@ using GroupID = int32_t;
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
+template <class Node, class OperatorType, class OperatorExpr>
 class GroupExpression {
  public:
-  GroupExpression(Operator op, std::vector<GroupID> child_groups);
+  GroupExpression(Node op, std::vector<GroupID> child_groups);
 
   GroupID GetGroupID() const;
 
@@ -46,7 +48,7 @@ class GroupExpression {
 
   GroupID GetChildGroupId(int child_idx) const;
 
-  Operator Op() const;
+  Node Op() const;
 
   double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 
@@ -61,11 +63,11 @@ class GroupExpression {
 
   hash_t Hash() const;
 
-  bool operator==(const GroupExpression &r);
+  bool operator==(const GroupExpression<Node, OperatorType, OperatorExpr> &r);
 
-  void SetRuleExplored(Rule *rule);
+  void SetRuleExplored(Rule<Node,OperatorType,OperatorExpr> *rule);
 
-  bool HasRuleExplored(Rule *rule);
+  bool HasRuleExplored(Rule<Node,OperatorType,OperatorExpr> *rule);
 
   void SetDerivedStats() { stats_derived_ = true; }
 
@@ -75,7 +77,7 @@ class GroupExpression {
 
  private:
   GroupID group_id;
-  Operator op;
+  Node op;
   std::vector<GroupID> child_groups;
   std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES)> rule_mask_;
   bool stats_derived_;
@@ -92,9 +94,9 @@ class GroupExpression {
 
 namespace std {
 
-template <>
-struct hash<peloton::optimizer::GroupExpression> {
-  typedef peloton::optimizer::GroupExpression argument_type;
+template <class Node, class OperatorType, class OperatorExpr>
+struct hash<peloton::optimizer::GroupExpression<Node,OperatorType,OperatorExpr>> {
+  typedef peloton::optimizer::GroupExpression<Node,OperatorType,OperatorExpr> argument_type;
   typedef std::size_t result_type;
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };

@@ -132,8 +132,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
 
   optimizer.GetMetadata().memo.InsertExpression(
       optimizer.GetMetadata().MakeGroupExpression(parent_join), true);
-  OptimizeContext *root_context =
-      new OptimizeContext(&(optimizer.GetMetadata()), nullptr);
+  OptimizeContext<Operator,OpType,OperatorExpression> *root_context =
+      new OptimizeContext<Operator,OpType,OperatorExpression>(&(optimizer.GetMetadata()), nullptr);
 
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
@@ -227,8 +227,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
 
   optimizer.GetMetadata().memo.InsertExpression(
       optimizer.GetMetadata().MakeGroupExpression(parent_join), true);
-  OptimizeContext *root_context =
-      new OptimizeContext(&(optimizer.GetMetadata()), nullptr);
+  OptimizeContext<Operator,OpType,OperatorExpression> *root_context =
+      new OptimizeContext<Operator,OpType,OperatorExpression>(&(optimizer.GetMetadata()), nullptr);
 
   EXPECT_EQ(left_leaf, parent_join->Children()[0]->Children()[0]);
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);

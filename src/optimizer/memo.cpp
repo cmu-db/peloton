@@ -21,15 +21,77 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Memo
 //===--------------------------------------------------------------------===//
-Memo::Memo() {}
+template <class Node, class OperatorType, class OperatorExpr>
+Memo<Node,OperatorType,OperatorExpr>::Memo() {}
 
-GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                                        bool enforced) {
+//===--------------------------------------------------------------------===//
+// Memo::AddNewGroup (declare here to prevent specialization error)
+//===--------------------------------------------------------------------===//
+template <class Node, class OperatorType, class OperatorExpr>
+GroupID Memo<Node,OperatorType,OperatorExpr>::AddNewGroup(std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr) {
+  //(TODO): handle general case/AbstractExpressions
+  (void)gexpr;
+  PELOTON_ASSERT(0);
+  return 0;
+}
+
+template <>
+GroupID Memo<Operator,OpType,OperatorExpression>::AddNewGroup(std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr) {
+  GroupID new_group_id = groups_.size();
+  // Find out the table alias that this group represents
+  std::unordered_set<std::string> table_aliases;
+  auto op_type = gexpr->Op().GetType();
+  if (op_type == OpType::Get) {
+    // For base group, the table alias can get directly from logical get
+    const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
+    table_aliases.insert(logical_get->table_alias);
+  } else if (op_type == OpType::LogicalQueryDerivedGet) {
+    const LogicalQueryDerivedGet *query_get =
+        gexpr->Op().As<LogicalQueryDerivedGet>();
+    table_aliases.insert(query_get->table_alias);
+  } else {
+    // For other groups, need to aggregate the table alias from children
+    for (auto child_group_id : gexpr->GetChildGroupIDs()) {
+      Group<Operator,OpType,OperatorExpression> *child_group = GetGroupByID(child_group_id);
+      for (auto &table_alias : child_group->GetTableAliases()) {
+        table_aliases.insert(table_alias);
+      }
+    }
+  }
+
+  groups_.emplace_back(
+      new Group<Operator,OpType,OperatorExpression>(new_group_id, std::move(table_aliases)));
+  return new_group_id;
+}
+
+//===--------------------------------------------------------------------===//
+// Memo remaining interface functions
+//===--------------------------------------------------------------------===//
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
+  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+  bool enforced) {
+
   return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
-GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                                        GroupID target_group, bool enforced) {
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
+  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+  GroupID target_group,
+  bool enforced) {
+
+  //(TODO): handle general/AbstractExpression case
+  PELOTON_ASSERT(0);
+  return nullptr;
+}
+
+// Specialization for Memo::InsertExpression due to OpType
+template <>
+GroupExpression<Operator,OpType,OperatorExpression> *Memo<Operator,OpType,OperatorExpression>::InsertExpression(
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr,
+  GroupID target_group,
+  bool enforced) {
   // If leaf, then just return
   if (gexpr->Op().GetType() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
@@ -55,19 +117,22 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
     } else {
       group_id = target_group;
     }
-    Group *group = GetGroupByID(group_id);
+    Group<Operator,OpType,OperatorExpression> *group = GetGroupByID(group_id);
     group->AddExpression(gexpr, enforced);
     return gexpr.get();
   }
 }
 
-std::vector<std::unique_ptr<Group>> &Memo::Groups() {
+template <class Node, class OperatorType, class OperatorExpr>
+std::vector<std::unique_ptr<Group<Node,OperatorType,OperatorExpr>>> &Memo<Node,OperatorType,OperatorExpr>::Groups() {
   return groups_;
 }
 
-Group *Memo::GetGroupByID(GroupID id) { return groups_[id].get(); }
+template <class Node, class OperatorType, class OperatorExpr>
+Group<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::GetGroupByID(GroupID id) { return groups_[id].get(); }
 
-const std::string Memo::GetInfo(int num_indent) const {
+template <class Node, class OperatorType, class OperatorExpr>
+const std::string Memo<Node,OperatorType,OperatorExpr>::GetInfo(int num_indent) const {
     std::ostringstream os;
     os << StringUtil::Indent(num_indent) << "Memo::\n";
     os << StringUtil::Indent(num_indent + 1) 
@@ -80,40 +145,15 @@ const std::string Memo::GetInfo(int num_indent) const {
     return os.str();
 }
 
-const std::string Memo::GetInfo() const {
+template <class Node, class OperatorType, class OperatorExpr>
+const std::string Memo<Node,OperatorType,OperatorExpr>::GetInfo() const {
     std::ostringstream os;
     os << GetInfo(0);
     return os.str();
 }
 
-
-GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
-  GroupID new_group_id = groups_.size();
-  // Find out the table alias that this group represents
-  std::unordered_set<std::string> table_aliases;
-  auto op_type = gexpr->Op().GetType();
-  if (op_type == OpType::Get) {
-    // For base group, the table alias can get directly from logical get
-    const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
-    table_aliases.insert(logical_get->table_alias);
-  } else if (op_type == OpType::LogicalQueryDerivedGet) {
-    const LogicalQueryDerivedGet *query_get =
-        gexpr->Op().As<LogicalQueryDerivedGet>();
-    table_aliases.insert(query_get->table_alias);
-  } else {
-    // For other groups, need to aggregate the table alias from children
-    for (auto child_group_id : gexpr->GetChildGroupIDs()) {
-      Group *child_group = GetGroupByID(child_group_id);
-      for (auto &table_alias : child_group->GetTableAliases()) {
-        table_aliases.insert(table_alias);
-      }
-    }
-  }
-
-  groups_.emplace_back(
-      new Group(new_group_id, std::move(table_aliases)));
-  return new_group_id;
-}
+// Explicitly instantiate template
+template class Memo<Operator,OpType,OperatorExpression>;
 
 }  // namespace optimizer
 }  // namespace peloton

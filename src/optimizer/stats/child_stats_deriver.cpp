@@ -20,9 +20,9 @@ namespace peloton {
 namespace optimizer {
 
 using std::vector;
-vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression *gexpr,
+vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
                                                     ExprSet required_cols,
-                                                    Memo *memo) {
+                                                    Memo<Operator,OpType,OperatorExpression> *memo) {
   required_cols_ = required_cols;
   gexpr_ = gexpr;
   memo_ = memo;

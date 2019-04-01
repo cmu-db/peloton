@@ -21,19 +21,18 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class GroupExpression;
 
 #define PHYS_PROMISE 3
 #define LOG_PROMISE 1
 
-/**
- * @brief The base class of all rules
- */
+template <class Node, class OperatorType, class OperatorExpr>
 class Rule {
  public:
   virtual ~Rule(){};
 
-  std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
+  std::shared_ptr<Pattern<OperatorType>> GetMatchPattern() const { return match_pattern; }
 
   bool IsPhysical() const {
     return type_ > RuleType::LogicalPhysicalDelimiter &&
@@ -58,8 +57,8 @@ class Rule {
    * @return The promise, the higher the promise, the rule should be applied
    *  sooner
    */
-  virtual int Promise(GroupExpression *group_expr,
-                      OptimizeContext *context) const;
+  virtual int Promise(GroupExpression<Node, OperatorType, OperatorExpr> *group_expr,
+                      OptimizeContext<Node, OperatorType, OperatorExpr> *context) const;
 
   /**
    * @brief Check if the rule is applicable for the operator expression. The
@@ -74,8 +73,8 @@ class Rule {
    *
    * @return If the rule is applicable, return true, otherwise return false
    */
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr,
-                     OptimizeContext *context) const = 0;
+  virtual bool Check(std::shared_ptr<OperatorExpr> expr,
+                     OptimizeContext<Node, OperatorType, OperatorExpr> *context) const = 0;
 
   /**
    * @brief Convert a "before" operator tree to an "after" operator tree
@@ -85,30 +84,31 @@ class Rule {
    * @param context The current optimization context
    */
   virtual void Transform(
-      std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>> &transformed,
-      OptimizeContext *context) const = 0;
+      std::shared_ptr<OperatorExpr> input,
+      std::vector<std::shared_ptr<OperatorExpr>> &transformed,
+      OptimizeContext<Node, OperatorType, OperatorExpr> *context) const = 0;
 
   inline RuleType GetType() { return type_; }
 
   inline uint32_t GetRuleIdx() { return static_cast<uint32_t>(type_); }
 
  protected:
-  std::shared_ptr<Pattern> match_pattern;
+  std::shared_ptr<Pattern<OperatorType>> match_pattern;
   RuleType type_;
 };
 
 /**
  * @brief A struct to store a rule together with its promise
  */
+template <class Node, class OperatorType, class OperatorExpr>
 struct RuleWithPromise {
-  RuleWithPromise(Rule *rule, int promise) : rule(rule), promise(promise) {}
+  RuleWithPromise(Rule<Node,OperatorType,OperatorExpr> *rule, int promise) : rule(rule), promise(promise) {}
 
-  Rule *rule;
+  Rule<Node, OperatorType, OperatorExpr> *rule;
   int promise;
 
-  bool operator<(const RuleWithPromise &r) const { return promise < r.promise; }
-  bool operator>(const RuleWithPromise &r) const { return promise > r.promise; }
+  bool operator<(const RuleWithPromise<Node, OperatorType, OperatorExpr> &r) const { return promise < r.promise; }
+  bool operator>(const RuleWithPromise<Node, OperatorType, OperatorExpr> &r) const { return promise > r.promise; }
 };
 
 enum class RewriteRuleSetName : uint32_t {
@@ -120,41 +120,46 @@ enum class RewriteRuleSetName : uint32_t {
  * @brief All the rule sets, including logical transformation rules, physical
  *  implementation rules and rewrite rules
  */
+template <class Node, class OperatorType, class OperatorExpr>
 class RuleSet {
  public:
   // RuleSet will take the ownership of the rule object
   RuleSet();
 
-  inline void AddTransformationRule(Rule* rule) { transformation_rules_.emplace_back(rule); }
+  inline void AddTransformationRule(Rule<Node,OperatorType,OperatorExpr>* rule) { transformation_rules_.emplace_back(rule); }
 
-  inline void AddImplementationRule(Rule* rule) { transformation_rules_.emplace_back(rule); }
+  inline void AddImplementationRule(Rule<Node,OperatorType,OperatorExpr>* rule) { transformation_rules_.emplace_back(rule); }
 
-  inline void AddRewriteRule(RewriteRuleSetName set, Rule* rule) {
+  inline void AddRewriteRule(RewriteRuleSetName set, Rule<Node,OperatorType,OperatorExpr>* rule) {
     rewrite_rules_map_[static_cast<uint32_t>(set)].emplace_back(rule);
   }
 
-  std::vector<std::unique_ptr<Rule>> &GetTransformationRules() {
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> &GetTransformationRules() {
     return transformation_rules_;
   }
 
-  std::vector<std::unique_ptr<Rule>> &GetImplementationRules() {
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> &GetImplementationRules() {
     return implementation_rules_;
   }
 
-  std::vector<std::unique_ptr<Rule>> &GetRewriteRulesByName(
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> &GetRewriteRulesByName(
       RewriteRuleSetName set) {
     return rewrite_rules_map_[static_cast<uint32_t>(set)];
   }
 
-  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() { return rewrite_rules_map_; }
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>>> &GetRewriteRulesMap() {
+    return rewrite_rules_map_;
+  }
 
-  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() { return predicate_push_down_rules_; }
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> &GetPredicatePushDownRules() {
+    return predicate_push_down_rules_;
+  }
 
  private:
-  std::vector<std::unique_ptr<Rule>> transformation_rules_;
-  std::vector<std::unique_ptr<Rule>> implementation_rules_;
-  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> rewrite_rules_map_;
-  std::vector<std::unique_ptr<Rule>> predicate_push_down_rules_;
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> transformation_rules_;
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> implementation_rules_;
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>>> rewrite_rules_map_;
+  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> predicate_push_down_rules_;
 };
 
 }  // namespace optimizer

@@ -31,12 +31,15 @@
 namespace peloton {
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
+
 class TrivialCostModel : public AbstractCostModel {
  public:
   TrivialCostModel(){};
 
-  double CalculateCost(GroupExpression *gexpr, Memo *memo,
+  double CalculateCost(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                       Memo<Operator,OpType,OperatorExpression> *memo,
                        concurrency::TransactionContext *txn) override {
     gexpr_ = gexpr;
     memo_ = memo;
@@ -109,8 +112,8 @@ class TrivialCostModel : public AbstractCostModel {
   }
 
  private:
-  GroupExpression *gexpr_;
-  Memo *memo_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  Memo<Operator,OpType,OperatorExpression> *memo_;
   concurrency::TransactionContext *txn_;
   double output_cost_ = 0;
 };

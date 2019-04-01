@@ -49,7 +49,9 @@ using namespace optimizer;
 
 class OptimizerTests : public PelotonTest {
  protected:
-  GroupExpression *GetSingleGroupExpression(Memo &memo, GroupExpression *expr,
+  GroupExpression<Operator,OpType,OperatorExpression> *GetSingleGroupExpression(
+                                            Memo<Operator,OpType,OperatorExpression> &memo,
+                                            GroupExpression<Operator,OpType,OperatorExpression> *expr,
                                             int child_group_idx) {
     auto group = memo.GetGroupByID(expr->GetChildGroupId(child_group_idx));
     EXPECT_EQ(1, group->GetLogicalExpressions().size());
@@ -343,19 +345,19 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
   auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
-  std::shared_ptr<GroupExpression> gexpr =
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr =
       optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
-  std::shared_ptr<GroupExpression> head_gexpr =
-      std::make_shared<GroupExpression>(Operator(), child_groups);
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> head_gexpr =
+      std::make_shared<GroupExpression<Operator,OpType,OperatorExpression>>(Operator(), child_groups);
 
-  std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);
+  std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context =
+      std::make_shared<OptimizeContext<Operator,OpType,OperatorExpression>>(&(optimizer.GetMetadata()), nullptr);
   auto task_stack =
-      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+      std::unique_ptr<OptimizerTaskStack<Operator,OpType,OperatorExpression>>(new OptimizerTaskStack<Operator,OpType,OperatorExpression>());
   optimizer.GetMetadata().SetTaskPool(task_stack.get());
-  task_stack->Push(new TopDownRewrite(gexpr->GetGroupID(), root_context,
+  task_stack->Push(new TopDownRewrite<Operator,OpType,OperatorExpression>(gexpr->GetGroupID(), root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
   while (!task_stack->Empty()) {
@@ -430,19 +432,19 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
   auto bind_node_visitor = binder::BindNodeVisitor(txn, DEFAULT_DB_NAME);
   bind_node_visitor.BindNameToNode(parse_tree);
 
-  std::shared_ptr<GroupExpression> gexpr =
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr =
       optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
-  std::shared_ptr<GroupExpression> head_gexpr =
-      std::make_shared<GroupExpression>(Operator(), child_groups);
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> head_gexpr =
+      std::make_shared<GroupExpression<Operator,OpType,OperatorExpression>>(Operator(), child_groups);
 
-  std::shared_ptr<OptimizeContext> root_context =
-      std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);
+  std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context =
+      std::make_shared<OptimizeContext<Operator,OpType,OperatorExpression>>(&(optimizer.GetMetadata()), nullptr);
   auto task_stack =
-      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+      std::unique_ptr<OptimizerTaskStack<Operator,OpType,OperatorExpression>>(new OptimizerTaskStack<Operator,OpType,OperatorExpression>());
   optimizer.GetMetadata().SetTaskPool(task_stack.get());
-  task_stack->Push(new TopDownRewrite(gexpr->GetGroupID(), root_context,
+  task_stack->Push(new TopDownRewrite<Operator,OpType,OperatorExpression>(gexpr->GetGroupID(), root_context,
                                       RewriteRuleSetName::PREDICATE_PUSH_DOWN));
 
   while (!task_stack->Empty()) {
@@ -486,14 +488,14 @@ TEST_F(OptimizerTests, ExecuteTaskStackTest) {
   optimizer::Optimizer optimizer;
   const int root_group_id = 0;
   const auto root_group =
-      new Group(root_group_id, std::unordered_set<std::string>());
+      new Group<Operator,OpType,OperatorExpression>(root_group_id, std::unordered_set<std::string>());
   optimizer.GetMetadata().memo.Groups().emplace_back(root_group);
 
   auto required_prop = std::make_shared<PropertySet>(PropertySet());
-  auto root_context = std::make_shared<OptimizeContext>(
+  auto root_context = std::make_shared<OptimizeContext<Operator,OpType,OperatorExpression>>(
       &(optimizer.GetMetadata()), required_prop);
   auto task_stack =
-      std::unique_ptr<OptimizerTaskStack>(new OptimizerTaskStack());
+      std::unique_ptr<OptimizerTaskStack<Operator,OpType,OperatorExpression>>(new OptimizerTaskStack<Operator,OpType,OperatorExpression>());
   auto &timer = optimizer.GetMetadata().timer;
 
   // Insert tasks into task stack

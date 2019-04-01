@@ -26,8 +26,8 @@
 namespace peloton {
 namespace optimizer {
 
-void StatsCalculator::CalculateStats(GroupExpression *gexpr,
-                                     ExprSet required_cols, Memo *memo,
+void StatsCalculator::CalculateStats(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+                                     ExprSet required_cols, Memo<Operator,OpType,OperatorExpression> *memo,
                                      concurrency::TransactionContext *txn) {
   gexpr_ = gexpr;
   memo_ = memo;
