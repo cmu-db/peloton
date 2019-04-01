@@ -12,6 +12,8 @@
 
 #include "optimizer/rule_impls.h"
 #include "optimizer/group_expression.h"
+#include "optimizer/absexpr_expression.h"
+#include "optimizer/rule_rewrite.h"
 
 namespace peloton {
 namespace optimizer {
@@ -46,8 +48,14 @@ int Rule<Operator,OpType,OperatorExpression>::Promise(
 
 template <class Operator, class OperatorType, class OperatorExpr>
 RuleSet<Operator,OperatorType,OperatorExpr>::RuleSet() {
-  //(TODO): handle general/AbstractExpression case
   PELOTON_ASSERT(0);
+  // should never be invoked
+}
+
+template <>
+RuleSet<AbsExpr_Container,ExpressionType,AbsExpr_Expression>::RuleSet() {
+  AddRewriteRule(RewriteRuleSetName::COMPARATOR_ELIMINATION,
+                 new ComparatorElimination());
 }
 
 template <>
@@ -87,6 +95,10 @@ RuleSet<Operator,OpType, OperatorExpression>::RuleSet() {
   AddRewriteRule(RewriteRuleSetName::UNNEST_SUBQUERY,
                  new PullFilterThroughAggregation());
 }
+
+// Explicitly instantiate
+template class Rule<Operator,OpType,OperatorExpression>;
+template class Rule<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -38,13 +39,7 @@ GroupBindingIterator<Node,OperatorType,OperatorExpr>::GroupBindingIterator(
 
 template <class Node, class OperatorType, class OperatorExpr>
 bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNext() {
-  LOG_TRACE("HasNext");
-
-  //(TODO): GroupBindingIterator::HasNext() probably needs specialization
-  if (pattern_->Type() == OpType::Leaf) {
-    return current_item_index_ == 0;
-  }
-
+  //(TODO): refactor this and specialization to reduce duplicated code
   if (current_iterator_) {
     // Check if still have bindings in current item
     if (!current_iterator_->HasNext()) {
@@ -70,15 +65,59 @@ bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNext() {
     }
   }
 
+  std::cout << "Is there a group bind: " << (current_iterator_ != nullptr) << "\n";
+  return current_iterator_ != nullptr;
+}
+
+// Specialization
+template <>
+bool GroupBindingIterator<Operator,OpType,OperatorExpression>::HasNext() {
+  LOG_TRACE("HasNext");
+
+  if (pattern_->Type() == OpType::Leaf) {
+    return current_item_index_ == 0;
+  }
+
+  if (current_iterator_) {
+    // Check if still have bindings in current item
+    if (!current_iterator_->HasNext()) {
+      current_iterator_.reset(nullptr);
+      current_item_index_++;
+    }
+  }
+
+  if (current_iterator_ == nullptr) {
+    // Keep checking item iterators until we find a match
+    while (current_item_index_ < num_group_items_) {
+      current_iterator_.reset(new GroupExprBindingIterator<Operator,OpType,OperatorExpression>(
+          this->memo_,
+          target_group_->GetLogicalExpressions()[current_item_index_].get(),
+          pattern_));
+
+      if (current_iterator_->HasNext()) {
+        break;
+      }
+
+      current_iterator_.reset(nullptr);
+      current_item_index_++;
+    }
+  }
+
   return current_iterator_ != nullptr;
 }
 
 template <class Node, class OperatorType, class OperatorExpr>
 std::shared_ptr<OperatorExpr> GroupBindingIterator<Node,OperatorType,OperatorExpr>::Next() {
-  //(TODO): GroupBindingIterator::Next() probably needs specialization
+  std::cout << "Fetching next iterator\n";
+  return current_iterator_->Next();
+}
+
+// Specialization
+template <>
+std::shared_ptr<OperatorExpression> GroupBindingIterator<Operator,OpType,OperatorExpression>::Next() {
   if (pattern_->Type() == OpType::Leaf) {
     current_item_index_ = num_group_items_;
-    return std::make_shared<OperatorExpr>(LeafOperator::make(group_id_));
+    return std::make_shared<OperatorExpression>(LeafOperator::make(group_id_));
   }
   return current_iterator_->Next();
 }
@@ -188,6 +227,9 @@ std::shared_ptr<OperatorExpr> GroupExprBindingIterator<Node,OperatorType,Operato
 // Explicitly instantiate
 template class GroupBindingIterator<Operator,OpType,OperatorExpression>;
 template class GroupExprBindingIterator<Operator,OpType,OperatorExpression>;
+
+template class GroupBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
+template class GroupExprBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

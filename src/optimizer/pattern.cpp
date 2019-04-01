@@ -33,6 +33,7 @@ OperatorType Pattern<OperatorType>::Type() const { return _type; }
 
 // Explicitly instantiate
 template class Pattern<OpType>;
+template class Pattern<ExpressionType>;
 
 }  // namespace optimizer
 }  // namespace peloton

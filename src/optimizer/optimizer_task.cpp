@@ -18,6 +18,7 @@
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/stats/stats_calculator.h"
 #include "optimizer/stats/child_stats_deriver.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -429,6 +430,14 @@ void TopDownRewrite<Node,OperatorType,OperatorExpr>::execute() {
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
+
+      // (TODO): verify correctness
+      // Check whether rule actually can be applied
+      // as opposed to a structural level test
+      if (!r.rule->Check(before, this->context_.get())) {
+        continue;
+      }
+
       std::vector<std::shared_ptr<OperatorExpr>> after;
       r.rule->Transform(before, after, this->context_.get());
 
@@ -485,14 +494,27 @@ void BottomUpRewrite<Node,OperatorType,OperatorExpr>::execute() {
   std::sort(valid_rules.begin(), valid_rules.end(),
             std::greater<RuleWithPromise<Node,OperatorType,OperatorExpr>>());
 
+  std::cout << "Rule pass starting\n";
   for (auto &r : valid_rules) {
     GroupExprBindingIterator<Node,OperatorType,OperatorExpr> iterator(this->GetMemo(), cur_group_expr,
                                                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
+
+      std::cout << "Structural match found\n";
+
+      // (TODO): verify correctness
+      // Check whether rule actually can be applied
+      // as opposed to a structural level test
+      if (!r.rule->Check(before, this->context_.get())) {
+        continue;
+      }
+
+      std::cout << "Rule integrity check passed\n";
       std::vector<std::shared_ptr<OperatorExpr>> after;
       r.rule->Transform(before, after, this->context_.get());
+      std::cout << "Rule Transformation conducted\n";
 
       // Rewrite rule should provide at most 1 expression
       PELOTON_ASSERT(after.size() <= 1);
@@ -504,17 +526,25 @@ void BottomUpRewrite<Node,OperatorType,OperatorExpr>::execute() {
         this->context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
         this->PushTask(
             new BottomUpRewrite<Node,OperatorType,OperatorExpr>(group_id_, this->context_, rule_set_name_, false));
+
+        std::cout << "Rewrote expression overwrote!\n";
+        std::cout << "Rule Pass ended, starting again\n";
         return;
       }
     }
     cur_group_expr->SetRuleExplored(r.rule);
   }
+
+  std::cout << "Rule Pass ended\n";
 }
 
 
 // Explicitly instantiate
 template class TopDownRewrite<Operator,OpType,OperatorExpression>;
 template class BottomUpRewrite<Operator,OpType,OperatorExpression>;
+
+template class TopDownRewrite<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
+template class BottomUpRewrite<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

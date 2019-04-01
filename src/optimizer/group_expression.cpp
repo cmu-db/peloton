@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/internal_types.h"
+#include "optimizer/absexpr_expression.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
 #include "optimizer/rule.h"
@@ -112,6 +113,7 @@ bool GroupExpression<Node,OperatorType,OperatorExpr>::HasRuleExplored(Rule<Node,
 
 // Explicitly instantiate to prevent linker errors
 template class GroupExpression<Operator,OpType,OperatorExpression>;
+template class GroupExpression<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

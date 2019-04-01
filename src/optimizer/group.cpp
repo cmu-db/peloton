@@ -12,6 +12,7 @@
 
 #include "optimizer/group.h"
 #include "optimizer/operator_expression.h"
+#include "optimizer/absexpr_expression.h"
 
 #include "common/logger.h"
 
@@ -171,6 +172,7 @@ bool Group<Node, OperatorType, OperatorExpr>::HasColumnStats(std::string column_
 
 // Explicitly instantiate
 template class Group<Operator,OpType,OperatorExpression>;
+template class Group<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

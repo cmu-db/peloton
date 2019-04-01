@@ -1383,6 +1383,10 @@ enum class RuleType : uint32_t {
   PULL_FILTER_THROUGH_MARK_JOIN,
   PULL_FILTER_THROUGH_AGGREGATION,
 
+  // AST rewrite rules (logical -> logical)
+  // Removes ConstantValueExpression = ConstantValueExpression
+  COMP_EQUALITY_ELIMINATION,
+
   // Place holder to generate number of rules compile time
   NUM_RULES
 

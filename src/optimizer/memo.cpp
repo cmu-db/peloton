@@ -14,6 +14,7 @@
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
 #include "optimizer/stats/stats_calculator.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -29,10 +30,15 @@ Memo<Node,OperatorType,OperatorExpr>::Memo() {}
 //===--------------------------------------------------------------------===//
 template <class Node, class OperatorType, class OperatorExpr>
 GroupID Memo<Node,OperatorType,OperatorExpr>::AddNewGroup(std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr) {
-  //(TODO): handle general case/AbstractExpressions
   (void)gexpr;
-  PELOTON_ASSERT(0);
-  return 0;
+
+  GroupID new_group_id = groups_.size();
+  // Find out the table alias that this group represents
+  std::unordered_set<std::string> table_aliases;
+
+  groups_.emplace_back(
+      new Group<Node,OperatorType,OperatorExpr>(new_group_id, std::move(table_aliases)));
+  return new_group_id;
 }
 
 template <>
@@ -81,9 +87,32 @@ GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,Operator
   GroupID target_group,
   bool enforced) {
 
-  //(TODO): handle general/AbstractExpression case
-  PELOTON_ASSERT(0);
-  return nullptr;
+  //(TODO): refactor this with the specialization
+  auto it = group_expressions_.find(gexpr.get());
+  std::cout << "group_expressions_.size(): " << group_expressions_.size() << "\n";
+  std::cout << "InsertExpression (" << gexpr << "," << target_group << ")\n";
+
+  if (it != group_expressions_.end()) {
+    gexpr->SetGroupID((*it)->GetGroupID());
+    std::cout << "Same Group discovered..\n";
+    return *it;
+  } else {
+    group_expressions_.insert(gexpr.get());
+    // New expression, so try to insert into an existing group or
+    // create a new group if none specified
+    GroupID group_id;
+    if (target_group == UNDEFINED_GROUP) {
+      group_id = AddNewGroup(gexpr);
+    } else {
+      group_id = target_group;
+    }
+
+    Group<Node,OperatorType,OperatorExpr> *group = GetGroupByID(group_id);
+    group->AddExpression(gexpr, enforced);
+
+    std::cout << "Inserted into new group...size(): " << group_expressions_.size() << "\n";
+    return gexpr.get();
+  }
 }
 
 // Specialization for Memo::InsertExpression due to OpType
@@ -154,6 +183,7 @@ const std::string Memo<Node,OperatorType,OperatorExpr>::GetInfo() const {
 
 // Explicitly instantiate template
 template class Memo<Operator,OpType,OperatorExpression>;
+template class Memo<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton
