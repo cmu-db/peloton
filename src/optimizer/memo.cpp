@@ -74,27 +74,13 @@ GroupID Memo<Operator,OpType,OperatorExpression>::AddNewGroup(std::shared_ptr<Gr
 // Memo remaining interface functions
 //===--------------------------------------------------------------------===//
 template <class Node, class OperatorType, class OperatorExpr>
-GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
-  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
-  bool enforced) {
+GroupExpression<Node,OperatorType,OperatorExpr>* Memo<Node,OperatorType,OperatorExpr>::InsertExpr(
+    std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+    GroupID target_group, bool enforced) {
 
-  return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
-}
-
-template <class Node, class OperatorType, class OperatorExpr>
-GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
-  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
-  GroupID target_group,
-  bool enforced) {
-
-  //(TODO): refactor this with the specialization
   auto it = group_expressions_.find(gexpr.get());
-  std::cout << "group_expressions_.size(): " << group_expressions_.size() << "\n";
-  std::cout << "InsertExpression (" << gexpr << "," << target_group << ")\n";
-
   if (it != group_expressions_.end()) {
     gexpr->SetGroupID((*it)->GetGroupID());
-    std::cout << "Same Group discovered..\n";
     return *it;
   } else {
     group_expressions_.insert(gexpr.get());
@@ -109,10 +95,25 @@ GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,Operator
 
     Group<Node,OperatorType,OperatorExpr> *group = GetGroupByID(group_id);
     group->AddExpression(gexpr, enforced);
-
-    std::cout << "Inserted into new group...size(): " << group_expressions_.size() << "\n";
     return gexpr.get();
   }
+}
+
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
+  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+  bool enforced) {
+
+  return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
+}
+
+template <class Node, class OperatorType, class OperatorExpr>
+GroupExpression<Node,OperatorType,OperatorExpr> *Memo<Node,OperatorType,OperatorExpr>::InsertExpression(
+  std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+  GroupID target_group,
+  bool enforced) {
+
+  return InsertExpr(gexpr, target_group, enforced);
 }
 
 // Specialization for Memo::InsertExpression due to OpType
@@ -121,6 +122,7 @@ GroupExpression<Operator,OpType,OperatorExpression> *Memo<Operator,OpType,Operat
   std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> gexpr,
   GroupID target_group,
   bool enforced) {
+
   // If leaf, then just return
   if (gexpr->Op().GetType() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
@@ -130,26 +132,7 @@ GroupExpression<Operator,OpType,OperatorExpression> *Memo<Operator,OpType,Operat
     return nullptr;
   }
 
-  // Lookup in hash table
-  auto it = group_expressions_.find(gexpr.get());
-
-  if (it != group_expressions_.end()) {
-    gexpr->SetGroupID((*it)->GetGroupID());
-    return *it;
-  } else {
-    group_expressions_.insert(gexpr.get());
-    // New expression, so try to insert into an existing group or
-    // create a new group if none specified
-    GroupID group_id;
-    if (target_group == UNDEFINED_GROUP) {
-      group_id = AddNewGroup(gexpr);
-    } else {
-      group_id = target_group;
-    }
-    Group<Operator,OpType,OperatorExpression> *group = GetGroupByID(group_id);
-    group->AddExpression(gexpr, enforced);
-    return gexpr.get();
-  }
+  return InsertExpr(gexpr, target_group, enforced);
 }
 
 template <class Node, class OperatorType, class OperatorExpr>

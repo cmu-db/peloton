@@ -63,6 +63,9 @@ class GroupBindingIterator : public BindingIterator<Node,OperatorType,OperatorEx
   Group<Node,OperatorType,OperatorExpr> *target_group_;
   size_t num_group_items_;
 
+  // Internal function for HasNext()
+  bool HasNextBinding();
+
   size_t current_item_index_;
   std::unique_ptr<BindingIterator<Node,OperatorType,OperatorExpr>> current_iterator_;
 };

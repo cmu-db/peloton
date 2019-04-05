@@ -40,6 +40,7 @@ class Rewriter {
   std::shared_ptr<AbsExpr_Expression> ConvertToAbsExpr(const expression::AbstractExpression *expr);
 
  private:
+  expression::AbstractExpression* RebuildExpression(int root_group);
   void ExecuteTaskStack(OptimizerTaskStack<AbsExpr_Container,ExpressionType,AbsExpr_Expression> &task_stack);
   void RewriteLoop(int root_group_id);
   std::shared_ptr<GroupExpression<AbsExpr_Container,ExpressionType,AbsExpr_Expression>> ConvertTree(const expression::AbstractExpression *expr);

@@ -91,6 +91,11 @@ class Memo {
  private:
   GroupID AddNewGroup(std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr);
 
+  // Internal InsertExpression function
+  GroupExpression<Node,OperatorType,OperatorExpr>* InsertExpr(
+    std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> gexpr,
+    GroupID target_group, bool enforced);
+
   // The group owns the group expressions, not the memo
   std::unordered_set<GroupExpression<Node,OperatorType,OperatorExpr>*,
                      GExprPtrHash<Node,OperatorType,OperatorExpr>,

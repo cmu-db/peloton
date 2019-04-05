@@ -117,5 +117,90 @@ TEST_F(RewriterTests, SingleCompareEqualRewritePassTrue) {
 
   delete rewrote;
 }
+
+TEST_F(RewriterTests, SimpleEqualityTree) {
+  //                      [=]
+  //                  [=]     [=]
+  //                [4] [5] [3] [3]
+  type::Value val4 = type::ValueFactory::GetIntegerValue(4);
+  type::Value val5 = type::ValueFactory::GetIntegerValue(5);
+  type::Value val3 = type::ValueFactory::GetIntegerValue(3);
+
+  auto lb_left_child = new expression::ConstantValueExpression(val4);
+  auto lb_right_child = new expression::ConstantValueExpression(val5);
+  auto rb_left_child = new expression::ConstantValueExpression(val3);
+  auto rb_right_child = new expression::ConstantValueExpression(val3);
+
+  auto lb = new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+                                                 lb_left_child, lb_right_child);
+  auto rb = new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+                                                 rb_left_child, rb_right_child);
+  auto top = new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL, lb, rb);
+
+  Rewriter *rewriter = new Rewriter();
+  auto rewrote = rewriter->RewriteExpression(top);
+
+  delete rewriter;
+  delete top;
+
+  EXPECT_TRUE(rewrote != nullptr);
+  EXPECT_TRUE(rewrote->GetChildrenSize() == 0);
+  EXPECT_TRUE(rewrote->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+
+  auto casted = dynamic_cast<expression::ConstantValueExpression*>(rewrote);
+  EXPECT_TRUE(casted->GetValueType() == type::TypeId::BOOLEAN);
+  EXPECT_TRUE(type::ValuePeeker::PeekBoolean(casted->GetValue()) == false);
+
+  delete rewrote;
+}
+
+// (TODO): delete this test once more rewriting rules implemented
+TEST_F(RewriterTests, SimpleJunctionPreserve) {
+  //                     [AND]
+  //                  [=]     [=]
+  //                [4] [5] [3] [3]
+  type::Value val4 = type::ValueFactory::GetIntegerValue(4);
+  type::Value val5 = type::ValueFactory::GetIntegerValue(5);
+  type::Value val3 = type::ValueFactory::GetIntegerValue(3);
+
+  auto lb_left_child = new expression::ConstantValueExpression(val4);
+  auto lb_right_child = new expression::ConstantValueExpression(val5);
+  auto rb_left_child = new expression::ConstantValueExpression(val3);
+  auto rb_right_child = new expression::ConstantValueExpression(val3);
+
+  auto lb = new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+                                                 lb_left_child, lb_right_child);
+  auto rb = new expression::ComparisonExpression(ExpressionType::COMPARE_EQUAL,
+                                                 rb_left_child, rb_right_child);
+  auto top = new expression::ConjunctionExpression(ExpressionType::CONJUNCTION_AND, lb, rb);
+
+  Rewriter *rewriter = new Rewriter();
+  auto rewrote = rewriter->RewriteExpression(top);
+
+  delete rewriter;
+  delete top;
+
+  EXPECT_TRUE(rewrote != nullptr);
+  EXPECT_TRUE(rewrote->GetChildrenSize() == 2);
+  EXPECT_TRUE(rewrote->GetExpressionType() == ExpressionType::CONJUNCTION_AND);
+
+  auto left = rewrote->GetChild(0);
+  auto right = rewrote->GetChild(1);
+
+  EXPECT_TRUE(left != nullptr && right != nullptr);
+  EXPECT_TRUE(left->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+  EXPECT_TRUE(right->GetExpressionType() == ExpressionType::VALUE_CONSTANT);
+
+  auto left_cast = dynamic_cast<const expression::ConstantValueExpression*>(left);
+  auto right_cast = dynamic_cast<const expression::ConstantValueExpression*>(right);
+  EXPECT_TRUE(left_cast->GetValueType() == type::TypeId::BOOLEAN);
+  EXPECT_TRUE(right_cast->GetValueType() == type::TypeId::BOOLEAN);
+
+  EXPECT_TRUE(type::ValuePeeker::PeekBoolean(left_cast->GetValue()) == false);
+  EXPECT_TRUE(type::ValuePeeker::PeekBoolean(right_cast->GetValue()) == true);
+
+  delete rewrote;
+}
+
 }  // namespace test
 }  // namespace peloton

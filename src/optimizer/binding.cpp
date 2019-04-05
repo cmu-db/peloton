@@ -38,8 +38,7 @@ GroupBindingIterator<Node,OperatorType,OperatorExpr>::GroupBindingIterator(
 }
 
 template <class Node, class OperatorType, class OperatorExpr>
-bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNext() {
-  //(TODO): refactor this and specialization to reduce duplicated code
+bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNextBinding() {
   if (current_iterator_) {
     // Check if still have bindings in current item
     if (!current_iterator_->HasNext()) {
@@ -65,8 +64,12 @@ bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNext() {
     }
   }
 
-  std::cout << "Is there a group bind: " << (current_iterator_ != nullptr) << "\n";
   return current_iterator_ != nullptr;
+}
+
+template <class Node, class OperatorType, class OperatorExpr>
+bool GroupBindingIterator<Node,OperatorType,OperatorExpr>::HasNext() {
+  return HasNextBinding();
 }
 
 // Specialization
@@ -78,37 +81,11 @@ bool GroupBindingIterator<Operator,OpType,OperatorExpression>::HasNext() {
     return current_item_index_ == 0;
   }
 
-  if (current_iterator_) {
-    // Check if still have bindings in current item
-    if (!current_iterator_->HasNext()) {
-      current_iterator_.reset(nullptr);
-      current_item_index_++;
-    }
-  }
-
-  if (current_iterator_ == nullptr) {
-    // Keep checking item iterators until we find a match
-    while (current_item_index_ < num_group_items_) {
-      current_iterator_.reset(new GroupExprBindingIterator<Operator,OpType,OperatorExpression>(
-          this->memo_,
-          target_group_->GetLogicalExpressions()[current_item_index_].get(),
-          pattern_));
-
-      if (current_iterator_->HasNext()) {
-        break;
-      }
-
-      current_iterator_.reset(nullptr);
-      current_item_index_++;
-    }
-  }
-
-  return current_iterator_ != nullptr;
+  return HasNextBinding();
 }
 
 template <class Node, class OperatorType, class OperatorExpr>
 std::shared_ptr<OperatorExpr> GroupBindingIterator<Node,OperatorType,OperatorExpr>::Next() {
-  std::cout << "Fetching next iterator\n";
   return current_iterator_->Next();
 }
 

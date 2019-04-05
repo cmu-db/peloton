@@ -12,6 +12,9 @@
 
 // AbstractExpression Definition
 #include "expression/abstract_expression.h"
+#include "expression/conjunction_expression.h"
+#include "expression/comparison_expression.h"
+#include "expression/constant_value_expression.h"
 
 #include <memory>
 #include <vector>
@@ -110,6 +113,40 @@ class AbsExpr_Container {
   // Operator contains physical or logical operator node
   bool IsDefined() const {
     return node != nullptr;
+  }
+
+  //(TODO): fix memory management once go to terrier
+  expression::AbstractExpression *Rebuild(std::vector<expression::AbstractExpression*> children) {
+    switch (GetType()) {
+      case ExpressionType::COMPARE_EQUAL:
+      case ExpressionType::COMPARE_NOTEQUAL:
+      case ExpressionType::COMPARE_LESSTHAN:
+      case ExpressionType::COMPARE_GREATERTHAN:
+      case ExpressionType::COMPARE_LESSTHANOREQUALTO:
+      case ExpressionType::COMPARE_GREATERTHANOREQUALTO:
+      case ExpressionType::COMPARE_LIKE:
+      case ExpressionType::COMPARE_NOTLIKE:
+      case ExpressionType::COMPARE_IN:
+      case ExpressionType::COMPARE_DISTINCT_FROM: {
+        PELOTON_ASSERT(children.size() == 2);
+        return new expression::ComparisonExpression(GetType(), children[0], children[1]);
+      }
+      case ExpressionType::CONJUNCTION_AND:
+      case ExpressionType::CONJUNCTION_OR: {
+        PELOTON_ASSERT(children.size() == 2);
+        return new expression::ConjunctionExpression(GetType(), children[0], children[1]);
+      }
+      case ExpressionType::VALUE_CONSTANT: {
+        PELOTON_ASSERT(children.size() == 0);
+        auto cve = static_cast<const expression::ConstantValueExpression*>(node);
+        return new expression::ConstantValueExpression(cve->GetValue());
+      }
+      default: {
+        int type = static_cast<int>(GetType());
+        LOG_ERROR("Unimplemented Rebuild() for %d found", type);
+        return nullptr;
+      }
+    }
   }
 
  private:

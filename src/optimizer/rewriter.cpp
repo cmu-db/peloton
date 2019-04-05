@@ -69,45 +69,45 @@ void Rewriter::RewriteLoop(int root_group_id) {
   ExecuteTaskStack(*task_stack);
 }
 
+expression::AbstractExpression* Rewriter::RebuildExpression(int root) {
+  auto cur_group = metadata_.memo.GetGroupByID(root);
+  auto exprs = cur_group->GetLogicalExpressions();
+
+  // (TODO): what should we do if exprs.size() > 1?
+  PELOTON_ASSERT(exprs.size() > 0);
+  auto expr = exprs[0];
+
+  std::vector<GroupID> child_groups = expr->GetChildGroupIDs();
+  std::vector<expression::AbstractExpression*> child_exprs;
+  for (auto group : child_groups) {
+    // Build children first
+    expression::AbstractExpression *child = RebuildExpression(group);
+    PELOTON_ASSERT(child != nullptr);
+
+    child_exprs.push_back(child);
+  }
+
+  AbsExpr_Container c = expr->Op();
+  return c.Rebuild(child_exprs);
+}
+
 expression::AbstractExpression* Rewriter::RewriteExpression(const expression::AbstractExpression *expr) {
-  // (TODO): convert AbstractExpression to AbsExpr_Expression...
+  // (TODO): do we need to actually convert to a wrapper?
   // This is needed in order to provide template classes the correct interface.
   // This should probably be better abstracted away.
   std::shared_ptr<GroupExpressionTemplate> gexpr = ConvertTree(expr);
-  std::cout << "Converted tree to internal data structures\n";
+  LOG_DEBUG("Converted tree to internal data structures");
 
   GroupID root_id = gexpr->GetGroupID();
   RewriteLoop(root_id);
-  std::cout << "Performed rewrite loop pass\n";
+  LOG_DEBUG("Performed rewrite loop pass");
 
-  // (TODO): rebuild AbstractExpression tree from memo
-  // The real strategy is very similar to Optimizer::ChooseBestPlan
-  // It should be possible to use the Children stored in GroupExpression
-  // to recursively pull from memo_ until a GroupExpression where
-  // GetChildrenGroupsSize() == 0 (which indicates the leaf).
-  
-  // For now, this just returns the top level node
-  GroupTemplate* group = metadata_.memo.GetGroupByID(root_id);
-  std::vector<std::shared_ptr<GroupExpressionTemplate>> exprs = group->GetLogicalExpressions();
-
-  PELOTON_ASSERT(exprs.size() > 0);
-  std::cout << "Final logical expressions retrieved\n";
-
-  // Take the first one
-  gexpr = exprs[0];
-  PELOTON_ASSERT(gexpr->GetChildrenGroupsSize() == 0);
-
-  // (TODO): build a layer which can go from AbsExpr_Container -> new AbstractExpression
-  // (TODO): build a layer which can go from AbsExpr_Expression -> new AbstractExpression
-  // right now this is just hard-coded which is bad
-  PELOTON_ASSERT(gexpr->Op().GetType() == ExpressionType::VALUE_CONSTANT);
-  auto casted = static_cast<const expression::ConstantValueExpression*>(gexpr->Op().GetExpr());
-  auto rebuilt = new expression::ConstantValueExpression(casted->GetValue());
-  std::cout << "Rebuilt expression\n";
+  expression::AbstractExpression *expr_tree = RebuildExpression(root_id);
+  LOG_DEBUG("Rebuilt expression tree from memo table");
 
   Reset();
-  std::cout << "Reset the rewriter\n";
-  return rebuilt;
+  LOG_DEBUG("Reset the rewriter");
+  return expr_tree;
 }
 
 void Rewriter::Reset() {
@@ -116,7 +116,7 @@ void Rewriter::Reset() {
 
 std::shared_ptr<AbsExpr_Expression> Rewriter::ConvertToAbsExpr(const expression::AbstractExpression* expr) {
 
-  // (TODO): need to think about how memory management would work w.r.t Peloton/terrier
+  // (TODO): fix memory management once we get to terrier
   // for now, this just directly wraps each AbstractExpression in a AbsExpr_Container
   // which is then wrapped in an AbsExpr_Expression to provide the same Operator/OperatorExpression
   // interface that is relied upon by the rest of the code base.
@@ -131,14 +131,10 @@ std::shared_ptr<AbsExpr_Expression> Rewriter::ConvertToAbsExpr(const expression:
 
 std::shared_ptr<GroupExpressionTemplate> Rewriter::ConvertTree(
   const expression::AbstractExpression *expr) {
-  std::cout << "Entered Rewriter::ConvertTree\n";
 
   std::shared_ptr<AbsExpr_Expression> exp = ConvertToAbsExpr(expr);
-  std::cout << "Converted to AbsExpr_Expression\n";
-
   std::shared_ptr<GroupExpressionTemplate> gexpr;
   metadata_.RecordTransformedExpression(exp, gexpr);
-  std::cout << "Initial loaded into memo\n";
   return gexpr;
 }
 

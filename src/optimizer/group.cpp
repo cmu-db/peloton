@@ -33,7 +33,12 @@ void Group<Node, OperatorType, OperatorExpr>::AddExpression(
   std::shared_ptr<GroupExpression<Node,OperatorType,OperatorExpr>> expr,
   bool enforced) {
 
-  //(TODO): rethink how separation works with AbstractExpressions
+  // Additional assertion checks for AddExpression() with AST rewriting
+  if (std::is_same<Node, AbsExpr_Container>::value) {
+    PELOTON_ASSERT(!enforced);
+    PELOTON_ASSERT(!expr->Op().IsPhysical());
+  }
+
   // Do duplicate detection
   expr->SetGroupID(id_);
   if (enforced)

@@ -23,9 +23,10 @@ int Rule<Node,OperatorType,OperatorExpr>::Promise(
   GroupExpression<Node, OperatorType, OperatorExpr> *group_expr,
   OptimizeContext<Node, OperatorType, OperatorExpr> *context) const {
 
-  //(TODO): handle general/AbstractExpression case
-  PELOTON_ASSERT(group_expr);
-  PELOTON_ASSERT(context);
+  (void)group_expr;
+  (void)context;
+
+  LOG_ERROR("Rule::Promise for rewrite engine not implemented!");
   PELOTON_ASSERT(0);
   return 0;
 }
@@ -48,8 +49,8 @@ int Rule<Operator,OpType,OperatorExpression>::Promise(
 
 template <class Operator, class OperatorType, class OperatorExpr>
 RuleSet<Operator,OperatorType,OperatorExpr>::RuleSet() {
+  LOG_ERROR("Must invoke specialization of RuleSet constructor");
   PELOTON_ASSERT(0);
-  // should never be invoked
 }
 
 template <>

@@ -20,6 +20,13 @@
 namespace peloton {
 namespace optimizer {
 
+/* Rules are applied from high to low priority */
+enum class RulePriority : int {
+  HIGH = 3,
+  MEDIUM = 2,
+  LOW = 1
+};
+
 class ComparatorElimination: public Rule<AbsExpr_Container,ExpressionType,AbsExpr_Expression> {
  public:
   ComparatorElimination();

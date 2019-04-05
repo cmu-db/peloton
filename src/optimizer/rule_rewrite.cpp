@@ -28,10 +28,7 @@ int ComparatorElimination::Promise(GroupExpression<AbsExpr_Container,ExpressionT
                                    OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const {
   (void)group_expr;
   (void)context;
-
-  //(TODO): is this correct, proceed to structural binding?
-  std::cout << "Promise hit\n";
-  return 1;
+  return static_cast<int>(RulePriority::HIGH);
 }
 
 bool ComparatorElimination::Check(std::shared_ptr<AbsExpr_Expression> plan,
@@ -39,15 +36,12 @@ bool ComparatorElimination::Check(std::shared_ptr<AbsExpr_Expression> plan,
   (void)context;
   (void)plan;
 
-  std::cout << "Check hit\n";
-
-  //(TODO): perform checking more gracefully
-  // Technically, if structure matches, rule should always be applied
+  // If any of these assertions fail, something is seriously wrong with GroupExprBinding
+  // Verify the structure of the tree is correct
   PELOTON_ASSERT(plan != nullptr);
   PELOTON_ASSERT(plan->Children().size() == 2);
   PELOTON_ASSERT(plan->Op().GetType() == ExpressionType::COMPARE_EQUAL);
 
-  // Verify the structure of the tree is correct
   auto left = plan->Children()[0];
   auto right = plan->Children()[1];
   PELOTON_ASSERT(left->Children().size() == 0);
@@ -55,6 +49,7 @@ bool ComparatorElimination::Check(std::shared_ptr<AbsExpr_Expression> plan,
   PELOTON_ASSERT(right->Children().size() == 0);
   PELOTON_ASSERT(right->Op().GetType() == ExpressionType::VALUE_CONSTANT);
 
+  // Technically, if structure matches, rule should always be applied
   return true;
 }
 
@@ -64,7 +59,7 @@ void ComparatorElimination::Transform(std::shared_ptr<AbsExpr_Expression> input,
   (void)transformed;
   (void)context;
 
-  // (TODO): create a wrapper for evaluating ConstantValue relations
+  // (TODO): create a wrapper for evaluating ConstantValue relations (pending email reply)
 
   // Extract the AbstractExpression through indirection layer
   auto left = input->Children()[0]->Op().GetExpr();
@@ -80,7 +75,6 @@ void ComparatorElimination::Transform(std::shared_ptr<AbsExpr_Expression> input,
 
   // Need to check type equality to prevent assertion failure
   // This is only a Peloton issue (terrier checks type for you)
-  // (TODO): perform checking through a class/strategy
   bool is_equal = (lvalue.GetTypeId() == rvalue.GetTypeId()) &&
                   (lv->ExactlyEquals(*rv));
 
@@ -90,9 +84,7 @@ void ComparatorElimination::Transform(std::shared_ptr<AbsExpr_Expression> input,
   auto cnt = AbsExpr_Container(eq);
   auto shared = std::make_shared<AbsExpr_Expression>(cnt);
 
-  // (TODO): figure out how to free these expressions
-  // (TODO): Terrier uses shared_ptr but Peloton has this
-  // awkward mixture of raw pointers and unique_ptr
+  // (TODO): figure out memory management once go to terrier (which use shared_ptr)
   transformed.push_back(shared);
 }
 }  // namespace optimizer
