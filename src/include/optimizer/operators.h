@@ -55,7 +55,7 @@ class LogicalGet : public OperatorNode<LogicalGet> {
       std::shared_ptr<catalog::TableCatalogEntry> table = nullptr,
       std::string alias = "", bool update = false);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -76,7 +76,7 @@ class LogicalExternalFileGet : public OperatorNode<LogicalExternalFileGet> {
                        std::string file_name, char delimiter, char quote,
                        char escape);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -100,7 +100,7 @@ class LogicalQueryDerivedGet : public OperatorNode<LogicalQueryDerivedGet> {
                          std::shared_ptr<expression::AbstractExpression>>
           alias_to_expr_map);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -120,7 +120,7 @@ class LogicalFilter : public OperatorNode<LogicalFilter> {
   static Operator make(std::vector<AnnotatedExpression> &filter);
   std::vector<AnnotatedExpression> predicates;
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 };
@@ -144,7 +144,7 @@ class LogicalDependentJoin : public OperatorNode<LogicalDependentJoin> {
 
   static Operator make(std::vector<AnnotatedExpression> &conditions);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -160,7 +160,7 @@ class LogicalMarkJoin : public OperatorNode<LogicalMarkJoin> {
 
   static Operator make(std::vector<AnnotatedExpression> &conditions);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -176,7 +176,7 @@ class LogicalSingleJoin : public OperatorNode<LogicalSingleJoin> {
 
   static Operator make(std::vector<AnnotatedExpression> &conditions);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -192,7 +192,7 @@ class LogicalInnerJoin : public OperatorNode<LogicalInnerJoin> {
 
   static Operator make(std::vector<AnnotatedExpression> &conditions);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -254,7 +254,7 @@ class LogicalAggregateAndGroupBy
       std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
       std::vector<AnnotatedExpression> &having);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
   hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
@@ -346,7 +346,7 @@ class LogicalExportExternalFile
   static Operator make(ExternalFileFormat format, std::string file_name,
                        char delimiter, char quote, char escape);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -376,7 +376,7 @@ class PhysicalSeqScan : public OperatorNode<PhysicalSeqScan> {
                        std::vector<AnnotatedExpression> predicates,
                        bool update);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -401,7 +401,7 @@ class PhysicalIndexScan : public OperatorNode<PhysicalIndexScan> {
                        std::vector<ExpressionType> expr_type_list,
                        std::vector<type::Value> value_list);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -430,7 +430,7 @@ class ExternalFileScan : public OperatorNode<ExternalFileScan> {
                        std::string file_name, char delimiter, char quote,
                        char escape);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -454,7 +454,7 @@ class QueryDerivedScan : public OperatorNode<QueryDerivedScan> {
                          std::shared_ptr<expression::AbstractExpression>>
           alias_to_expr_map);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -503,7 +503,7 @@ class PhysicalInnerNLJoin : public OperatorNode<PhysicalInnerNLJoin> {
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -553,7 +553,7 @@ class PhysicalInnerHashJoin : public OperatorNode<PhysicalInnerHashJoin> {
       std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
       std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -650,7 +650,7 @@ class PhysicalExportExternalFile
   static Operator make(ExternalFileFormat format, std::string file_name,
                        char delimiter, char quote, char escape);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
 
   hash_t Hash() const override;
 
@@ -670,7 +670,7 @@ class PhysicalHashGroupBy : public OperatorNode<PhysicalHashGroupBy> {
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       std::vector<AnnotatedExpression> having);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
   hash_t Hash() const override;
 
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;
@@ -686,7 +686,7 @@ class PhysicalSortGroupBy : public OperatorNode<PhysicalSortGroupBy> {
       std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
       std::vector<AnnotatedExpression> having);
 
-  bool operator==(const BaseOperatorNode &r) override;
+  bool operator==(const AbstractNode &r) override;
   hash_t Hash() const override;
   // TODO(boweic): use raw ptr
   std::vector<std::shared_ptr<expression::AbstractExpression>> columns;

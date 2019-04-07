@@ -45,14 +45,14 @@ Operator LogicalGet::make(oid_t get_id,
 }
 
 hash_t LogicalGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalGet::operator==(const BaseOperatorNode &r) {
+bool LogicalGet::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
@@ -80,7 +80,7 @@ Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
   return Operator(get);
 }
 
-bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
+bool LogicalExternalFileGet::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::LogicalExternalFileGet) return false;
   const auto &get = *static_cast<const LogicalExternalFileGet *>(&node);
   return (get_id == get.get_id && format == get.format &&
@@ -89,7 +89,7 @@ bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalExternalFileGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
@@ -116,7 +116,7 @@ Operator LogicalQueryDerivedGet::make(
   return Operator(get);
 }
 
-bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
+bool LogicalQueryDerivedGet::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r =
       *static_cast<const LogicalQueryDerivedGet *>(&node);
@@ -124,7 +124,7 @@ bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalQueryDerivedGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
@@ -139,13 +139,13 @@ Operator LogicalFilter::make(std::vector<AnnotatedExpression> &filter) {
 }
 
 hash_t LogicalFilter::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalFilter::operator==(const BaseOperatorNode &r) {
+bool LogicalFilter::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::LogicalFilter) return false;
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
@@ -182,13 +182,13 @@ Operator LogicalDependentJoin::make(
 }
 
 hash_t LogicalDependentJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
+bool LogicalDependentJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
@@ -217,13 +217,13 @@ Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression> &conditions) {
 }
 
 hash_t LogicalMarkJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
+bool LogicalMarkJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -251,13 +251,13 @@ Operator LogicalSingleJoin::make(std::vector<AnnotatedExpression> &conditions) {
 }
 
 hash_t LogicalSingleJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
+bool LogicalSingleJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::LogicalSingleJoin) return false;
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -285,13 +285,13 @@ Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression> &conditions) {
 }
 
 hash_t LogicalInnerJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
+bool LogicalInnerJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::InnerJoin) return false;
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -368,7 +368,7 @@ Operator LogicalAggregateAndGroupBy::make(
   return Operator(group_by);
 }
 
-bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
+bool LogicalAggregateAndGroupBy::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::LogicalAggregateAndGroupBy) return false;
   const LogicalAggregateAndGroupBy &r =
       *static_cast<const LogicalAggregateAndGroupBy *>(&node);
@@ -381,7 +381,7 @@ bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalAggregateAndGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
@@ -470,7 +470,7 @@ Operator LogicalExportExternalFile::make(ExternalFileFormat format,
   return Operator(export_op);
 }
 
-bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
+bool LogicalExportExternalFile::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::LogicalExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const LogicalExportExternalFile *>(&node);
@@ -480,7 +480,7 @@ bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalExportExternalFile::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
@@ -516,7 +516,7 @@ Operator PhysicalSeqScan::make(
   return Operator(scan);
 }
 
-bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
+bool PhysicalSeqScan::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::SeqScan) return false;
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
@@ -528,7 +528,7 @@ bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
 }
 
 hash_t PhysicalSeqScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
@@ -559,7 +559,7 @@ Operator PhysicalIndexScan::make(
   return Operator(scan);
 }
 
-bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
+bool PhysicalIndexScan::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
@@ -577,7 +577,7 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
 }
 
 hash_t PhysicalIndexScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&index_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
@@ -601,7 +601,7 @@ Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
   return Operator(get);
 }
 
-bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
+bool ExternalFileScan::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::QueryDerivedScan) return false;
   const auto &get = *static_cast<const ExternalFileScan *>(&node);
   return (get_id == get.get_id && format == get.format &&
@@ -610,7 +610,7 @@ bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t ExternalFileScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
@@ -637,14 +637,14 @@ Operator QueryDerivedScan::make(
   return Operator(get);
 }
 
-bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
+bool QueryDerivedScan::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return get_id == r.get_id;
 }
 
 hash_t QueryDerivedScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
@@ -689,7 +689,7 @@ Operator PhysicalInnerNLJoin::make(
 }
 
 hash_t PhysicalInnerNLJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto &expr : right_keys)
@@ -699,7 +699,7 @@ hash_t PhysicalInnerNLJoin::Hash() const {
   return hash;
 }
 
-bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
+bool PhysicalInnerNLJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
@@ -766,7 +766,7 @@ Operator PhysicalInnerHashJoin::make(
 }
 
 hash_t PhysicalInnerHashJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto &expr : right_keys)
@@ -776,7 +776,7 @@ hash_t PhysicalInnerHashJoin::Hash() const {
   return hash;
 }
 
-bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
+bool PhysicalInnerHashJoin::operator==(const AbstractNode &r) {
   if (r.GetType() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
@@ -891,7 +891,7 @@ Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
   return Operator(export_op);
 }
 
-bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
+bool PhysicalExportExternalFile::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::ExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const PhysicalExportExternalFile *>(&node);
@@ -901,7 +901,7 @@ bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalExportExternalFile::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
@@ -923,7 +923,7 @@ Operator PhysicalHashGroupBy::make(
   return Operator(agg);
 }
 
-bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
+bool PhysicalHashGroupBy::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
@@ -936,7 +936,7 @@ bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalHashGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
@@ -954,7 +954,7 @@ Operator PhysicalSortGroupBy::make(
   return Operator(agg);
 }
 
-bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
+bool PhysicalSortGroupBy::operator==(const AbstractNode &node) {
   if (node.GetType() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
@@ -967,7 +967,7 @@ bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalSortGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;

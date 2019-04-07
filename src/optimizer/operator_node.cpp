@@ -10,6 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "optimizer/abstract_node.h"
 #include "optimizer/operator_node.h"
 
 namespace peloton {
@@ -20,7 +21,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Operator::Operator() : node(nullptr) {}
 
-Operator::Operator(BaseOperatorNode *node) : node(node) {}
+Operator::Operator(AbstractNode *node) : node(node) {}
 
 void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 
