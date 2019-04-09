@@ -20,10 +20,10 @@ namespace peloton {
 namespace optimizer {
 namespace test {
 
-class MockTask : public optimizer::OptimizerTask {
+class MockTask : public optimizer::OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
   MockTask()
-      : optimizer::OptimizerTask(nullptr, OptimizerTaskType::OPTIMIZE_GROUP) {}
+      : optimizer::OptimizerTask<Operator,OpType,OperatorExpression>(nullptr, OptimizerTaskType::OPTIMIZE_GROUP) {}
 
   MOCK_METHOD0(execute, void());
 };

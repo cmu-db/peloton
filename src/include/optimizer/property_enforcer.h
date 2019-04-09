@@ -30,8 +30,8 @@ class PropertyEnforcer : public PropertyVisitor {
  public:
 
 
-  std::shared_ptr<GroupExpression> EnforceProperty(
-      GroupExpression* gexpr, Property* property);
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> EnforceProperty(
+      GroupExpression<Operator,OpType,OperatorExpression>* gexpr, Property* property);
 
   virtual void Visit(const PropertyColumns *) override;
   virtual void Visit(const PropertySort *) override;
@@ -39,8 +39,8 @@ class PropertyEnforcer : public PropertyVisitor {
   virtual void Visit(const PropertyLimit *) override;
 
  private:
-  GroupExpression* input_gexpr_;
-  std::shared_ptr<GroupExpression> output_gexpr_;
+  GroupExpression<Operator,OpType,OperatorExpression>* input_gexpr_;
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> output_gexpr_;
 };
 
 }  // namespace optimizer

@@ -24,14 +24,33 @@ class AbstractExpression;
 }
 namespace optimizer {
 
+template <class Node, class OperatorType, class OperatorExpr>
 class OptimizeContext;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class Rule;
+
+template <class Node, class OperatorType, class OperatorExpr>
 struct RuleWithPromise;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class RuleSet;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class Group;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class GroupExpression;
+
+template <class Node, class OperatorType, class OperatorExpr>
 class OptimizerMetadata;
+
+enum class OpType;
+class Operator;
+class OperatorExpression;
 class PropertySet;
 enum class RewriteRuleSetName : uint32_t;
 using GroupID = int32_t;
@@ -53,9 +72,10 @@ enum class OptimizerTaskType {
 /**
  * @brief The base class for tasks in the optimizer
  */
+template <class Node, class OperatorType, class OperatorExpr>
 class OptimizerTask {
  public:
-  OptimizerTask(std::shared_ptr<OptimizeContext> context,
+  OptimizerTask(std::shared_ptr<OptimizeContext<Node,OperatorType,OperatorExpr>> context,
                 OptimizerTaskType type)
       : type_(type), context_(context) {}
 
@@ -71,24 +91,24 @@ class OptimizerTask {
    * @param valid_rules The valid rules to apply in the current rule set will be
    *  append to valid_rules, with their promises
    */
-  static void ConstructValidRules(GroupExpression *group_expr,
-                                  OptimizeContext *context,
-                                  std::vector<std::unique_ptr<Rule>> &rules,
-                                  std::vector<RuleWithPromise> &valid_rules);
+  static void ConstructValidRules(GroupExpression<Node,OperatorType,OperatorExpr> *group_expr,
+                                  OptimizeContext<Node,OperatorType,OperatorExpr> *context,
+                                  std::vector<std::unique_ptr<Rule<Node,OperatorType,OperatorExpr>>> &rules,
+                                  std::vector<RuleWithPromise<Node,OperatorType,OperatorExpr>> &valid_rules);
 
   virtual void execute() = 0;
 
-  void PushTask(OptimizerTask *task);
+  void PushTask(OptimizerTask<Node,OperatorType,OperatorExpr> *task);
 
-  inline Memo &GetMemo() const;
+  inline Memo<Node,OperatorType,OperatorExpr> &GetMemo() const;
 
-  inline RuleSet &GetRuleSet() const;
+  inline RuleSet<Node,OperatorType,OperatorExpr> &GetRuleSet() const;
 
   virtual ~OptimizerTask(){};
 
  protected:
   OptimizerTaskType type_;
-  std::shared_ptr<OptimizeContext> context_;
+  std::shared_ptr<OptimizeContext<Node,OperatorType,OperatorExpr>> context_;
 };
 
 /**
@@ -96,15 +116,16 @@ class OptimizerTask {
  *  equivalent operator trees if not already explored 2. Cost all physical
  *  operator trees given the current context
  */
-class OptimizeGroup : public OptimizerTask {
+class OptimizeGroup : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  OptimizeGroup(Group *group, std::shared_ptr<OptimizeContext> context)
+  OptimizeGroup(Group<Operator,OpType,OperatorExpression> *group,
+                std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_GROUP),
         group_(group) {}
   virtual void execute() override;
 
  private:
-  Group *group_;
+  Group<Operator,OpType,OperatorExpression> *group_;
 };
 
 /**
@@ -114,31 +135,32 @@ class OptimizeGroup : public OptimizerTask {
  *  promises so that a physical transformation rule is applied before a logical
  *  transformation rule
  */
-class OptimizeExpression : public OptimizerTask {
+class OptimizeExpression : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  OptimizeExpression(GroupExpression *group_expr,
-                     std::shared_ptr<OptimizeContext> context)
+  OptimizeExpression(GroupExpression<Operator,OpType,OperatorExpression> *group_expr,
+                     std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_EXPR),
         group_expr_(group_expr) {}
   virtual void execute() override;
 
  private:
-  GroupExpression *group_expr_;
+  GroupExpression<Operator,OpType,OperatorExpression> *group_expr_;
 };
 
 /**
  * @brief Generate all logical transformation rules by applying logical
  * transformation rules to logical operators in the group until saturated
  */
-class ExploreGroup : public OptimizerTask {
+class ExploreGroup : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  ExploreGroup(Group *group, std::shared_ptr<OptimizeContext> context)
+  ExploreGroup(Group<Operator,OpType,OperatorExpression> *group,
+               std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::EXPLORE_GROUP),
         group_(group) {}
   virtual void execute() override;
 
  private:
-  Group *group_;
+  Group<Operator,OpType,OperatorExpression> *group_;
 };
 
 /**
@@ -146,16 +168,16 @@ class ExploreGroup : public OptimizerTask {
  * pattern
  * in the same group is found, also apply logical transformation rule for it.
  */
-class ExploreExpression : public OptimizerTask {
+class ExploreExpression : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  ExploreExpression(GroupExpression *group_expr,
-                    std::shared_ptr<OptimizeContext> context)
+  ExploreExpression(GroupExpression<Operator,OpType,OperatorExpression> *group_expr,
+                    std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::EXPLORE_EXPR),
         group_expr_(group_expr) {}
   virtual void execute() override;
 
  private:
-  GroupExpression *group_expr_;
+  GroupExpression<Operator,OpType,OperatorExpression> *group_expr_;
 };
 
 /**
@@ -164,10 +186,11 @@ class ExploreExpression : public OptimizerTask {
  *  to the new group expression based on the explore flag. If the rule is a
  *  physical implementation rule, we directly cost the physical expression
  */
-class ApplyRule : public OptimizerTask {
+class ApplyRule : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  ApplyRule(GroupExpression *group_expr, Rule *rule,
-            std::shared_ptr<OptimizeContext> context, bool explore = false)
+  ApplyRule(GroupExpression<Operator,OpType,OperatorExpression> *group_expr,
+            Rule<Operator,OpType,OperatorExpression> *rule,
+            std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context, bool explore = false)
       : OptimizerTask(context, OptimizerTaskType::APPLY_RULE),
         group_expr_(group_expr),
         rule_(rule),
@@ -175,8 +198,8 @@ class ApplyRule : public OptimizerTask {
   virtual void execute() override;
 
  private:
-  GroupExpression *group_expr_;
-  Rule *rule_;
+  GroupExpression<Operator,OpType,OperatorExpression> *group_expr_;
+  Rule<Operator,OpType,OperatorExpression> *rule_;
   bool explore_only;
 };
 
@@ -187,10 +210,10 @@ class ApplyRule : public OptimizerTask {
  *  current expression's cost is larger than the upper bound of the current
  *  group
  */
-class OptimizeInputs : public OptimizerTask {
+class OptimizeInputs : public OptimizerTask<Operator,OpType,OperatorExpression> {
  public:
-  OptimizeInputs(GroupExpression *group_expr,
-                 std::shared_ptr<OptimizeContext> context)
+  OptimizeInputs(GroupExpression<Operator,OpType,OperatorExpression> *group_expr,
+                 std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_INPUTS),
         group_expr_(group_expr) {}
 
@@ -208,7 +231,7 @@ class OptimizeInputs : public OptimizerTask {
   std::vector<std::pair<std::shared_ptr<PropertySet>,
                         std::vector<std::shared_ptr<PropertySet>>>>
       output_input_properties_;
-  GroupExpression *group_expr_;
+  GroupExpression<Operator,OpType,OperatorExpression> *group_expr_;
   double cur_total_cost_;
   int cur_child_idx_ = -1;
   int prev_child_idx_ = -1;
@@ -220,11 +243,11 @@ class OptimizeInputs : public OptimizerTask {
  * child group have the stats, if not, recursively derive the stats. This would
  * lazily collect the stats for the column needed
  */
-class DeriveStats : public OptimizerTask {
+class DeriveStats : public OptimizerTask<Operator,OpType, OperatorExpression> {
  public:
-  DeriveStats(GroupExpression *gexpr,
+  DeriveStats(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
               ExprSet required_cols,
-              std::shared_ptr<OptimizeContext> context)
+              std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),
         required_cols_(required_cols) {}
@@ -237,7 +260,7 @@ class DeriveStats : public OptimizerTask {
   virtual void execute() override;
 
  private:
-  GroupExpression *gexpr_;
+  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
   ExprSet required_cols_;
 };
 
@@ -247,11 +270,13 @@ class DeriveStats : public OptimizerTask {
  * level rewrite. An example is predicate push-down. We only push the predicates
  * from the upper level to the lower level.
  */
-class TopDownRewrite : public OptimizerTask {
+template <class Node, class OperatorType, class OperatorExpr>
+class TopDownRewrite : public OptimizerTask<Node,OperatorType,OperatorExpr> {
  public:
-  TopDownRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
+  TopDownRewrite(GroupID group_id,
+                 std::shared_ptr<OptimizeContext<Node,OperatorType,OperatorExpr>> context,
                  RewriteRuleSetName rule_set_name)
-      : OptimizerTask(context, OptimizerTaskType::TOP_DOWN_REWRITE),
+      : OptimizerTask<Node,OperatorType,OperatorExpr>(context, OptimizerTaskType::TOP_DOWN_REWRITE),
         group_id_(group_id),
         rule_set_name_(rule_set_name) {}
   virtual void execute() override;
@@ -266,11 +291,13 @@ class TopDownRewrite : public OptimizerTask {
  * that the upper level rewrite in the operator tree will not enable lower
  * level rewrite.
  */
-class BottomUpRewrite : public OptimizerTask {
+template <class Node, class OperatorType, class OperatorExpr>
+class BottomUpRewrite : public OptimizerTask<Node,OperatorType,OperatorExpr> {
  public:
-  BottomUpRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
+  BottomUpRewrite(GroupID group_id,
+                  std::shared_ptr<OptimizeContext<Node,OperatorType,OperatorExpr>> context,
                   RewriteRuleSetName rule_set_name, bool has_optimized_child)
-      : OptimizerTask(context, OptimizerTaskType::BOTTOM_UP_REWRITE),
+      : OptimizerTask<Node,OperatorType,OperatorExpr>(context, OptimizerTaskType::BOTTOM_UP_REWRITE),
         group_id_(group_id),
         rule_set_name_(rule_set_name),
         has_optimized_child_(has_optimized_child) {}

@@ -60,7 +60,10 @@ enum CostModels {DEFAULT, POSTGRES, TRIVIAL};
 // Optimizer
 //===--------------------------------------------------------------------===//
 class Optimizer : public AbstractOptimizer {
+  template <class Node, class OperatorType, class OperatorExpr>
   friend class BindingIterator;
+
+  template <class Node, class OperatorType, class OperatorExpr>
   friend class GroupBindingIterator;
 
   friend class ::peloton::test::
@@ -85,16 +88,18 @@ class Optimizer : public AbstractOptimizer {
 
   void Reset() override;
 
-  OptimizerMetadata &GetMetadata() { return metadata_; }
+  OptimizerMetadata<Operator,OpType,OperatorExpression> &GetMetadata() { return metadata_; }
 
   /* For test purposes only */
-  std::shared_ptr<GroupExpression> TestInsertQueryTree(
-      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> TestInsertQueryTree(
+    parser::SQLStatement *tree,
+    concurrency::TransactionContext *txn) {
+
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */
-  void TestExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                            std::shared_ptr<OptimizeContext> root_context) {
+  void TestExecuteTaskStack(OptimizerTaskStack<Operator,OpType,OperatorExpression> &task_stack, int root_group_id,
+                            std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context) {
     return ExecuteTaskStack(task_stack, root_group_id, root_context);
   }
 
@@ -119,7 +124,7 @@ class Optimizer : public AbstractOptimizer {
    * tree: a peloton query tree representing a select query
    * return: the root group expression for the inserted query
    */
-  std::shared_ptr<GroupExpression> InsertQueryTree(
+  std::shared_ptr<GroupExpression<Operator,OpType,OperatorExpression>> InsertQueryTree(
       parser::SQLStatement *tree, concurrency::TransactionContext *txn);
 
   /* GetQueryTreeRequiredProperties - get the required physical properties for
@@ -161,12 +166,12 @@ class Optimizer : public AbstractOptimizer {
    * root_context: the OptimizerContext to use that maintains required
    *properties
    */
-  void ExecuteTaskStack(OptimizerTaskStack &task_stack, int root_group_id,
-                        std::shared_ptr<OptimizeContext> root_context);
+  void ExecuteTaskStack(OptimizerTaskStack<Operator,OpType,OperatorExpression> &task_stack, int root_group_id,
+                        std::shared_ptr<OptimizeContext<Operator,OpType,OperatorExpression>> root_context);
 
   //////////////////////////////////////////////////////////////////////////////
   /// Metadata
-  OptimizerMetadata metadata_;
+  OptimizerMetadata<Operator,OpType,OperatorExpression> metadata_;
   std::unique_ptr<AbstractCostModel> cost_model_;
 };
 

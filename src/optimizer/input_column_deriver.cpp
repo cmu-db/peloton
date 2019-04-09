@@ -37,8 +37,9 @@ InputColumnDeriver::InputColumnDeriver() {}
 
 pair<vector<AbstractExpression *>, vector<vector<AbstractExpression *>>>
 InputColumnDeriver::DeriveInputColumns(
-    GroupExpression *gexpr, shared_ptr<PropertySet> properties,
-    vector<AbstractExpression *> required_cols, Memo *memo) {
+    GroupExpression<Operator,OpType,OperatorExpression> *gexpr, shared_ptr<PropertySet> properties,
+    vector<AbstractExpression *> required_cols,
+    Memo<Operator,OpType,OperatorExpression> *memo) {
   properties_ = properties;
   gexpr_ = gexpr;
   required_cols_ = move(required_cols);
