@@ -27,7 +27,7 @@ vector<ExprSet> ChildStatsDeriver::DeriveInputStats(GroupExpression *gexpr,
   gexpr_ = gexpr;
   memo_ = memo;
   output_ = vector<ExprSet>(gexpr->GetChildrenGroupsSize(), ExprSet{});
-  gexpr->Op().Accept(this);
+  gexpr->Op()->Accept(this);
   return std::move(output_);
 }
 

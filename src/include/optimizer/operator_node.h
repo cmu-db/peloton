@@ -28,18 +28,19 @@ namespace optimizer {
 class OperatorVisitor;
 
 // Curiously recurring template pattern
-// TODO(ncx): this templating would be nice to clean up
 template <typename T>
 struct OperatorNode : public AbstractNode {
-  OperatorNode() {}
+  OperatorNode() : AbstractNode(nullptr) {}
 
   virtual ~OperatorNode() {}
 
   void Accept(OperatorVisitor *v) const;
 
-  virtual std::string GetName() const { return name_; }
+  std::string GetName() const { return name_; }
 
-  virtual OpType GetType() const { return type_; }
+  OpType GetOpType() const { return op_type_; }
+
+  ExpressionType GetExpType() const { return exp_type_; }
 
   bool IsLogical() const;
 
@@ -47,7 +48,9 @@ struct OperatorNode : public AbstractNode {
 
   static std::string name_;
 
-  static OpType type_;
+  static OpType op_type_;
+
+  static ExpressionType exp_type_;
 };
 
 class Operator : public AbstractNode {
@@ -60,7 +63,9 @@ class Operator : public AbstractNode {
 
   std::string GetName() const;
 
-  OpType GetType() const;
+  OpType GetOpType() const;
+
+  ExpressionType GetExpType() const;
 
   bool IsLogical() const;
 
@@ -71,21 +76,6 @@ class Operator : public AbstractNode {
   bool operator==(const Operator &r);
 
   bool IsDefined() const;
-
-  template <typename T>
-  const T *As() const {
-    if (node && typeid(*node) == typeid(T)) {
-      return (const T *)node.get();
-    }
-    return nullptr;
-  }
-
-  static std::string name_;
-
-  static OpType type_;
-
- private:
-  std::shared_ptr<AbstractNode> node;
 };
 
 }  // namespace optimizer

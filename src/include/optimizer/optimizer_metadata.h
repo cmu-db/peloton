@@ -19,6 +19,8 @@
 #include "optimizer/rule.h"
 #include "settings/settings_manager.h"
 
+#include <memory>
+
 namespace peloton {
 namespace catalog {
 class Catalog;
@@ -58,7 +60,7 @@ class OptimizerMetadata {
       memo.InsertExpression(gexpr, false);
       child_groups.push_back(gexpr->GetGroupID());
     }
-    return std::make_shared<GroupExpression>(expr->Op(),
+    return std::make_shared<GroupExpression>(std::make_shared<Operator>(expr->Op()),
                                              std::move(child_groups));
   }
 

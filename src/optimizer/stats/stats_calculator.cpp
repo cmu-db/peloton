@@ -33,7 +33,7 @@ void StatsCalculator::CalculateStats(GroupExpression *gexpr,
   memo_ = memo;
   required_cols_ = required_cols;
   txn_ = txn;
-  gexpr->Op().Accept(this);
+  gexpr->Op()->Accept(this);
 }
 
 void StatsCalculator::Visit(const LogicalGet *op) {

@@ -102,7 +102,7 @@ void InnerJoinAssociativity::Transform(
   auto parent_join = input->Op().As<LogicalInnerJoin>();
   std::vector<std::shared_ptr<OperatorExpression>> children = input->Children();
   PELOTON_ASSERT(children.size() == 2);
-  PELOTON_ASSERT(children[0]->Op().GetType() == OpType::InnerJoin);
+  PELOTON_ASSERT(children[0]->Op().GetOpType() == OpType::InnerJoin);
   PELOTON_ASSERT(children[0]->Children().size() == 2);
   auto child_join = children[0]->Op().As<LogicalInnerJoin>();
   auto left = children[0]->Children()[0];
@@ -1115,7 +1115,7 @@ int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op()->GetOpType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::Low);
@@ -1166,7 +1166,7 @@ int SingleJoinToInnerJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op()->GetOpType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::Low);
@@ -1219,7 +1219,7 @@ int PullFilterThroughMarkJoin::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op()->GetOpType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::High);
@@ -1280,7 +1280,7 @@ int PullFilterThroughAggregation::Promise(GroupExpression *group_expr,
   (void)context;
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op()->GetOpType()) {
     return 0;
   }
   return static_cast<int>(UnnestPromise::High);

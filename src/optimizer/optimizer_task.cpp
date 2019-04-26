@@ -31,8 +31,12 @@ void OptimizerTask::ConstructValidRules(
     std::vector<RuleWithPromise> &valid_rules) {
   for (auto &rule : rules) {
     // Check if we can apply the rule
+    // TODO(ncx): replace after pattern fix
+    // bool root_pattern_mismatch =
+    //     group_expr->Op()->GetOpType() != rule->GetMatchPattern()->OpType()
+    //     || group_expr->Op()->GetExpType() != rule->GetMatchPattern()->ExpType();
     bool root_pattern_mismatch =
-        group_expr->Op().GetType() != rule->GetMatchPattern()->Type();
+        group_expr->Op()->GetOpType() != rule->GetMatchPattern()->Type();
     bool already_explored = group_expr->HasRuleExplored(rule.get());
     bool child_pattern_mismatch =
         group_expr->GetChildrenGroupsSize() !=
@@ -97,7 +101,7 @@ void OptimizeExpression::execute() {
 
   std::sort(valid_rules.begin(), valid_rules.end());
   LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
-            static_cast<int>(group_expr_->Op().GetType()), valid_rules.size());
+            static_cast<int>(group_expr_->Op()->GetOpType()), valid_rules.size());
   // Apply rule
   for (auto &r : valid_rules) {
     PushTask(new ApplyRule(group_expr_, r.rule, context_));
@@ -187,7 +191,7 @@ void ApplyRule::execute() {
       if (context_->metadata->RecordTransformedExpression(
               new_expr, new_gexpr, group_expr_->GetGroupID())) {
         // A new group expression is generated
-        if (new_gexpr->Op().IsLogical()) {
+        if (new_gexpr->Op()->IsLogical()) {
           // Derive stats for the *logical expression*
           PushTask(new DeriveStats(new_gexpr.get(), ExprSet{}, context_));
           if (explore_only) {

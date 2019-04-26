@@ -18,9 +18,11 @@ namespace optimizer {
 
 int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)context;
+  // TODO(ncx): replace after pattern fix
+  // auto root_type = match_pattern->OpType();
   auto root_type = match_pattern->Type();
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Op().GetType()) {
+  if (root_type != OpType::Leaf && root_type != group_expr->Op()->GetOpType()) {
     return 0;
   }
   if (IsPhysical()) return PHYS_PROMISE;

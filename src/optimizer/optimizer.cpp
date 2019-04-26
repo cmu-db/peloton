@@ -327,7 +327,7 @@ const std::string Optimizer::GetOperatorInfo(
     auto gexpr = group->GetBestExpression(required_props);
     
     os << std::endl << StringUtil::Indent(num_indent) << "operator name: "
-       << gexpr->Op().GetName().c_str();
+       << gexpr->Op()->GetName().c_str();
 
     vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
     auto required_input_props = gexpr->GetInputProperties(required_props);
@@ -352,7 +352,7 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   auto gexpr = group->GetBestExpression(required_props);
 
   LOG_TRACE("Choosing best plan for group %d with op %s", gexpr->GetGroupID(),
-            gexpr->Op().GetName().c_str());
+            gexpr->Op()->GetName().c_str());
 
   vector<GroupID> child_groups = gexpr->GetChildGroupIDs();
   auto required_input_props = gexpr->GetInputProperties(required_props);
@@ -383,8 +383,9 @@ unique_ptr<planner::AbstractPlan> Optimizer::ChooseBestPlan(
   }
 
   // Derive root plan
+  // TODO(ncx): fix once OperatorExpression is abstracted
   shared_ptr<OperatorExpression> op =
-      make_shared<OperatorExpression>(gexpr->Op());
+      make_shared<OperatorExpression>(*(Operator *)gexpr->Op().get());
 
   PlanGenerator generator;
   auto plan = generator.ConvertOpExpression(op, required_props, required_cols,

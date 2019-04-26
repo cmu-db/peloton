@@ -83,7 +83,7 @@ enum class OpType {
 class OperatorVisitor;
 
 struct AbstractNode {
-  AbstractNode() {}
+  AbstractNode(AbstractNode *node) : node(node) {}
 
   ~AbstractNode() {}
 
@@ -91,25 +91,36 @@ struct AbstractNode {
 
   virtual std::string GetName() const = 0;
 
-  // TODO(ncx): problematic dependence on OpType
-  virtual OpType GetType() const = 0;
+  // TODO(ncx): dependence on OpType and ExpressionType (ideally abstracted away)
+  virtual OpType GetOpType() const = 0;
+
+  virtual ExpressionType GetExpType() const = 0;
 
   virtual bool IsLogical() const = 0;
 
   virtual bool IsPhysical() const = 0;
 
   virtual hash_t Hash() const {
-    OpType t = GetType();
+    // TODO(ncx): hash should work for ExpressionType nodes
+    OpType t = GetOpType();
     return HashUtil::Hash(&t);
   }
 
   virtual bool operator==(const AbstractNode &r) {
-    return GetType() == r.GetType();
+    return GetOpType() == r.GetOpType() && GetExpType() == r.GetExpType();
   }
 
   virtual bool IsDefined() const { return node != nullptr; }
 
- private:
+  template <typename T>
+  const T *As() const {
+    if (node && typeid(*node) == typeid(T)) {
+      return (const T *)node.get();
+    }
+    return nullptr;
+  }
+
+ protected:
   std::shared_ptr<AbstractNode> node; 
 };
 

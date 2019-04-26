@@ -53,7 +53,7 @@ hash_t LogicalGet::Hash() const {
 }
 
 bool LogicalGet::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::Get) return false;
+  if (r.GetOpType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -81,7 +81,7 @@ Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
 }
 
 bool LogicalExternalFileGet::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::LogicalExternalFileGet) return false;
+  if (node.GetOpType() != OpType::LogicalExternalFileGet) return false;
   const auto &get = *static_cast<const LogicalExternalFileGet *>(&node);
   return (get_id == get.get_id && format == get.format &&
           file_name == get.file_name && delimiter == get.delimiter &&
@@ -117,7 +117,7 @@ Operator LogicalQueryDerivedGet::make(
 }
 
 bool LogicalQueryDerivedGet::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::LogicalQueryDerivedGet) return false;
+  if (node.GetOpType() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r =
       *static_cast<const LogicalQueryDerivedGet *>(&node);
   return get_id == r.get_id;
@@ -146,7 +146,7 @@ hash_t LogicalFilter::Hash() const {
 }
 
 bool LogicalFilter::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::LogicalFilter) return false;
+  if (r.GetOpType() != OpType::LogicalFilter) return false;
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -189,7 +189,7 @@ hash_t LogicalDependentJoin::Hash() const {
 }
 
 bool LogicalDependentJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::LogicalDependentJoin) return false;
+  if (r.GetOpType() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -224,7 +224,7 @@ hash_t LogicalMarkJoin::Hash() const {
 }
 
 bool LogicalMarkJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::LogicalMarkJoin) return false;
+  if (r.GetOpType() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -258,7 +258,7 @@ hash_t LogicalSingleJoin::Hash() const {
 }
 
 bool LogicalSingleJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::LogicalSingleJoin) return false;
+  if (r.GetOpType() != OpType::LogicalSingleJoin) return false;
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -292,7 +292,7 @@ hash_t LogicalInnerJoin::Hash() const {
 }
 
 bool LogicalInnerJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::InnerJoin) return false;
+  if (r.GetOpType() != OpType::InnerJoin) return false;
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -369,7 +369,7 @@ Operator LogicalAggregateAndGroupBy::make(
 }
 
 bool LogicalAggregateAndGroupBy::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::LogicalAggregateAndGroupBy) return false;
+  if (node.GetOpType() != OpType::LogicalAggregateAndGroupBy) return false;
   const LogicalAggregateAndGroupBy &r =
       *static_cast<const LogicalAggregateAndGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -471,7 +471,7 @@ Operator LogicalExportExternalFile::make(ExternalFileFormat format,
 }
 
 bool LogicalExportExternalFile::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::LogicalExportExternalFile) return false;
+  if (node.GetOpType() != OpType::LogicalExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const LogicalExportExternalFile *>(&node);
   return (format == export_op.format && file_name == export_op.file_name &&
@@ -517,7 +517,7 @@ Operator PhysicalSeqScan::make(
 }
 
 bool PhysicalSeqScan::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::SeqScan) return false;
+  if (r.GetOpType() != OpType::SeqScan) return false;
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -560,7 +560,7 @@ Operator PhysicalIndexScan::make(
 }
 
 bool PhysicalIndexScan::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::IndexScan) return false;
+  if (r.GetOpType() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
   if (index_id != node.index_id ||
@@ -602,7 +602,7 @@ Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
 }
 
 bool ExternalFileScan::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::QueryDerivedScan) return false;
+  if (node.GetOpType() != OpType::QueryDerivedScan) return false;
   const auto &get = *static_cast<const ExternalFileScan *>(&node);
   return (get_id == get.get_id && format == get.format &&
           file_name == get.file_name && delimiter == get.delimiter &&
@@ -638,7 +638,7 @@ Operator QueryDerivedScan::make(
 }
 
 bool QueryDerivedScan::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::QueryDerivedScan) return false;
+  if (node.GetOpType() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return get_id == r.get_id;
 }
@@ -700,7 +700,7 @@ hash_t PhysicalInnerNLJoin::Hash() const {
 }
 
 bool PhysicalInnerNLJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::InnerNLJoin) return false;
+  if (r.GetOpType() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -777,7 +777,7 @@ hash_t PhysicalInnerHashJoin::Hash() const {
 }
 
 bool PhysicalInnerHashJoin::operator==(const AbstractNode &r) {
-  if (r.GetType() != OpType::InnerHashJoin) return false;
+  if (r.GetOpType() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -892,7 +892,7 @@ Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
 }
 
 bool PhysicalExportExternalFile::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::ExportExternalFile) return false;
+  if (node.GetOpType() != OpType::ExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const PhysicalExportExternalFile *>(&node);
   return (format == export_op.format && file_name == export_op.file_name &&
@@ -924,7 +924,7 @@ Operator PhysicalHashGroupBy::make(
 }
 
 bool PhysicalHashGroupBy::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::HashGroupBy) return false;
+  if (node.GetOpType() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -955,7 +955,7 @@ Operator PhysicalSortGroupBy::make(
 }
 
 bool PhysicalSortGroupBy::operator==(const AbstractNode &node) {
-  if (node.GetType() != OpType::SortGroupBy) return false;
+  if (node.GetOpType() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -1099,113 +1099,118 @@ std::string OperatorNode<PhysicalExportExternalFile>::name_ =
 
 //===--------------------------------------------------------------------===//
 template <>
-OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
+OpType OperatorNode<LeafOperator>::op_type_ = OpType::Leaf;
 template <>
-OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
+OpType OperatorNode<LogicalGet>::op_type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalExternalFileGet>::type_ =
+OpType OperatorNode<LogicalExternalFileGet>::op_type_ =
     OpType::LogicalExternalFileGet;
 template <>
-OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
+OpType OperatorNode<LogicalQueryDerivedGet>::op_type_ =
     OpType::LogicalQueryDerivedGet;
 template <>
-OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
+OpType OperatorNode<LogicalFilter>::op_type_ = OpType::LogicalFilter;
 template <>
-OpType OperatorNode<LogicalProjection>::type_ = OpType::LogicalProjection;
+OpType OperatorNode<LogicalProjection>::op_type_ = OpType::LogicalProjection;
 template <>
-OpType OperatorNode<LogicalMarkJoin>::type_ = OpType::LogicalMarkJoin;
+OpType OperatorNode<LogicalMarkJoin>::op_type_ = OpType::LogicalMarkJoin;
 template <>
-OpType OperatorNode<LogicalSingleJoin>::type_ = OpType::LogicalSingleJoin;
+OpType OperatorNode<LogicalSingleJoin>::op_type_ = OpType::LogicalSingleJoin;
 template <>
-OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
+OpType OperatorNode<LogicalDependentJoin>::op_type_ = OpType::LogicalDependentJoin;
 template <>
-OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
+OpType OperatorNode<LogicalInnerJoin>::op_type_ = OpType::InnerJoin;
 template <>
-OpType OperatorNode<LogicalLeftJoin>::type_ = OpType::LeftJoin;
+OpType OperatorNode<LogicalLeftJoin>::op_type_ = OpType::LeftJoin;
 template <>
-OpType OperatorNode<LogicalRightJoin>::type_ = OpType::RightJoin;
+OpType OperatorNode<LogicalRightJoin>::op_type_ = OpType::RightJoin;
 template <>
-OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
+OpType OperatorNode<LogicalOuterJoin>::op_type_ = OpType::OuterJoin;
 template <>
-OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
+OpType OperatorNode<LogicalSemiJoin>::op_type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregateAndGroupBy>::type_ =
+OpType OperatorNode<LogicalAggregateAndGroupBy>::op_type_ =
     OpType::LogicalAggregateAndGroupBy;
 template <>
-OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
+OpType OperatorNode<LogicalInsert>::op_type_ = OpType::LogicalInsert;
 template <>
-OpType OperatorNode<LogicalInsertSelect>::type_ = OpType::LogicalInsertSelect;
+OpType OperatorNode<LogicalInsertSelect>::op_type_ = OpType::LogicalInsertSelect;
 template <>
-OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
+OpType OperatorNode<LogicalUpdate>::op_type_ = OpType::LogicalUpdate;
 template <>
-OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
+OpType OperatorNode<LogicalDelete>::op_type_ = OpType::LogicalDelete;
 template <>
-OpType OperatorNode<LogicalDistinct>::type_ = OpType::LogicalDistinct;
+OpType OperatorNode<LogicalDistinct>::op_type_ = OpType::LogicalDistinct;
 template <>
-OpType OperatorNode<LogicalLimit>::type_ = OpType::LogicalLimit;
+OpType OperatorNode<LogicalLimit>::op_type_ = OpType::LogicalLimit;
 template <>
-OpType OperatorNode<LogicalExportExternalFile>::type_ =
+OpType OperatorNode<LogicalExportExternalFile>::op_type_ =
     OpType::LogicalExportExternalFile;
 
 template <>
-OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
+OpType OperatorNode<DummyScan>::op_type_ = OpType::DummyScan;
 template <>
-OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
+OpType OperatorNode<PhysicalSeqScan>::op_type_ = OpType::SeqScan;
 template <>
-OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
+OpType OperatorNode<PhysicalIndexScan>::op_type_ = OpType::IndexScan;
 template <>
-OpType OperatorNode<ExternalFileScan>::type_ = OpType::ExternalFileScan;
+OpType OperatorNode<ExternalFileScan>::op_type_ = OpType::ExternalFileScan;
 template <>
-OpType OperatorNode<QueryDerivedScan>::type_ = OpType::QueryDerivedScan;
+OpType OperatorNode<QueryDerivedScan>::op_type_ = OpType::QueryDerivedScan;
 template <>
-OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
+OpType OperatorNode<PhysicalOrderBy>::op_type_ = OpType::OrderBy;
 template <>
-OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
+OpType OperatorNode<PhysicalDistinct>::op_type_ = OpType::Distinct;
 template <>
-OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
+OpType OperatorNode<PhysicalLimit>::op_type_ = OpType::PhysicalLimit;
 template <>
-OpType OperatorNode<PhysicalInnerNLJoin>::type_ = OpType::InnerNLJoin;
+OpType OperatorNode<PhysicalInnerNLJoin>::op_type_ = OpType::InnerNLJoin;
 template <>
-OpType OperatorNode<PhysicalLeftNLJoin>::type_ = OpType::LeftNLJoin;
+OpType OperatorNode<PhysicalLeftNLJoin>::op_type_ = OpType::LeftNLJoin;
 template <>
-OpType OperatorNode<PhysicalRightNLJoin>::type_ = OpType::RightNLJoin;
+OpType OperatorNode<PhysicalRightNLJoin>::op_type_ = OpType::RightNLJoin;
 template <>
-OpType OperatorNode<PhysicalOuterNLJoin>::type_ = OpType::OuterNLJoin;
+OpType OperatorNode<PhysicalOuterNLJoin>::op_type_ = OpType::OuterNLJoin;
 template <>
-OpType OperatorNode<PhysicalInnerHashJoin>::type_ = OpType::InnerHashJoin;
+OpType OperatorNode<PhysicalInnerHashJoin>::op_type_ = OpType::InnerHashJoin;
 template <>
-OpType OperatorNode<PhysicalLeftHashJoin>::type_ = OpType::LeftHashJoin;
+OpType OperatorNode<PhysicalLeftHashJoin>::op_type_ = OpType::LeftHashJoin;
 template <>
-OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
+OpType OperatorNode<PhysicalRightHashJoin>::op_type_ = OpType::RightHashJoin;
 template <>
-OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
+OpType OperatorNode<PhysicalOuterHashJoin>::op_type_ = OpType::OuterHashJoin;
 template <>
-OpType OperatorNode<PhysicalInsert>::type_ = OpType::Insert;
+OpType OperatorNode<PhysicalInsert>::op_type_ = OpType::Insert;
 template <>
-OpType OperatorNode<PhysicalInsertSelect>::type_ = OpType::InsertSelect;
+OpType OperatorNode<PhysicalInsertSelect>::op_type_ = OpType::InsertSelect;
 template <>
-OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
+OpType OperatorNode<PhysicalDelete>::op_type_ = OpType::Delete;
 template <>
-OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
+OpType OperatorNode<PhysicalUpdate>::op_type_ = OpType::Update;
 template <>
-OpType OperatorNode<PhysicalHashGroupBy>::type_ = OpType::HashGroupBy;
+OpType OperatorNode<PhysicalHashGroupBy>::op_type_ = OpType::HashGroupBy;
 template <>
-OpType OperatorNode<PhysicalSortGroupBy>::type_ = OpType::SortGroupBy;
+OpType OperatorNode<PhysicalSortGroupBy>::op_type_ = OpType::SortGroupBy;
 template <>
-OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
+OpType OperatorNode<PhysicalAggregate>::op_type_ = OpType::Aggregate;
 template <>
-OpType OperatorNode<PhysicalExportExternalFile>::type_ =
+OpType OperatorNode<PhysicalExportExternalFile>::op_type_ =
     OpType::ExportExternalFile;
+
+//===--------------------------------------------------------------------===//
+template <typename T>
+ExpressionType OperatorNode<T>::exp_type_ = ExpressionType::INVALID;
+
 //===--------------------------------------------------------------------===//
 
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
-  return type_ < OpType::LogicalPhysicalDelimiter;
+  return op_type_ < OpType::LogicalPhysicalDelimiter;
 }
 
 template <typename T>
 bool OperatorNode<T>::IsPhysical() const {
-  return type_ > OpType::LogicalPhysicalDelimiter;
+  return op_type_ > OpType::LogicalPhysicalDelimiter;
 }
 
 template <>

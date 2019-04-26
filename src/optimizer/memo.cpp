@@ -31,8 +31,8 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
 GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
                                         GroupID target_group, bool enforced) {
   // If leaf, then just return
-  if (gexpr->Op().GetType() == OpType::Leaf) {
-    const LeafOperator *leaf = gexpr->Op().As<LeafOperator>();
+  if (gexpr->Op()->GetOpType() == OpType::Leaf) {
+    const LeafOperator *leaf = gexpr->Op()->As<LeafOperator>();
     PELOTON_ASSERT(target_group == UNDEFINED_GROUP ||
            target_group == leaf->origin_group);
     gexpr->SetGroupID(leaf->origin_group);
@@ -91,14 +91,14 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
   // Find out the table alias that this group represents
   std::unordered_set<std::string> table_aliases;
-  auto op_type = gexpr->Op().GetType();
+  auto op_type = gexpr->Op()->GetOpType();
   if (op_type == OpType::Get) {
     // For base group, the table alias can get directly from logical get
-    const LogicalGet *logical_get = gexpr->Op().As<LogicalGet>();
+    const LogicalGet *logical_get = gexpr->Op()->As<LogicalGet>();
     table_aliases.insert(logical_get->table_alias);
   } else if (op_type == OpType::LogicalQueryDerivedGet) {
     const LogicalQueryDerivedGet *query_get =
-        gexpr->Op().As<LogicalQueryDerivedGet>();
+        gexpr->Op()->As<LogicalQueryDerivedGet>();
     table_aliases.insert(query_get->table_alias);
   } else {
     // For other groups, need to aggregate the table alias from children

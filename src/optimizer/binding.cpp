@@ -85,8 +85,9 @@ GroupExprBindingIterator::GroupExprBindingIterator(
       pattern_(pattern),
       first_(true),
       has_next_(false),
-      current_binding_(std::make_shared<OperatorExpression>(gexpr->Op())) {
-  if (gexpr->Op().GetType() != pattern->Type()) {
+      // TODO(ncx): fix once OperatorExpression is abstracted
+      current_binding_(std::make_shared<OperatorExpression>(*(Operator *)gexpr->Op().get())) {
+  if (gexpr->Op()->GetOpType() != pattern->Type()) {
     return;
   }
 
@@ -100,7 +101,7 @@ GroupExprBindingIterator::GroupExprBindingIterator(
   LOG_TRACE(
       "Attempting to bind on group %d with expression of type %s, children "
       "size %lu",
-      gexpr->GetGroupID(), gexpr->Op().GetName().c_str(), child_groups.size());
+      gexpr->GetGroupID(), gexpr->Op()->GetName().c_str(), child_groups.size());
 
   // Find all bindings for children
   children_bindings_.resize(child_groups.size(), {});

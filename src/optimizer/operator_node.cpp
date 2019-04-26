@@ -19,9 +19,9 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Operator
 //===--------------------------------------------------------------------===//
-Operator::Operator() : node(nullptr) {}
+Operator::Operator() : AbstractNode(nullptr) {}
 
-Operator::Operator(AbstractNode *node) : node(node) {}
+Operator::Operator(AbstractNode *node) : AbstractNode(node) {}
 
 void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 
@@ -32,11 +32,18 @@ std::string Operator::GetName() const {
   return "Undefined";
 }
 
-OpType Operator::GetType() const {
+OpType Operator::GetOpType() const {
   if (IsDefined()) {
-    return node->GetType();
+    return node->GetOpType();
   }
   return OpType::Undefined;
+}
+
+ExpressionType Operator::GetExpType() const {
+  if (IsDefined()) {
+    return node->GetExpType();
+  }
+  return ExpressionType::INVALID;
 }
 
 bool Operator::IsLogical() const {
