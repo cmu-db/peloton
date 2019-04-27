@@ -21,7 +21,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Operator::Operator() : AbstractNode(nullptr) {}
 
-Operator::Operator(AbstractNode *node) : AbstractNode(node) {}
+Operator::Operator(std::shared_ptr<AbstractNode> node) : AbstractNode(node) {}
 
 void Operator::Accept(OperatorVisitor *v) const { node->Accept(v); }
 

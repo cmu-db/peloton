@@ -67,7 +67,7 @@ bool GroupBindingIterator::HasNext() {
   return current_iterator_ != nullptr;
 }
 
-std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
+std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
   if (pattern_->Type() == OpType::Leaf) {
     current_item_index_ = num_group_items_;
     return std::make_shared<OperatorExpression>(LeafOperator::make(group_id_));
@@ -85,9 +85,9 @@ GroupExprBindingIterator::GroupExprBindingIterator(
       pattern_(pattern),
       first_(true),
       has_next_(false),
-      // TODO(ncx): fix once OperatorExpression is abstracted
-      current_binding_(std::make_shared<OperatorExpression>(*(Operator *)gexpr->Op().get())) {
-  if (gexpr->Op()->GetOpType() != pattern->Type()) {
+      // TODO(ncx): needs workaround when Node is not an Operator
+      current_binding_(std::make_shared<OperatorExpression>(gexpr->Node())) {
+  if (gexpr->Node()->GetOpType() != pattern->Type()) {
     return;
   }
 
@@ -101,14 +101,14 @@ GroupExprBindingIterator::GroupExprBindingIterator(
   LOG_TRACE(
       "Attempting to bind on group %d with expression of type %s, children "
       "size %lu",
-      gexpr->GetGroupID(), gexpr->Op()->GetName().c_str(), child_groups.size());
+      gexpr->GetGroupID(), gexpr->Node()->GetName().c_str(), child_groups.size());
 
   // Find all bindings for children
   children_bindings_.resize(child_groups.size(), {});
   children_bindings_pos_.resize(child_groups.size(), 0);
   for (size_t i = 0; i < child_groups.size(); ++i) {
     // Try to find a match in the given group
-    std::vector<std::shared_ptr<OperatorExpression>> &child_bindings =
+    std::vector<std::shared_ptr<AbstractNodeExpression>> &child_bindings =
         children_bindings_[i];
     GroupBindingIterator iterator(memo_, child_groups[i], child_patterns[i]);
 
@@ -138,7 +138,7 @@ bool GroupExprBindingIterator::HasNext() {
     // The first child to be modified
     int first_modified_idx = children_bindings_pos_.size() - 1;
     for (; first_modified_idx >= 0; --first_modified_idx) {
-      const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
+      const std::vector<std::shared_ptr<AbstractNodeExpression>> &child_binding =
           children_bindings_[first_modified_idx];
 
       // Try to increment idx from the back
@@ -162,9 +162,9 @@ bool GroupExprBindingIterator::HasNext() {
       // Add new children to end
       for (size_t offset = first_modified_idx;
            offset < children_bindings_pos_.size(); ++offset) {
-        const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
+        const std::vector<std::shared_ptr<AbstractNodeExpression>> &child_binding =
             children_bindings_[offset];
-        std::shared_ptr<OperatorExpression> binding =
+        std::shared_ptr<AbstractNodeExpression> binding =
             child_binding[children_bindings_pos_[offset]];
         current_binding_->PushChild(binding);
       }
@@ -173,7 +173,7 @@ bool GroupExprBindingIterator::HasNext() {
   return has_next_;
 }
 
-std::shared_ptr<OperatorExpression> GroupExprBindingIterator::Next() {
+std::shared_ptr<AbstractNodeExpression> GroupExprBindingIterator::Next() {
   return current_binding_;
 }
 

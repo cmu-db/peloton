@@ -46,7 +46,7 @@ class GroupExpression {
 
   GroupID GetChildGroupId(int child_idx) const;
 
-  std::shared_ptr<AbstractNode> Op() const;
+  std::shared_ptr<AbstractNode> Node() const;
 
   double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 

@@ -12,13 +12,14 @@
 
 #pragma once
 
+#include "operator_expression.h"
 #include "optimizer/operator_node.h"
 #include "optimizer/group.h"
 #include "optimizer/pattern.h"
+
 #include <map>
 #include <tuple>
 #include <memory>
-#include "operator_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -37,7 +38,7 @@ class BindingIterator {
 
   virtual bool HasNext() = 0;
 
-  virtual std::shared_ptr<OperatorExpression> Next() = 0;
+  virtual std::shared_ptr<AbstractNodeExpression> Next() = 0;
 
  protected:
   Memo &memo_;
@@ -50,7 +51,7 @@ class GroupBindingIterator : public BindingIterator {
 
   bool HasNext() override;
 
-  std::shared_ptr<OperatorExpression> Next() override;
+  std::shared_ptr<AbstractNodeExpression> Next() override;
 
  private:
   GroupID group_id_;
@@ -70,7 +71,7 @@ class GroupExprBindingIterator : public BindingIterator {
 
   bool HasNext() override;
 
-  std::shared_ptr<OperatorExpression> Next() override;
+  std::shared_ptr<AbstractNodeExpression> Next() override;
 
  private:
   GroupExpression* gexpr_;
@@ -78,8 +79,8 @@ class GroupExprBindingIterator : public BindingIterator {
 
   bool first_;
   bool has_next_;
-  std::shared_ptr<OperatorExpression> current_binding_;
-  std::vector<std::vector<std::shared_ptr<OperatorExpression>>>
+  std::shared_ptr<AbstractNodeExpression> current_binding_;
+  std::vector<std::vector<std::shared_ptr<AbstractNodeExpression>>>
       children_bindings_;
   std::vector<size_t> children_bindings_pos_;
 };

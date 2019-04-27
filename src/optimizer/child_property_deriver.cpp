@@ -38,7 +38,7 @@ ChildPropertyDeriver::GetProperties(GroupExpression *gexpr,
   output_.clear();
   memo_ = memo;
   gexpr_ = gexpr;
-  gexpr->Op()->Accept(this);
+  gexpr->Node()->Accept(this);
   return move(output_);
 }
 

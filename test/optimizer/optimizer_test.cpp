@@ -368,28 +368,28 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op()->GetOpType());
-  auto join_op = group_expr->Op()->As<LogicalInnerJoin>();
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Node()->GetOpType());
+  auto join_op = group_expr->Node()->As<LogicalInnerJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 
   // Check left get
   auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op()->GetOpType());
-  auto get_op = l_group_expr->Op()->As<LogicalGet>();
+  EXPECT_EQ(OpType::Get, l_group_expr->Node()->GetOpType());
+  auto get_op = l_group_expr->Node()->As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
   // Check right filter
   auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::LogicalFilter, r_group_expr->Op()->GetOpType());
-  auto filter_op = r_group_expr->Op()->As<LogicalFilter>();
+  EXPECT_EQ(OpType::LogicalFilter, r_group_expr->Node()->GetOpType());
+  auto filter_op = r_group_expr->Node()->As<LogicalFilter>();
   EXPECT_EQ(1, filter_op->predicates.size());
   EXPECT_TRUE(filter_op->predicates[0].expr->ExactlyEquals(*predicates[1]));
 
   // Check get below filter
   group_expr = GetSingleGroupExpression(memo, r_group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op()->GetOpType());
-  get_op = group_expr->Op()->As<LogicalGet>();
+  EXPECT_EQ(OpType::Get, l_group_expr->Node()->GetOpType());
+  get_op = group_expr->Node()->As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
   txn_manager.CommitTransaction(txn);
@@ -456,21 +456,21 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
 
   // Check join in the root
   auto group_expr = GetSingleGroupExpression(memo, head_gexpr.get(), 0);
-  EXPECT_EQ(OpType::InnerJoin, group_expr->Op()->GetOpType());
-  auto join_op = group_expr->Op()->As<LogicalInnerJoin>();
+  EXPECT_EQ(OpType::InnerJoin, group_expr->Node()->GetOpType());
+  auto join_op = group_expr->Node()->As<LogicalInnerJoin>();
   EXPECT_EQ(1, join_op->join_predicates.size());
   EXPECT_TRUE(join_op->join_predicates[0].expr->ExactlyEquals(*predicates[0]));
 
   // Check left get
   auto l_group_expr = GetSingleGroupExpression(memo, group_expr, 0);
-  EXPECT_EQ(OpType::Get, l_group_expr->Op()->GetOpType());
-  auto get_op = l_group_expr->Op()->As<LogicalGet>();
+  EXPECT_EQ(OpType::Get, l_group_expr->Node()->GetOpType());
+  auto get_op = l_group_expr->Node()->As<LogicalGet>();
   EXPECT_TRUE(get_op->predicates.empty());
 
   // Check right filter
   auto r_group_expr = GetSingleGroupExpression(memo, group_expr, 1);
-  EXPECT_EQ(OpType::Get, r_group_expr->Op()->GetOpType());
-  get_op = r_group_expr->Op()->As<LogicalGet>();
+  EXPECT_EQ(OpType::Get, r_group_expr->Node()->GetOpType());
+  get_op = r_group_expr->Node()->As<LogicalGet>();
   EXPECT_EQ(1, get_op->predicates.size());
   EXPECT_TRUE(get_op->predicates[0].expr->ExactlyEquals(*predicates[1]));
 

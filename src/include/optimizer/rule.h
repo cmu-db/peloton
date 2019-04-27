@@ -74,7 +74,7 @@ class Rule {
    *
    * @return If the rule is applicable, return true, otherwise return false
    */
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr,
+  virtual bool Check(std::shared_ptr<AbstractNodeExpression> expr,
                      OptimizeContext *context) const = 0;
 
   /**
@@ -85,8 +85,8 @@ class Rule {
    * @param context The current optimization context
    */
   virtual void Transform(
-      std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+      std::shared_ptr<AbstractNodeExpression> input,
+      std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
       OptimizeContext *context) const = 0;
 
   inline RuleType GetType() { return type_; }

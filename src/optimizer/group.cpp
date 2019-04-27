@@ -31,7 +31,7 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
   expr->SetGroupID(id_);
   if (enforced)
     enforced_exprs_.push_back(expr);
-  else if (expr->Op()->IsPhysical())
+  else if (expr->Node()->IsPhysical())
     physical_expressions_.push_back(expr);
   else
     logical_expressions_.push_back(expr);
@@ -40,7 +40,7 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 bool Group::SetExpressionCost(GroupExpression *expr, double cost,
                               std::shared_ptr<PropertySet> &properties) {
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
-            expr->GetGroupID(), expr->Op()->GetName().c_str(),
+            expr->GetGroupID(), expr->Node()->GetName().c_str(),
             properties->ToString().c_str());
   auto it = lowest_cost_expressions_.find(properties);
   if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
@@ -86,7 +86,7 @@ const std::string Group::GetInfo(int num_indent) const {
     
     for (auto expr : logical_expressions_) {
         os << StringUtil::Indent(num_indent + 4)
-           << expr->Op()->GetName() << std::endl;
+           << expr->Node()->GetName() << std::endl;
         const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {        
             os << StringUtil::Indent(num_indent + 6)
@@ -102,7 +102,7 @@ const std::string Group::GetInfo(int num_indent) const {
            << "physical_expressions_: \n";
     for (auto expr : physical_expressions_) {
         os << StringUtil::Indent(num_indent + 4)
-           << expr->Op()->GetName() << std::endl;
+           << expr->Node()->GetName() << std::endl;
         const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {
             os << StringUtil::Indent(num_indent + 6)
@@ -119,7 +119,7 @@ const std::string Group::GetInfo(int num_indent) const {
            << "enforced_exprs_: \n";
     for (auto expr : enforced_exprs_) {
         os << StringUtil::Indent(num_indent + 4)
-           << expr->Op()->GetName() << std::endl;
+           << expr->Node()->GetName() << std::endl;
         const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
         if (ChildGroupIDs.size() > 0) {
             os << StringUtil::Indent(num_indent + 6)

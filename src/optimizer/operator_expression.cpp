@@ -2,11 +2,11 @@
 //
 //                         Peloton
 //
-// op_expression.cpp
+// operator_expression.cpp
 //
-// Identification: src/optimizer/op_expression.cpp
+// Identification: src/optimizer/operator_expression.cpp
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-19, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
@@ -20,26 +20,26 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Operator Expression
 //===--------------------------------------------------------------------===//
-OperatorExpression::OperatorExpression(Operator op) : op(op) {}
+OperatorExpression::OperatorExpression(std::shared_ptr<AbstractNode> node) : node(node) {}
 
-void OperatorExpression::PushChild(std::shared_ptr<OperatorExpression> op) {
-  children.push_back(op);
+void OperatorExpression::PushChild(std::shared_ptr<AbstractNodeExpression> node) {
+  children.push_back(node);
 }
 
 void OperatorExpression::PopChild() { children.pop_back(); }
 
-const std::vector<std::shared_ptr<OperatorExpression>>
+const std::vector<std::shared_ptr<AbstractNodeExpression>>
     &OperatorExpression::Children() const {
   return children;
 }
 
-const Operator &OperatorExpression::Op() const { return op; }
+const std::shared_ptr<AbstractNode> OperatorExpression::Node() const { return node; }
 
 const std::string OperatorExpression::GetInfo() const {
   std::string info = "{";
   {
     info += "\"Op\":";
-    info += "\"" + op.GetName() + "\",";
+    info += "\"" + node->GetName() + "\",";
     if (!children.empty()) {
       info += "\"Children\":[";
       {

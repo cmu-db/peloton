@@ -43,7 +43,7 @@ GroupID GroupExpression::GetChildGroupId(int child_idx) const {
   return child_groups[child_idx];
 }
 
-std::shared_ptr<AbstractNode> GroupExpression::Op() const {
+std::shared_ptr<AbstractNode> GroupExpression::Node() const {
   return std::shared_ptr<AbstractNode>(node);
 }
 
@@ -87,7 +87,7 @@ hash_t GroupExpression::Hash() const {
 }
 
 bool GroupExpression::operator==(const GroupExpression &r) {
-  return (*node == *r.Op()) && (child_groups == r.child_groups);
+  return (*node == *r.Node()) && (child_groups == r.child_groups);
 }
 
 void GroupExpression::SetRuleExplored(Rule *rule) {

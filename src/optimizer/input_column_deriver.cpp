@@ -43,7 +43,7 @@ InputColumnDeriver::DeriveInputColumns(
   gexpr_ = gexpr;
   required_cols_ = move(required_cols);
   memo_ = memo;
-  gexpr->Op()->Accept(this);
+  gexpr->Node()->Accept(this);
 
   return move(output_input_cols_);
 }

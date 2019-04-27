@@ -41,7 +41,7 @@ class TrivialCostModel : public AbstractCostModel {
     gexpr_ = gexpr;
     memo_ = memo;
     txn_ = txn;
-    gexpr_->Op()->Accept(this);
+    gexpr_->Node()->Accept(this);
     return output_cost_;
   };
 

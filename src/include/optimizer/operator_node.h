@@ -57,7 +57,7 @@ class Operator : public AbstractNode {
  public:
   Operator();
 
-  Operator(AbstractNode *node);
+  Operator(std::shared_ptr<AbstractNode> node);
 
   void Accept(OperatorVisitor *v) const;
 

@@ -33,10 +33,10 @@ void OptimizerTask::ConstructValidRules(
     // Check if we can apply the rule
     // TODO(ncx): replace after pattern fix
     // bool root_pattern_mismatch =
-    //     group_expr->Op()->GetOpType() != rule->GetMatchPattern()->OpType()
-    //     || group_expr->Op()->GetExpType() != rule->GetMatchPattern()->ExpType();
+    //     group_expr->Node()->GetOpType() != rule->GetMatchPattern()->OpType()
+    //     || group_expr->Node()->GetExpType() != rule->GetMatchPattern()->ExpType();
     bool root_pattern_mismatch =
-        group_expr->Op()->GetOpType() != rule->GetMatchPattern()->Type();
+        group_expr->Node()->GetOpType() != rule->GetMatchPattern()->Type();
     bool already_explored = group_expr->HasRuleExplored(rule.get());
     bool child_pattern_mismatch =
         group_expr->GetChildrenGroupsSize() !=
@@ -101,7 +101,7 @@ void OptimizeExpression::execute() {
 
   std::sort(valid_rules.begin(), valid_rules.end());
   LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
-            static_cast<int>(group_expr_->Op()->GetOpType()), valid_rules.size());
+            static_cast<int>(group_expr_->Node()->GetOpType()), valid_rules.size());
   // Apply rule
   for (auto &r : valid_rules) {
     PushTask(new ApplyRule(group_expr_, r.rule, context_));
@@ -184,14 +184,14 @@ void ApplyRule::execute() {
       continue;
     }
 
-    std::vector<std::shared_ptr<OperatorExpression>> after;
+    std::vector<std::shared_ptr<AbstractNodeExpression>> after;
     rule_->Transform(before, after, context_.get());
     for (auto &new_expr : after) {
       std::shared_ptr<GroupExpression> new_gexpr;
       if (context_->metadata->RecordTransformedExpression(
               new_expr, new_gexpr, group_expr_->GetGroupID())) {
         // A new group expression is generated
-        if (new_gexpr->Op()->IsLogical()) {
+        if (new_gexpr->Node()->IsLogical()) {
           // Derive stats for the *logical expression*
           PushTask(new DeriveStats(new_gexpr.get(), ExprSet{}, context_));
           if (explore_only) {
@@ -427,7 +427,7 @@ void TopDownRewrite::execute() {
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
-      std::vector<std::shared_ptr<OperatorExpression>> after;
+      std::vector<std::shared_ptr<AbstractNodeExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
@@ -488,7 +488,7 @@ void BottomUpRewrite::execute() {
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
-      std::vector<std::shared_ptr<OperatorExpression>> after;
+      std::vector<std::shared_ptr<AbstractNodeExpression>> after;
       r.rule->Transform(before, after, context_.get());
 
       // Rewrite rule should provide at most 1 expression
