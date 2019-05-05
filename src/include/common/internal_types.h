@@ -1393,6 +1393,14 @@ enum class RuleType : uint32_t {
   TV_EQUALITY_WITH_TWO_CV, // (A.B = x) AND (A.B = y) where x/y are constant
   TRANSITIVE_CLOSURE_CONSTANT,  // (A.B = x) AND (A.B = C.D)
 
+  // Boolean short-circuit rules
+  AND_SHORT_CIRCUIT, // (FALSE AND B)
+  OR_SHORT_CIRCUIT, // (TRUE OR B)
+
+  // Catalog-based NULL/NON-NULL rules
+  NULL_LOOKUP_ON_NOT_NULL_COLUMN,
+  NOT_NULL_LOOKUP_ON_NOT_NULL_COLUMN,
+
   // Place holder to generate number of rules compile time
   NUM_RULES
 

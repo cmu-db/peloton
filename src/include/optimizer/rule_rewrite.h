@@ -20,6 +20,9 @@
 namespace peloton {
 namespace optimizer {
 
+using GroupExprTemplate = GroupExpression;
+using OptimizeContext = OptimizeContext;
+
 /* Rules are applied from high to low priority */
 enum class RulePriority : int {
   HIGH = 3,
@@ -65,6 +68,50 @@ class TransitiveClosureConstantTransform: public Rule {
   TransitiveClosureConstantTransform();
 
   int Promise(GroupExpression *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class AndShortCircuit: public Rule {
+ public:
+  AndShortCircuit();
+
+  int Promise(GroupExprTemplate *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class OrShortCircuit: public Rule {
+ public:
+  OrShortCircuit();
+
+  int Promise(GroupExprTemplate *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class NullLookupOnNotNullColumn: public Rule {
+ public:
+  NullLookupOnNotNullColumn();
+
+  int Promise(GroupExprTemplate *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class NotNullLookupOnNotNullColumn: public Rule {
+ public:
+  NotNullLookupOnNotNullColumn();
+
+  int Promise(GroupExprTemplate *group_expr, OptimizeContext *context) const override;
   bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
   void Transform(std::shared_ptr<AbstractNodeExpression> input,
                  std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,

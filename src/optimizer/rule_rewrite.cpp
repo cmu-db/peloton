@@ -399,5 +399,228 @@ void TransitiveClosureConstantTransform::Transform(std::shared_ptr<AbstractNodeE
   transformed.push_back(abs_expr);
 }
 
+// ===========================================================
+//
+// Boolean short-circuit related functions
+//
+// ===========================================================
+AndShortCircuit::AndShortCircuit() {
+  type_ = RuleType::AND_SHORT_CIRCUIT;
+
+  // (FALSE AND <any expression>)
+  match_pattern = std::make_shared<Pattern>(ExpressionType::CONJUNCTION_AND);
+  auto left_child = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  auto right_child = std::make_shared<Pattern>(ExpressionType::GROUP_MARKER);
+
+  match_pattern->AddChild(left_child);
+  match_pattern->AddChild(right_child);
+}
+
+int AndShortCircuit::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::HIGH);
+}
+
+bool AndShortCircuit::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void AndShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                OptimizeContext *context) const {
+  (void)context;
+  (void)transformed;
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (FALSE AND <any expression>)
+  PELOTON_ASSERT(input->Children().size() == 2);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::CONJUNCTION_AND);
+
+  std::shared_ptr<AbstractNodeExpression> left = input->Children()[0];
+  PELOTON_ASSERT(left->Children().size() == 0);
+  PELOTON_ASSERT(left->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
+
+  std::shared_ptr<AbsExpr_Container> left_c = std::dynamic_pointer_cast<AbsExpr_Container>(left->Node());
+  PELOTON_ASSERT(left_c != nullptr);
+
+  auto left_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(left_c->GetExpr());
+  type::Value left_value = left_cv_expr->GetValue();
+
+  LOG_DEBUG("fjdsklafjksdjflkadsjf");
+
+  // Only transform the expression if we're ANDing a FALSE boolean value
+  if (left_value.GetTypeId() == type::TypeId::BOOLEAN && left_value.IsFalse()) {
+    type::Value val_false = type::ValueFactory::GetBooleanValue(false);
+    std::shared_ptr<expression::ConstantValueExpression> false_expr = std::make_shared<expression::ConstantValueExpression>(val_false);
+    std::shared_ptr<AbsExpr_Container> false_cnt = std::make_shared<AbsExpr_Container>(false_expr);
+    std::shared_ptr<AbsExpr_Expression> false_container = std::make_shared<AbsExpr_Expression>(false_cnt);
+    transformed.push_back(false_container);
+  }
+}
+
+
+OrShortCircuit::OrShortCircuit() {
+  type_ = RuleType::OR_SHORT_CIRCUIT;
+
+  // (FALSE AND <any expression>)
+  match_pattern = std::make_shared<Pattern>(ExpressionType::CONJUNCTION_OR);
+  auto left_child = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  auto right_child = std::make_shared<Pattern>(ExpressionType::GROUP_MARKER);
+
+  match_pattern->AddChild(left_child);
+  match_pattern->AddChild(right_child);
+}
+
+int OrShortCircuit::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::HIGH);
+}
+
+bool OrShortCircuit::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void OrShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                OptimizeContext *context) const {
+  (void)context;
+  (void)transformed;
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (TRUE OR <any expression>)
+  PELOTON_ASSERT(input->Children().size() == 2);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::CONJUNCTION_OR);
+
+  std::shared_ptr<AbstractNodeExpression> left = input->Children()[0];
+  PELOTON_ASSERT(left->Children().size() == 0);
+  PELOTON_ASSERT(left->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
+
+  std::shared_ptr<AbsExpr_Container> left_c = std::dynamic_pointer_cast<AbsExpr_Container>(left->Node());
+  PELOTON_ASSERT(left_c != nullptr);
+
+  auto left_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(left_c->GetExpr());
+  type::Value left_value = left_cv_expr->GetValue();
+
+  // Only transform the expression if we're ANDing a TRUE boolean value
+  if (left_value.GetTypeId() == type::TypeId::BOOLEAN && left_value.IsTrue()) {
+    type::Value val_true = type::ValueFactory::GetBooleanValue(true);
+    std::shared_ptr<expression::ConstantValueExpression> true_expr = std::make_shared<expression::ConstantValueExpression>(val_true);
+    std::shared_ptr<AbsExpr_Container> true_cnt = std::make_shared<AbsExpr_Container>(true_expr);
+    std::shared_ptr<AbsExpr_Expression> true_container = std::make_shared<AbsExpr_Expression>(true_cnt);
+    transformed.push_back(true_container);
+  }
+}
+
+
+NullLookupOnNotNullColumn::NullLookupOnNotNullColumn() {
+  type_ = RuleType::NULL_LOOKUP_ON_NOT_NULL_COLUMN;
+
+  // Structure: [T.X IS NULL]
+  match_pattern = std::make_shared<Pattern>(ExpressionType::OPERATOR_IS_NULL);
+  auto child = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+
+  match_pattern->AddChild(child);
+}
+
+int NullLookupOnNotNullColumn::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::LOW);
+}
+
+bool NullLookupOnNotNullColumn::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void NullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                OptimizeContext *context) const {
+  (void)context;
+  (void)transformed;
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (TRUE OR <any expression>)
+  PELOTON_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::OPERATOR_IS_NULL);
+
+  std::shared_ptr<AbstractNodeExpression> child = input->Children()[0];
+  PELOTON_ASSERT(child->Children().size() == 0);
+  PELOTON_ASSERT(child->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+
+  std::shared_ptr<AbsExpr_Container> child_c = std::dynamic_pointer_cast<AbsExpr_Container>(child->Node());
+  PELOTON_ASSERT(child_c != nullptr);
+
+  auto tuple_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(child_c->GetExpr());
+
+  // Only transform into [FALSE] if the tuple value expression is specifically non-NULL,
+  //   otherwise do nothing
+  if (tuple_expr->GetIsNotNull()) {
+    type::Value val_false = type::ValueFactory::GetBooleanValue(false);
+    std::shared_ptr<expression::ConstantValueExpression> false_expr = std::make_shared<expression::ConstantValueExpression>(val_false);
+    std::shared_ptr<AbsExpr_Container> false_cnt = std::make_shared<AbsExpr_Container>(false_expr);
+    std::shared_ptr<AbsExpr_Expression> false_container = std::make_shared<AbsExpr_Expression>(false_cnt);
+    transformed.push_back(false_container);
+  }
+}
+
+NotNullLookupOnNotNullColumn::NotNullLookupOnNotNullColumn() {
+  type_ = RuleType::NOT_NULL_LOOKUP_ON_NOT_NULL_COLUMN;
+
+  // Structure: [T.X IS NOT NULL]
+  match_pattern = std::make_shared<Pattern>(ExpressionType::OPERATOR_IS_NOT_NULL);
+  auto child = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+
+  match_pattern->AddChild(child);
+}
+
+int NotNullLookupOnNotNullColumn::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::LOW);
+}
+
+bool NotNullLookupOnNotNullColumn::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void NotNullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                OptimizeContext *context) const {
+  (void)context;
+  (void)transformed;
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (TRUE OR <any expression>)
+  PELOTON_ASSERT(input->Children().size() == 1);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::OPERATOR_IS_NOT_NULL);
+
+  std::shared_ptr<AbstractNodeExpression> child = input->Children()[0];
+  PELOTON_ASSERT(child->Children().size() == 0);
+  PELOTON_ASSERT(child->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+
+  std::shared_ptr<AbsExpr_Container> child_c = std::dynamic_pointer_cast<AbsExpr_Container>(child->Node());
+  auto tuple_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(child_c->GetExpr());
+
+  // Only transform into [TRUE] if the tuple value expression is specifically non-NULL,
+  //   otherwise do nothing
+  if (tuple_expr->GetIsNotNull()) {
+    type::Value val_true = type::ValueFactory::GetBooleanValue(true);
+    std::shared_ptr<expression::ConstantValueExpression> true_expr = std::make_shared<expression::ConstantValueExpression>(val_true);
+    std::shared_ptr<AbsExpr_Container> true_cnt = std::make_shared<AbsExpr_Container>(true_expr);
+    std::shared_ptr<AbsExpr_Expression> true_container = std::make_shared<AbsExpr_Expression>(true_cnt);
+    transformed.push_back(true_container);
+  }
+}
+
 }  // namespace optimizer
 }  // namespace peloton

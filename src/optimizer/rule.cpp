@@ -76,6 +76,15 @@ RuleSet::RuleSet() {
   AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TVEqualityWithTwoCVTransform());
   AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TransitiveClosureConstantTransform());
 
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new AndShortCircuit());
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new OrShortCircuit());
+
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new NullLookupOnNotNullColumn());
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new NotNullLookupOnNotNullColumn());
+
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TVEqualityWithTwoCVTransform());
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TransitiveClosureConstantTransform());
+
   // Define transformation/implementation rules
   AddTransformationRule(new InnerJoinCommutativity());
   AddTransformationRule(new InnerJoinAssociativity());

@@ -79,6 +79,10 @@ class TupleValueExpression : public AbstractExpression {
     tuple_idx_ = tuple_idx;
   }
 
+  inline void SetIsNotNull(bool is_not_null) {
+    is_not_null_ = is_not_null;
+  }
+
   /**
    * @brief Attribute binding
    * @param binding_contexts
@@ -116,6 +120,8 @@ class TupleValueExpression : public AbstractExpression {
     if ((table_name_.empty() xor other.table_name_.empty()) ||
         col_name_.empty() xor other.col_name_.empty())
       return false;
+    if (GetIsNotNull() != other.GetIsNotNull())
+      return false;
     bool res = bound_obj_id_ == other.bound_obj_id_;
     if (!table_name_.empty() && !other.table_name_.empty())
       res = table_name_ == other.table_name_ && res;
@@ -151,6 +157,8 @@ class TupleValueExpression : public AbstractExpression {
 
   bool GetIsBound() const { return is_bound_; }
 
+  bool GetIsNotNull() const { return is_not_null_; }
+
   const std::tuple<oid_t, oid_t, oid_t> &GetBoundOid() const {
     return bound_obj_id_;
   }
@@ -185,7 +193,8 @@ class TupleValueExpression : public AbstractExpression {
         value_idx_(other.value_idx_),
         tuple_idx_(other.tuple_idx_),
         table_name_(other.table_name_),
-        col_name_(other.col_name_) {}
+        col_name_(other.col_name_),
+        is_not_null_(other.is_not_null_) {}
 
   // Bound flag
   bool is_bound_ = false;
@@ -196,6 +205,7 @@ class TupleValueExpression : public AbstractExpression {
   int tuple_idx_;
   std::string table_name_;
   std::string col_name_;
+  bool is_not_null_ = false;
 
   const planner::AttributeInfo *ai_;
 };
