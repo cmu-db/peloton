@@ -15,6 +15,7 @@
 #include "common/logger.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -27,14 +28,16 @@ GroupBindingIterator::GroupBindingIterator(Memo &memo, GroupID id,
     : BindingIterator(memo),
       group_id_(id),
       pattern_(pattern),
-      target_group_(memo_.GetGroupByID(id)),
+      target_group_(this->memo_.GetGroupByID(id)),
       num_group_items_(target_group_->GetLogicalExpressions().size()),
       current_item_index_(0) {
   LOG_TRACE("Attempting to bind on group %d", id);
 }
 
-bool GroupBindingIterator::HasNext() {
-  LOG_TRACE("HasNext");
+bool GroupBindingIterator::HasNextBinding() {
+  LOG_TRACE("HasNextBinding");
+
+  // TODO(ncx): pattern
   if (pattern_->Type() == OpType::Leaf) {
     return current_item_index_ == 0;
   }
@@ -51,7 +54,7 @@ bool GroupBindingIterator::HasNext() {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
       current_iterator_.reset(new GroupExprBindingIterator(
-          memo_,
+          this->memo_,
           target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
@@ -68,10 +71,12 @@ bool GroupBindingIterator::HasNext() {
 }
 
 std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
+  // TODO(ncx): pattern
   if (pattern_->Type() == OpType::Leaf) {
     current_item_index_ = num_group_items_;
     return std::make_shared<OperatorExpression>(LeafOperator::make(group_id_));
   }
+
   return current_iterator_->Next();
 }
 
@@ -79,7 +84,7 @@ std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
 GroupExprBindingIterator::GroupExprBindingIterator(
-    Memo &memo, GroupExpression *gexpr, std::shared_ptr<Pattern> pattern)
+  Memo &memo, GroupExpression *gexpr, std::shared_ptr<Pattern> pattern)
     : BindingIterator(memo),
       gexpr_(gexpr),
       pattern_(pattern),
@@ -92,8 +97,7 @@ GroupExprBindingIterator::GroupExprBindingIterator(
   }
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
-  const std::vector<std::shared_ptr<Pattern>> &child_patterns =
-      pattern->Children();
+  const std::vector<std::shared_ptr<Pattern>> &child_patterns = pattern->Children();
 
   if (child_groups.size() != child_patterns.size()) {
     return;
@@ -110,7 +114,7 @@ GroupExprBindingIterator::GroupExprBindingIterator(
     // Try to find a match in the given group
     std::vector<std::shared_ptr<AbstractNodeExpression>> &child_bindings =
         children_bindings_[i];
-    GroupBindingIterator iterator(memo_, child_groups[i], child_patterns[i]);
+    GroupBindingIterator iterator(this->memo_, child_groups[i], child_patterns[i]);
 
     // Get all bindings
     while (iterator.HasNext()) {
@@ -155,8 +159,7 @@ bool GroupExprBindingIterator::HasNext() {
       has_next_ = false;
     } else {
       // Pop all updated childrens
-      for (size_t idx = first_modified_idx; idx < children_bindings_pos_.size();
-           idx++) {
+      for (size_t idx = first_modified_idx; idx < children_bindings_pos_.size(); idx++) {
         current_binding_->PopChild();
       }
       // Add new children to end
@@ -176,6 +179,13 @@ bool GroupExprBindingIterator::HasNext() {
 std::shared_ptr<AbstractNodeExpression> GroupExprBindingIterator::Next() {
   return current_binding_;
 }
+
+// Explicitly instantiate
+template class GroupBindingIterator<Operator,OpType,OperatorExpression>;
+template class GroupExprBindingIterator<Operator,OpType,OperatorExpression>;
+
+template class GroupBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
+template class GroupExprBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

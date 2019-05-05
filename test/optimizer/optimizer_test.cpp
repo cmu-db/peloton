@@ -347,9 +347,14 @@ TEST_F(OptimizerTests, PushFilterThroughJoinTest) {
       optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
+<<<<<<< HEAD
   std::shared_ptr<GroupExpression> head_gexpr =
       std::make_shared<GroupExpression>(
           std::make_shared<Operator>(Operator()), child_groups);
+=======
+  std::shared_ptr<GroupExpression> head_gexpr =
+      std::make_shared<GroupExpression>(Operator(), child_groups);
+>>>>>>> templatize
 
   std::shared_ptr<OptimizeContext> root_context =
       std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);
@@ -435,9 +440,14 @@ TEST_F(OptimizerTests, PredicatePushDownRewriteTest) {
       optimizer.TestInsertQueryTree(parse_tree, txn);
   std::vector<GroupID> child_groups = {gexpr->GetGroupID()};
 
+<<<<<<< HEAD
   std::shared_ptr<GroupExpression> head_gexpr =
       std::make_shared<GroupExpression>(
           std::make_shared<Operator>(Operator()), child_groups);
+=======
+  std::shared_ptr<GroupExpression> head_gexpr =
+      std::make_shared<GroupExpression>(Operator(), child_groups);
+>>>>>>> templatize
 
   std::shared_ptr<OptimizeContext> root_context =
       std::make_shared<OptimizeContext>(&(optimizer.GetMetadata()), nullptr);

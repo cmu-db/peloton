@@ -20,9 +20,13 @@
 namespace peloton {
 namespace optimizer {
 
+/**
+ * template parameter should *really* only be OpType or ExpressionType
+ */
+template <class OperatorType>
 class Pattern {
  public:
-  Pattern(OpType op);
+  Pattern(OperatorType op);
 
   void AddChild(std::shared_ptr<Pattern> child);
 
@@ -30,10 +34,10 @@ class Pattern {
 
   inline size_t GetChildPatternsSize() const { return children.size(); }
 
-  OpType Type() const;
+  OperatorType Type() const;
 
  private:
-  OpType _type;
+  OperatorType _type;
   std::vector<std::shared_ptr<Pattern>> children;
 };
 

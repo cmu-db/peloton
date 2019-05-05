@@ -26,13 +26,11 @@ class GroupExpression;
 #define PHYS_PROMISE 3
 #define LOG_PROMISE 1
 
-/**
- * @brief The base class of all rules
- */
 class Rule {
  public:
   virtual ~Rule(){};
 
+  // TODO(ncx): pattern
   std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
 
   bool IsPhysical() const {
@@ -94,6 +92,7 @@ class Rule {
   inline uint32_t GetRuleIdx() { return static_cast<uint32_t>(type_); }
 
  protected:
+  // TODO(ncx): pattern
   std::shared_ptr<Pattern> match_pattern;
   RuleType type_;
 };
@@ -113,7 +112,8 @@ struct RuleWithPromise {
 
 enum class RewriteRuleSetName : uint32_t {
   PREDICATE_PUSH_DOWN = 0,
-  UNNEST_SUBQUERY
+  UNNEST_SUBQUERY,
+  COMPARATOR_ELIMINATION
 };
 
 /**
@@ -146,9 +146,13 @@ class RuleSet {
     return rewrite_rules_map_[static_cast<uint32_t>(set)];
   }
 
-  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() { return rewrite_rules_map_; }
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() {
+    return rewrite_rules_map_;
+  }
 
-  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() { return predicate_push_down_rules_; }
+  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() {
+    return predicate_push_down_rules_;
+  }
 
  private:
   std::vector<std::unique_ptr<Rule>> transformation_rules_;

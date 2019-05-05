@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/internal_types.h"
+#include "optimizer/absexpr_expression.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
 #include "optimizer/rule.h"
@@ -21,7 +22,8 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
-GroupExpression::GroupExpression(std::shared_ptr<AbstractNode> node, std::vector<GroupID> child_groups)
+GroupExpression::GroupExpression(std::shared_ptr<AbstractNode> node,
+                                 std::vector<GroupID> child_groups)
     : group_id(UNDEFINED_GROUP),
       node(node),
       child_groups(child_groups),

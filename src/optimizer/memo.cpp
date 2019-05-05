@@ -14,6 +14,7 @@
 #include "optimizer/memo.h"
 #include "optimizer/operators.h"
 #include "optimizer/stats/stats_calculator.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -23,13 +24,12 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 Memo::Memo() {}
 
-GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                                        bool enforced) {
-  return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
-}
-
+//===--------------------------------------------------------------------===//
+// Memo remaining interface functions
+//===--------------------------------------------------------------------===//
 GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
                                         GroupID target_group, bool enforced) {
+
   // If leaf, then just return
   if (gexpr->Node()->GetOpType() == OpType::Leaf) {
     const LeafOperator *leaf = gexpr->Node()->As<LeafOperator>();
@@ -39,9 +39,7 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
     return nullptr;
   }
 
-  // Lookup in hash table
   auto it = group_expressions_.find(gexpr.get());
-
   if (it != group_expressions_.end()) {
     gexpr->SetGroupID((*it)->GetGroupID());
     return *it;
@@ -55,10 +53,17 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
     } else {
       group_id = target_group;
     }
+
     Group *group = GetGroupByID(group_id);
     group->AddExpression(gexpr, enforced);
     return gexpr.get();
   }
+}
+
+GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
+                                        bool enforced) {
+
+  return InsertExpression(gexpr, UNDEFINED_GROUP, enforced);
 }
 
 std::vector<std::unique_ptr<Group>> &Memo::Groups() {
@@ -86,12 +91,16 @@ const std::string Memo::GetInfo() const {
     return os.str();
 }
 
-
+//===--------------------------------------------------------------------===//
+// Memo::AddNewGroup
+//===--------------------------------------------------------------------===//
 GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   GroupID new_group_id = groups_.size();
   // Find out the table alias that this group represents
   std::unordered_set<std::string> table_aliases;
   auto op_type = gexpr->Node()->GetOpType();
+
+  // TODO(ncx): specialize (if not OpType, then just add new group)
   if (op_type == OpType::Get) {
     // For base group, the table alias can get directly from logical get
     const LogicalGet *logical_get = gexpr->Node()->As<LogicalGet>();
@@ -110,8 +119,7 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
     }
   }
 
-  groups_.emplace_back(
-      new Group(new_group_id, std::move(table_aliases)));
+  groups_.emplace_back(new Group(new_group_id, std::move(table_aliases)));
   return new_group_id;
 }
 

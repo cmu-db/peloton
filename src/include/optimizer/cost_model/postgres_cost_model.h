@@ -29,6 +29,7 @@ namespace peloton {
 namespace optimizer {
 
 class Memo;
+
 // Derive cost for a physical group expression
 class PostgresCostModel : public AbstractCostModel {
  public:

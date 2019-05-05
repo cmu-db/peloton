@@ -46,6 +46,7 @@ class BindingIterator {
 
 class GroupBindingIterator : public BindingIterator {
  public:
+  // TODO(ncx): pattern
   GroupBindingIterator(Memo& memo, GroupID id,
                        std::shared_ptr<Pattern> pattern);
 
@@ -59,21 +60,25 @@ class GroupBindingIterator : public BindingIterator {
   Group *target_group_;
   size_t num_group_items_;
 
+  // Internal function for HasNext()
+  bool HasNextBinding();
+
   size_t current_item_index_;
   std::unique_ptr<BindingIterator> current_iterator_;
 };
 
 class GroupExprBindingIterator : public BindingIterator {
  public:
-  GroupExprBindingIterator(Memo& memo,
-                      GroupExpression *gexpr,
-                      std::shared_ptr<Pattern> pattern);
+  // TODO(ncx): pattern
+  GroupExprBindingIterator(Memo& memo, GroupExpression *gexpr,
+                           std::shared_ptr<Pattern> pattern);
 
   bool HasNext() override;
 
   std::shared_ptr<AbstractNodeExpression> Next() override;
 
  private:
+  // TODO(ncx): pattern
   GroupExpression* gexpr_;
   std::shared_ptr<Pattern> pattern_;
 

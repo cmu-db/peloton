@@ -32,6 +32,7 @@ using GroupID = int32_t;
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
+template <class Node, class OperatorType, class OperatorExpr>
 class GroupExpression {
  public:
   GroupExpression(std::shared_ptr<AbstractNode> node, std::vector<GroupID> child_groups);

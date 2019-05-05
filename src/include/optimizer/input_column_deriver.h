@@ -100,6 +100,7 @@ class InputColumnDeriver : public OperatorVisitor {
    * @brief Provide all tuple value expressions needed in the expression
    */
   void ScanHelper();
+  // TODO(ncx): BaseOperatorNode
   void AggregateHelper(const AbstractNode *);
   void JoinHelper(const AbstractNode *op);
 

@@ -18,6 +18,7 @@
 #include "optimizer/child_property_deriver.h"
 #include "optimizer/stats/stats_calculator.h"
 #include "optimizer/stats/child_stats_deriver.h"
+#include "optimizer/absexpr_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -93,11 +94,11 @@ void OptimizeExpression::execute() {
   std::vector<RuleWithPromise> valid_rules;
 
   // Construct valid transformation rules from rule set
-  ConstructValidRules(group_expr_, context_.get(),
-                      GetRuleSet().GetTransformationRules(), valid_rules);
+  this->ConstructValidRules(group_expr_, context_.get(),
+                            GetRuleSet().GetTransformationRules(), valid_rules);
   // Construct valid implementation rules from rule set
-  ConstructValidRules(group_expr_, context_.get(),
-                      GetRuleSet().GetImplementationRules(), valid_rules);
+  this->ConstructValidRules(group_expr_, context_.get(),
+                            GetRuleSet().GetImplementationRules(), valid_rules);
 
   std::sort(valid_rules.begin(), valid_rules.end());
   LOG_DEBUG("OptimizeExpression::execute() op %d, valid rules : %lu",
@@ -176,8 +177,7 @@ void ApplyRule::execute() {
   LOG_TRACE("ApplyRule::execute() for rule: %d", rule_->GetRuleIdx());
   if (group_expr_->HasRuleExplored(rule_)) return;
 
-  GroupExprBindingIterator iterator(GetMemo(), group_expr_,
-                                    rule_->GetMatchPattern());
+  GroupExprBindingIterator iterator(GetMemo(), group_expr_, rule_->GetMatchPattern());
   while (iterator.HasNext()) {
     auto before = iterator.Next();
     if (!rule_->Check(before, context_.get())) {
@@ -409,26 +409,34 @@ void OptimizeInputs::execute() {
 void TopDownRewrite::execute() {
   std::vector<RuleWithPromise> valid_rules;
 
-  auto cur_group = GetMemo().GetGroupByID(group_id_);
+  auto cur_group = this->GetMemo().GetGroupByID(group_id_);
   auto cur_group_expr = cur_group->GetLogicalExpression();
 
   // Construct valid transformation rules from rule set
-  ConstructValidRules(cur_group_expr, context_.get(),
-                      GetRuleSet().GetRewriteRulesByName(rule_set_name_),
-                      valid_rules);
+  this->ConstructValidRules(cur_group_expr, this->context_.get(),
+                            this->GetRuleSet().GetRewriteRulesByName(rule_set_name_),
+                            valid_rules);
 
   // Sort so that we apply rewrite rules with higher promise first
   std::sort(valid_rules.begin(), valid_rules.end(),
             std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
-    GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,
+    GroupExprBindingIterator iterator(this->GetMemo(), cur_group_expr,
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
+
+      // (TODO): pending terrier issue #332
+      // Check whether rule actually can be applied
+      // as opposed to a structural level test
+      if (!r.rule->Check(before, this->context_.get())) {
+        continue;
+      }
+
       std::vector<std::shared_ptr<AbstractNodeExpression>> after;
-      r.rule->Transform(before, after, context_.get());
+      r.rule->Transform(before, after, this->context_.get());
 
       // Rewrite rule should provide at most 1 expression
       PELOTON_ASSERT(after.size() <= 1);
@@ -437,8 +445,8 @@ void TopDownRewrite::execute() {
       // saturated
       if (!after.empty()) {
         auto &new_expr = after[0];
-        context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
-        PushTask(new TopDownRewrite(group_id_, context_, rule_set_name_));
+        this->context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
+        this->PushTask(new TopDownRewrite(group_id_, this->context_, rule_set_name_));
         return;
       }
     }
@@ -449,47 +457,55 @@ void TopDownRewrite::execute() {
        child_group_idx < cur_group_expr->GetChildrenGroupsSize();
        child_group_idx++) {
     // Need to rewrite all sub trees first
-    PushTask(
+    this->PushTask(
         new TopDownRewrite(cur_group_expr->GetChildGroupId(child_group_idx),
-                           context_, rule_set_name_));
+                           this->context_, rule_set_name_));
   }
 }
 
 void BottomUpRewrite::execute() {
   std::vector<RuleWithPromise> valid_rules;
 
-  auto cur_group = GetMemo().GetGroupByID(group_id_);
+  auto cur_group = this->GetMemo().GetGroupByID(group_id_);
   auto cur_group_expr = cur_group->GetLogicalExpression();
 
   if (!has_optimized_child_) {
-    PushTask(new BottomUpRewrite(group_id_, context_, rule_set_name_, true));
+    this->PushTask(new BottomUpRewrite(group_id_, this->context_, rule_set_name_, true));
     for (size_t child_group_idx = 0;
          child_group_idx < cur_group_expr->GetChildrenGroupsSize();
          child_group_idx++) {
       // Need to rewrite all sub trees first
-      PushTask(
+      this->PushTask(
           new BottomUpRewrite(cur_group_expr->GetChildGroupId(child_group_idx),
-                              context_, rule_set_name_, false));
+                              this->context_, rule_set_name_, false));
     }
     return;
   }
   // Construct valid transformation rules from rule set
-  ConstructValidRules(cur_group_expr, context_.get(),
-                      GetRuleSet().GetRewriteRulesByName(rule_set_name_),
-                      valid_rules);
+  this->ConstructValidRules(cur_group_expr, this->context_.get(),
+                            this->GetRuleSet().GetRewriteRulesByName(rule_set_name_),
+                            valid_rules);
 
   // Sort so that we apply rewrite rules with higher promise first
   std::sort(valid_rules.begin(), valid_rules.end(),
             std::greater<RuleWithPromise>());
 
   for (auto &r : valid_rules) {
-    GroupExprBindingIterator iterator(GetMemo(), cur_group_expr,
+    GroupExprBindingIterator iterator(this->GetMemo(), cur_group_expr,
                                       r.rule->GetMatchPattern());
     if (iterator.HasNext()) {
       auto before = iterator.Next();
       PELOTON_ASSERT(!iterator.HasNext());
+
+      // (TODO): pending terrier issue #332
+      // Check whether rule actually can be applied
+      // as opposed to a structural level test
+      if (!r.rule->Check(before, this->context_.get())) {
+        continue;
+      }
+
       std::vector<std::shared_ptr<AbstractNodeExpression>> after;
-      r.rule->Transform(before, after, context_.get());
+      r.rule->Transform(before, after, this->context_.get());
 
       // Rewrite rule should provide at most 1 expression
       PELOTON_ASSERT(after.size() <= 1);
@@ -498,14 +514,16 @@ void BottomUpRewrite::execute() {
       // saturated, also childs are already been rewritten
       if (!after.empty()) {
         auto &new_expr = after[0];
-        context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
-        PushTask(
-            new BottomUpRewrite(group_id_, context_, rule_set_name_, false));
+        this->context_->metadata->ReplaceRewritedExpression(new_expr, group_id_);
+        this->PushTask(
+            new BottomUpRewrite(group_id_, this->context_, rule_set_name_, false));
+
         return;
       }
     }
     cur_group_expr->SetRuleExplored(r.rule);
   }
 }
+
 }  // namespace optimizer
 }  // namespace peloton

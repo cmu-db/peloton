@@ -200,6 +200,7 @@ void InputColumnDeriver::ScanHelper() {
           output_cols, {}};
 }
 
+// TODO(ncx): BaseOperatorNode
 void InputColumnDeriver::AggregateHelper(const AbstractNode *op) {
   ExprSet input_cols_set;
   ExprMap output_cols_map;
@@ -269,6 +270,7 @@ void InputColumnDeriver::AggregateHelper(const AbstractNode *op) {
           output_cols, {input_cols}};
 }
 
+// TODO(ncx): BaseOperatorNode
 void InputColumnDeriver::JoinHelper(const AbstractNode *op) {
   const vector<AnnotatedExpression> *join_conds = nullptr;
   const vector<unique_ptr<expression::AbstractExpression>> *left_keys = nullptr;

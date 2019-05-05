@@ -32,6 +32,7 @@ namespace peloton {
 namespace optimizer {
 
 class Memo;
+
 class TrivialCostModel : public AbstractCostModel {
  public:
   TrivialCostModel(){};
