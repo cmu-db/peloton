@@ -17,7 +17,6 @@
 namespace peloton {
 namespace optimizer {
 
-template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
 class TableStats;
 class OperatorExpression;
@@ -28,9 +27,9 @@ class OperatorExpression;
  */
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+  void CalculateStats(GroupExpression *gexpr,
                       ExprSet required_cols,
-                      Memo<Operator,OpType,OperatorExpression> *memo,
+                      Memo *memo,
                       concurrency::TransactionContext* txn);
 
   void Visit(const LogicalGet *) override;
@@ -76,9 +75,9 @@ class StatsCalculator : public OperatorVisitor {
       const std::shared_ptr<TableStats> predicate_table_stats,
       const expression::AbstractExpression *expr);
 
-  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  GroupExpression *gexpr_;
   ExprSet required_cols_;
-  Memo<Operator,OpType,OperatorExpression> *memo_;
+  Memo *memo_;
   concurrency::TransactionContext* txn_;
 };
 

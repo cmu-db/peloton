@@ -6,18 +6,6 @@
 //
 // Identification: src/include/common/internal_types.h
 //
-// Copyright (c) 2015-2018, Carnegie Mellon University Database Group
-//
-//===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-//
-//                         Peloton
-//
-// internal_types.h
-//
-// Identification: src/include/common/internal_types.h
-//
 // Copyright (c) 2015-2017, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
@@ -258,7 +246,12 @@ enum class ExpressionType {
   // -----------------------------
   // Miscellaneous
   // -----------------------------
-  CAST = 600
+  CAST = 600,
+
+  // -----------------------------
+  // Rewriter-specific identifier
+  // -----------------------------
+  GROUP_MARKER = 721
 };
 
 // When short_str is true, return a short version of ExpressionType string
@@ -1384,8 +1377,21 @@ enum class RuleType : uint32_t {
   PULL_FILTER_THROUGH_AGGREGATION,
 
   // AST rewrite rules (logical -> logical)
-  // Removes ConstantValueExpression = ConstantValueExpression
-  COMP_EQUALITY_ELIMINATION,
+  // Removes ConstantValue =/!=/</>/<=/>= ConstantValue
+  CONSTANT_COMPARE_EQUAL,
+  CONSTANT_COMPARE_NOTEQUAL,
+  CONSTANT_COMPARE_LESSTHAN,
+  CONSTANT_COMPARE_GREATERTHAN,
+  CONSTANT_COMPARE_LESSTHANOREQUALTO,
+  CONSTANT_COMPARE_GREATERTHANOREQUALTO,
+
+  // Logical equivalent
+  EQUIV_AND,
+  EQUIV_OR,
+  EQUIV_COMPARE_EQUAL,
+
+  TV_EQUALITY_WITH_TWO_CV, // (A.B = x) AND (A.B = y) where x/y are constant
+  TRANSITIVE_CLOSURE_CONSTANT,  // (A.B = x) AND (A.B = C.D)
 
   // Place holder to generate number of rules compile time
   NUM_RULES

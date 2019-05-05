@@ -39,7 +39,7 @@ class OptimizerMetadata {
       settings::SettingId::task_execution_timeout)),
         timer(Timer<std::milli>()) {}
 
-  Memo OperatorType, OperatorExpr> memo;
+  Memo memo;
   RuleSet rule_set;
   OptimizerTaskPool *task_pool;
   std::unique_ptr<AbstractCostModel> cost_model;

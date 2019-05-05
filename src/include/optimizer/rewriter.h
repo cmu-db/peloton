@@ -25,26 +25,23 @@ namespace optimizer {
 class Rewriter {
 
  public:
-  Rewriter(const Rewriter &) = delete;
-  Rewriter &operator=(const Rewriter &) = delete;
-  Rewriter(Rewriter &&) = delete;
-  Rewriter &operator=(Rewriter &&) = delete;
-
   Rewriter();
-
-  expression::AbstractExpression* RewriteExpression(const expression::AbstractExpression *expr);
   void Reset();
 
-  OptimizerMetadata<AbsExpr_Container,ExpressionType,AbsExpr_Expression> &GetMetadata() { return metadata_; }
+  DISALLOW_COPY_AND_MOVE(Rewriter);
 
-  std::shared_ptr<AbsExpr_Expression> ConvertToAbsExpr(const expression::AbstractExpression *expr);
+  OptimizerMetadata &GetMetadata() { return metadata_; }
+
+  expression::AbstractExpression* RewriteExpression(const expression::AbstractExpression *expr);
 
  private:
   expression::AbstractExpression* RebuildExpression(int root_group);
-  void ExecuteTaskStack(OptimizerTaskStack<AbsExpr_Container,ExpressionType,AbsExpr_Expression> &task_stack);
   void RewriteLoop(int root_group_id);
-  std::shared_ptr<GroupExpression<AbsExpr_Container,ExpressionType,AbsExpr_Expression>> ConvertTree(const expression::AbstractExpression *expr);
-  OptimizerMetadata<AbsExpr_Container,ExpressionType,AbsExpr_Expression> metadata_;
+
+  std::shared_ptr<AbsExpr_Expression> ConvertToAbsExpr(const expression::AbstractExpression *expr);
+  std::shared_ptr<GroupExpression> RecordTreeGroups(const expression::AbstractExpression *expr);
+
+  OptimizerMetadata metadata_;
 };
 
 }  // namespace optimizer

@@ -3,6 +3,7 @@
 #include "catalog/column_catalog.h"
 #include "catalog/index_catalog.h"
 #include "catalog/table_catalog.h"
+#include "expression/group_marker_expression.h"
 #include "optimizer/operators.h"
 #include "optimizer/absexpr_expression.h"
 #include "optimizer/optimizer_metadata.h"
@@ -14,78 +15,389 @@
 namespace peloton {
 namespace optimizer {
 
-ComparatorElimination::ComparatorElimination() {
-  type_ = RuleType::COMP_EQUALITY_ELIMINATION;
+// ===========================================================
+//
+// ComparatorElimination related functions
+//
+// ===========================================================
+ComparatorElimination::ComparatorElimination(RuleType rule, ExpressionType root) {
+  type_ = rule;
 
-  match_pattern = std::make_shared<Pattern<ExpressionType>>(ExpressionType::COMPARE_EQUAL);
-  auto left = std::make_shared<Pattern<ExpressionType>>(ExpressionType::VALUE_CONSTANT);
-  auto right = std::make_shared<Pattern<ExpressionType>>(ExpressionType::VALUE_CONSTANT);
+  auto left = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  auto right = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  match_pattern = std::make_shared<Pattern>(root);
   match_pattern->AddChild(left);
   match_pattern->AddChild(right);
 }
 
-int ComparatorElimination::Promise(GroupExpression<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *group_expr,
-                                   OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const {
+int ComparatorElimination::Promise(GroupExpression *group_expr,
+                                   OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::MEDIUM);
+}
+
+bool ComparatorElimination::Check(std::shared_ptr<AbstractNodeExpression> plan,
+                                  OptimizeContext *context) const {
+  (void)context;
+  (void)plan;
+  return true;
+}
+
+void ComparatorElimination::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                      std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                      UNUSED_ATTRIBUTE OptimizeContext *context) const {
+  (void)transformed;
+  (void)context;
+
+  // Extract the AbstractExpression through indirection layer.
+  // Since the binding succeeded, there are guaranteed to be two children.
+  PELOTON_ASSERT(input->Children().size() == 2);
+
+  auto left_abs = std::dynamic_pointer_cast<AbsExpr_Container>(input->Children()[0]->Node());
+  auto right_abs = std::dynamic_pointer_cast<AbsExpr_Container>(input->Children()[1]->Node());
+  PELOTON_ASSERT(left_abs != nullptr && right_abs != nullptr);
+
+  auto left = left_abs->GetExpr();
+  auto right = right_abs->GetExpr();
+  auto lv = std::dynamic_pointer_cast<expression::ConstantValueExpression>(left);
+  auto rv = std::dynamic_pointer_cast<expression::ConstantValueExpression>(right);
+  PELOTON_ASSERT(lv != nullptr && rv != nullptr);
+
+  // Get the Value from ConstantValueExpression
+  auto lvalue = lv->GetValue();
+  auto rvalue = rv->GetValue();
+  if (lvalue.CheckComparable(rvalue)) {
+    CmpBool cmp = CmpBool::CmpTrue;
+    switch (type_) {
+    case RuleType::CONSTANT_COMPARE_EQUAL:
+      cmp = lvalue.CompareEquals(rvalue);
+      break;
+    case RuleType::CONSTANT_COMPARE_NOTEQUAL:
+      cmp = lvalue.CompareNotEquals(rvalue);
+      break;
+    case RuleType::CONSTANT_COMPARE_LESSTHAN:
+      cmp = lvalue.CompareLessThan(rvalue);
+      break;
+    case RuleType::CONSTANT_COMPARE_GREATERTHAN:
+      cmp = lvalue.CompareGreaterThan(rvalue);
+      break;
+    case RuleType::CONSTANT_COMPARE_LESSTHANOREQUALTO:
+      // lv <= rv does not have a predefined function so we do the following:
+      // (1) Compute truth value of lvalue > rvalue
+      // (2) Flip the truth value unless CmpBool::NULL_
+      cmp = lvalue.CompareGreaterThan(rvalue);
+      if (cmp != CmpBool::NULL_) {
+        cmp = (cmp == CmpBool::CmpFalse) ? CmpBool::CmpTrue : CmpBool::CmpFalse;
+      }
+      break;
+    case RuleType::CONSTANT_COMPARE_GREATERTHANOREQUALTO:
+      cmp = lvalue.CompareGreaterThanEquals(rvalue);
+      break;
+    default:
+      // Other type_ should not be handled by this rule
+      int type = static_cast<int>(type_);
+      LOG_ERROR("lvalue compare rvalue with RuleType (%d) not implemented", type);
+      PELOTON_ASSERT(0);
+      break;
+    }
+
+    // Create the replacement
+    type::Value val = type::ValueFactory::GetBooleanValue(cmp);
+    auto expr = std::make_shared<expression::ConstantValueExpression>(val);
+    auto container = std::make_shared<AbsExpr_Container>(AbsExpr_Container(expr));
+    auto shared = std::make_shared<AbsExpr_Expression>(container);
+    transformed.push_back(shared);
+  }
+
+  // If the values cannot be comparable, we leave them as is.
+  // We don't throw an error or anything because it is possible this branch
+  // may be collapsed due to subsequent optimizations, and it is likely
+  // any error will be caught during actual query execution.
+  return;
+}
+
+// ===========================================================
+//
+// EquivalentTransform related functions
+//
+// ===========================================================
+EquivalentTransform::EquivalentTransform(RuleType rule, ExpressionType root) {
+  type_ = rule;
+
+  auto left = std::make_shared<Pattern>(ExpressionType::GROUP_MARKER);
+  auto right = std::make_shared<Pattern>(ExpressionType::GROUP_MARKER);
+  match_pattern = std::make_shared<Pattern>(root);
+  match_pattern->AddChild(left);
+  match_pattern->AddChild(right);
+}
+
+int EquivalentTransform::Promise(GroupExpression *group_expr,
+                                   OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
   return static_cast<int>(RulePriority::HIGH);
 }
 
-bool ComparatorElimination::Check(std::shared_ptr<AbsExpr_Expression> plan,
-                                  OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const {
+bool EquivalentTransform::Check(std::shared_ptr<AbstractNodeExpression> plan,
+                                  OptimizeContext *context) const {
   (void)context;
   (void)plan;
-
-  // If any of these assertions fail, something is seriously wrong with GroupExprBinding
-  // Verify the structure of the tree is correct
-  PELOTON_ASSERT(plan != nullptr);
-  PELOTON_ASSERT(plan->Children().size() == 2);
-  PELOTON_ASSERT(plan->Op().GetType() == ExpressionType::COMPARE_EQUAL);
-
-  auto left = plan->Children()[0];
-  auto right = plan->Children()[1];
-  PELOTON_ASSERT(left->Children().size() == 0);
-  PELOTON_ASSERT(left->Op().GetType() == ExpressionType::VALUE_CONSTANT);
-  PELOTON_ASSERT(right->Children().size() == 0);
-  PELOTON_ASSERT(right->Op().GetType() == ExpressionType::VALUE_CONSTANT);
-
-  // Technically, if structure matches, rule should always be applied
   return true;
 }
 
-void ComparatorElimination::Transform(std::shared_ptr<AbsExpr_Expression> input,
-                                      std::vector<std::shared_ptr<AbsExpr_Expression>> &transformed,
-                                      UNUSED_ATTRIBUTE OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const {
+void EquivalentTransform::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                      std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                      UNUSED_ATTRIBUTE OptimizeContext *context) const {
   (void)transformed;
   (void)context;
 
-  // (TODO): create a wrapper for evaluating ConstantValue relations (pending email reply)
+  // We expect EquivalentTransform to operate on AND / OR which should
+  // have exactly 2 children for the expression to logically make sense.
+  PELOTON_ASSERT(input->Children().size() == 2);
 
-  // Extract the AbstractExpression through indirection layer
-  auto left = input->Children()[0]->Op().GetExpr();
-  auto right = input->Children()[1]->Op().GetExpr();
-  auto lv = static_cast<const expression::ConstantValueExpression*>(left);
-  auto rv = static_cast<const expression::ConstantValueExpression*>(right);
-  lv = const_cast<expression::ConstantValueExpression*>(lv);
-  rv = const_cast<expression::ConstantValueExpression*>(rv);
+  // Create flipped ordering
+  auto left = input->Children()[0];
+  auto right = input->Children()[1];
 
-  // Get the Value from ConstantValueExpression
-  auto lvalue = lv->GetValue();
-  auto rvalue = rv->GetValue();
+  // The children do not strictly matter anymore
+  auto type = match_pattern->GetExpType();
+  auto expr = std::make_shared<expression::ConjunctionExpression>(type);
+  auto a_expr = std::make_shared<AbsExpr_Container>(expr);
+  auto shared = std::make_shared<AbsExpr_Expression>(a_expr);
 
-  // Need to check type equality to prevent assertion failure
-  // This is only a Peloton issue (terrier checks type for you)
-  bool is_equal = (lvalue.GetTypeId() == rvalue.GetTypeId()) &&
-                  (lv->ExactlyEquals(*rv));
-
-  // Create the transformed expression
-  type::Value val = type::ValueFactory::GetBooleanValue(is_equal);
-  auto eq = new expression::ConstantValueExpression(val);
-  auto cnt = AbsExpr_Container(eq);
-  auto shared = std::make_shared<AbsExpr_Expression>(cnt);
-
-  // (TODO): figure out memory management once go to terrier (which use shared_ptr)
+  // Create flipped ordering at logical level
+  shared->PushChild(right);
+  shared->PushChild(left);
   transformed.push_back(shared);
+  return;
 }
+
+
+// ===========================================================
+//
+// Transitive-Transform related functions
+//
+// ===========================================================
+TVEqualityWithTwoCVTransform::TVEqualityWithTwoCVTransform() {
+  type_ = RuleType::TV_EQUALITY_WITH_TWO_CV;
+
+  // (A.B = x) AND (A.B = y)
+  match_pattern = std::make_shared<Pattern>(ExpressionType::CONJUNCTION_AND);
+
+  auto l_eq = std::make_shared<Pattern>(ExpressionType::COMPARE_EQUAL);
+  auto l_left = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+  auto l_right = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  l_eq->AddChild(l_left);
+  l_eq->AddChild(l_right);
+
+  auto r_eq = std::make_shared<Pattern>(ExpressionType::COMPARE_EQUAL);
+  auto r_left = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+  auto r_right = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  r_eq->AddChild(r_left);
+  r_eq->AddChild(r_right);
+
+  match_pattern->AddChild(l_eq);
+  match_pattern->AddChild(r_eq);
+}
+
+int TVEqualityWithTwoCVTransform::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::LOW);
+}
+
+bool TVEqualityWithTwoCVTransform::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void TVEqualityWithTwoCVTransform::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                               std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                               OptimizeContext *context) const {
+  (void)context;
+  //TODO(wz2): TVEqualityWithTwoCVTransform should work beyond straight equality
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (A.B = x) AND (A.B = y)
+  PELOTON_ASSERT(input->Children().size() == 2);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::CONJUNCTION_AND);
+
+  auto l_eq = input->Children()[0];
+  auto r_eq = input->Children()[1];
+  PELOTON_ASSERT(l_eq->Children().size() == 2);
+  PELOTON_ASSERT(r_eq->Children().size() == 2);
+  PELOTON_ASSERT(l_eq->Node()->GetExpType() == ExpressionType::COMPARE_EQUAL);
+  PELOTON_ASSERT(r_eq->Node()->GetExpType() == ExpressionType::COMPARE_EQUAL);
+
+  auto l_tv = l_eq->Children()[0];
+  auto l_cv = l_eq->Children()[1];
+  PELOTON_ASSERT(l_tv->Children().size() == 0);
+  PELOTON_ASSERT(l_cv->Children().size() == 0);
+  PELOTON_ASSERT(l_tv->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(l_cv->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
+
+  auto r_tv = r_eq->Children()[0];
+  auto r_cv = r_eq->Children()[1];
+  PELOTON_ASSERT(r_tv->Children().size() == 0);
+  PELOTON_ASSERT(r_cv->Children().size() == 0);
+  PELOTON_ASSERT(r_tv->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(r_cv->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
+
+  auto l_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_tv->Node());
+  auto r_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv->Node());
+  auto l_cv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_cv->Node());
+  auto r_cv_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_cv->Node());
+  PELOTON_ASSERT(l_tv_c != nullptr && r_tv_c != nullptr);
+  PELOTON_ASSERT(l_cv_c != nullptr && r_cv_c != nullptr);
+
+  auto l_tv_expr = l_tv_c->GetExpr();
+  auto r_tv_expr = r_tv_c->GetExpr();
+  if (l_tv_expr->ExactlyEquals(*r_tv_expr)) {
+    // Given the pattern (A.B = x) AND (C.D = y), the IF statement asserts that A.B is the same as C.D
+    // TODO(wz2): ExactlyEquals may be too strict, since must match bound_oid, table_name, col_name
+
+    // ExactlyEqual on TupleValueExpression has sufficient check
+    auto l_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(l_cv_c->GetExpr());
+    auto r_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(r_cv_c->GetExpr());
+    auto l_cv_val = l_cv_expr->GetValue();
+    auto r_cv_val = r_cv_expr->GetValue();
+    if (l_cv_val.CheckComparable(r_cv_val)) {
+      // Given a pattern (A.B = x) AND (A.B = y), we perform the following:
+      // - Rewrite expression to (A.B = x) if x == y
+      // - Rewrite expression to FALSE if x != y (including if x / y is NULL)
+      bool is_eq = false;
+      if (l_cv_val.CompareEquals(r_cv_val) == CmpBool::CmpTrue) {
+        // This means in the pattern (A.B = x) AND (A.B = y) that x == y
+        is_eq = true;
+      }
+
+      if (is_eq) {
+        transformed.push_back(l_eq);
+      } else {
+        auto val = type::ValueFactory::GetBooleanValue(false);
+        auto constant = std::make_shared<expression::ConstantValueExpression>(val);
+        auto abs_expr = std::make_shared<AbsExpr_Expression>(std::make_shared<AbsExpr_Container>(AbsExpr_Container(constant)));
+        transformed.push_back(abs_expr);
+      }
+
+      return;
+    }
+  }
+
+  return;
+}
+
+TransitiveClosureConstantTransform::TransitiveClosureConstantTransform() {
+  type_ = RuleType::TRANSITIVE_CLOSURE_CONSTANT;
+
+  // (A.B = x) AND (A.B = C.D)
+  match_pattern = std::make_shared<Pattern>(ExpressionType::CONJUNCTION_AND);
+
+  auto l_eq = std::make_shared<Pattern>(ExpressionType::COMPARE_EQUAL);
+  auto l_left = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+  auto l_right = std::make_shared<Pattern>(ExpressionType::VALUE_CONSTANT);
+  l_eq->AddChild(l_left);
+  l_eq->AddChild(l_right);
+
+  auto r_eq = std::make_shared<Pattern>(ExpressionType::COMPARE_EQUAL);
+  auto r_left = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+  auto r_right = std::make_shared<Pattern>(ExpressionType::VALUE_TUPLE);
+  r_eq->AddChild(r_left);
+  r_eq->AddChild(r_right);
+
+  match_pattern->AddChild(l_eq);
+  match_pattern->AddChild(r_eq);
+}
+
+int TransitiveClosureConstantTransform::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
+  (void)group_expr;
+  (void)context;
+  return static_cast<int>(RulePriority::LOW);
+}
+
+bool TransitiveClosureConstantTransform::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
+  (void)plan;
+  (void)context;
+  return true;
+}
+
+void TransitiveClosureConstantTransform::Transform(std::shared_ptr<AbstractNodeExpression> input,
+                                                   std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                                                   OptimizeContext *context) const {
+  (void)context;
+  //TODO(wz2): TransitiveClosureConstant should work beyond straight equality
+
+  // Asserting guarantees provided by the GroupExprBindingIterator
+  // Structure: (A.B = x) AND (A.B = C.D)
+  PELOTON_ASSERT(input->Children().size() == 2);
+  PELOTON_ASSERT(input->Node()->GetExpType() == ExpressionType::CONJUNCTION_AND);
+
+  auto l_eq = input->Children()[0];
+  auto r_eq = input->Children()[1];
+  PELOTON_ASSERT(l_eq->Children().size() == 2);
+  PELOTON_ASSERT(r_eq->Children().size() == 2);
+  PELOTON_ASSERT(l_eq->Node()->GetExpType() == ExpressionType::COMPARE_EQUAL);
+  PELOTON_ASSERT(r_eq->Node()->GetExpType() == ExpressionType::COMPARE_EQUAL);
+
+  auto l_tv = l_eq->Children()[0];
+  auto l_cv = l_eq->Children()[1];
+  PELOTON_ASSERT(l_tv->Children().size() == 0);
+  PELOTON_ASSERT(l_cv->Children().size() == 0);
+  PELOTON_ASSERT(l_tv->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(l_cv->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
+
+  auto r_tv_l = r_eq->Children()[0];
+  auto r_tv_r = r_eq->Children()[1];
+  PELOTON_ASSERT(r_tv_l->Children().size() == 0);
+  PELOTON_ASSERT(r_tv_r->Children().size() == 0);
+  PELOTON_ASSERT(r_tv_l->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+  PELOTON_ASSERT(r_tv_r->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
+
+  auto l_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_tv->Node());
+  auto r_tv_l_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv_l->Node());
+  auto r_tv_r_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv_r->Node());
+  PELOTON_ASSERT(l_tv_c != nullptr && r_tv_l_c != nullptr && r_tv_r_c != nullptr);
+
+  auto l_tv_expr = l_tv_c->GetExpr();
+  auto r_tv_l_expr = r_tv_l_c->GetExpr();
+  auto r_tv_r_expr = r_tv_r_c->GetExpr();
+
+  // At this stage, we have the arbitrary structure: (A.B = x) AND (C.D = E.F)
+  // TODO(wz2): ExactlyEquals for TupleValue may be too strict, since must match bound_oid, table_name, col_name
+  if (r_tv_l_expr->ExactlyEquals(*r_tv_r_expr)) {
+    // Handles case where C.D = E.F, which can rewrite to just A.B = x
+    transformed.push_back(l_eq);
+    return;
+  }
+
+  if (!l_tv_expr->ExactlyEquals(*r_tv_l_expr) && !l_tv_expr->ExactlyEquals(*r_tv_r_expr)) {
+    // We know that A.B != C.D and A.B != E.F, so no optimization possible
+    return;
+  }
+
+  auto new_left_eq = l_eq;
+  auto right_val_copy = l_cv;
+  auto new_right_eq = std::make_shared<AbsExpr_Expression>(r_eq->Node());
+
+  // At this stage, we have knowledge that C.D != E.F
+  if (l_tv_expr->ExactlyEquals(*r_tv_l_expr)) {
+    // At this stage, we have knowledge that A.B = C.D
+    new_right_eq->PushChild(right_val_copy);
+    new_right_eq->PushChild(r_tv_r);
+  } else {
+    // At this stage, we have knowledge that A.B = E.F
+    new_right_eq->PushChild(r_tv_l);
+    new_right_eq->PushChild(right_val_copy);
+  }
+
+  // Create new root expression
+  auto abs_expr = std::make_shared<AbsExpr_Expression>(input->Node());
+  abs_expr->PushChild(new_left_eq);
+  abs_expr->PushChild(new_right_eq);
+  transformed.push_back(abs_expr);
+}
+
 }  // namespace optimizer
 }  // namespace peloton

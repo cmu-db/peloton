@@ -20,31 +20,63 @@ namespace optimizer {
 
 int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)context;
-  // TODO(ncx): replace after pattern fix, and specialize to operators
-  // auto root_type = match_pattern->OpType();
-  auto root_type = match_pattern->Type();
+  auto root_type = match_pattern->GetOpType();
+  auto root_type_exp = match_pattern->GetExpType();
+
   // This rule is not applicable
-  if (root_type != OpType::Leaf && root_type != group_expr->Node()->GetOpType()) {
+  if (root_type != OpType::Undefined &&
+      root_type != OpType::Leaf &&
+      root_type != group_expr->Node()->GetOpType()) {
     return 0;
   }
+
+  if (root_type_exp != ExpressionType::INVALID &&
+      root_type_exp != ExpressionType::GROUP_MARKER &&
+      root_type_exp != group_expr->Node()->GetExpType()) {
+    return 0;
+  }
+
   if (IsPhysical()) return PHYS_PROMISE;
   return LOG_PROMISE;
 }
 
-RuleSet::RuleSet() {
-  LOG_ERROR("Must invoke specialization of RuleSet constructor");
-  PELOTON_ASSERT(0);
-}
-
 // TODO(ncx): best way to specialize for constructors?
-template <>
-RuleSet<AbsExpr_Container,ExpressionType,AbsExpr_Expression>::RuleSet() {
-  AddRewriteRule(RewriteRuleSetName::COMPARATOR_ELIMINATION,
-                 new ComparatorElimination());
-}
+RuleSet::RuleSet() {
+  // Comparator Elimination related rules
+  std::vector<std::pair<RuleType,ExpressionType>> comp_elim_pairs = {
+    std::make_pair(RuleType::CONSTANT_COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL),
+    std::make_pair(RuleType::CONSTANT_COMPARE_NOTEQUAL, ExpressionType::COMPARE_NOTEQUAL),
+    std::make_pair(RuleType::CONSTANT_COMPARE_LESSTHAN, ExpressionType::COMPARE_LESSTHAN),
+    std::make_pair(RuleType::CONSTANT_COMPARE_GREATERTHAN, ExpressionType::COMPARE_GREATERTHAN),
+    std::make_pair(RuleType::CONSTANT_COMPARE_LESSTHANOREQUALTO, ExpressionType::COMPARE_LESSTHANOREQUALTO),
+    std::make_pair(RuleType::CONSTANT_COMPARE_GREATERTHANOREQUALTO, ExpressionType::COMPARE_GREATERTHANOREQUALTO)
+  };
 
-template <>
-RuleSet<Operator,OpType, OperatorExpression>::RuleSet() {
+  for (auto &pair : comp_elim_pairs) {
+    AddRewriteRule(
+      RewriteRuleSetName::GENERIC_RULES,
+      new ComparatorElimination(pair.first, pair.second)
+    );
+  }
+
+  // Equivalent Transform related rules (flip AND, OR, EQUAL)
+  std::vector<std::pair<RuleType,ExpressionType>> equiv_pairs = {
+    std::make_pair(RuleType::EQUIV_AND, ExpressionType::CONJUNCTION_AND),
+    std::make_pair(RuleType::EQUIV_OR, ExpressionType::CONJUNCTION_OR),
+    std::make_pair(RuleType::EQUIV_COMPARE_EQUAL, ExpressionType::COMPARE_EQUAL)
+  };
+  for (auto &pair : equiv_pairs) {
+    AddRewriteRule(
+      RewriteRuleSetName::EQUIVALENT_TRANSFORM,
+      new EquivalentTransform(pair.first, pair.second)
+    );
+  }
+
+  // Additional rules
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TVEqualityWithTwoCVTransform());
+  AddRewriteRule(RewriteRuleSetName::GENERIC_RULES, new TransitiveClosureConstantTransform());
+
+  // Define transformation/implementation rules
   AddTransformationRule(new InnerJoinCommutativity());
   AddTransformationRule(new InnerJoinAssociativity());
   AddImplementationRule(new LogicalDeleteToPhysical());
@@ -64,6 +96,7 @@ RuleSet<Operator,OpType, OperatorExpression>::RuleSet() {
   AddImplementationRule(new ImplementLimit());
   AddImplementationRule(new LogicalExportToPhysicalExport());
 
+  // Query optimizer related rewrite rules
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,
                  new PushFilterThroughJoin());
   AddRewriteRule(RewriteRuleSetName::PREDICATE_PUSH_DOWN,

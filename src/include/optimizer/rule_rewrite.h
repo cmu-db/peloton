@@ -27,19 +27,49 @@ enum class RulePriority : int {
   LOW = 1
 };
 
-class ComparatorElimination: public Rule<AbsExpr_Container,ExpressionType,AbsExpr_Expression> {
+class ComparatorElimination: public Rule {
  public:
-  ComparatorElimination();
+  ComparatorElimination(RuleType rule, ExpressionType root);
 
-  int Promise(GroupExpression<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *group_expr,
-              OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const override;
-
-  bool Check(std::shared_ptr<AbsExpr_Expression> plan,
-             OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const override;
-
-  void Transform(std::shared_ptr<AbsExpr_Expression> input,
-                 std::vector<std::shared_ptr<AbsExpr_Expression>> &transformed,
-                 OptimizeContext<AbsExpr_Container,ExpressionType,AbsExpr_Expression> *context) const override;
+  int Promise(GroupExpression *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
 };
+
+class EquivalentTransform: public Rule {
+ public:
+  EquivalentTransform(RuleType rule, ExpressionType root);
+
+  int Promise(GroupExpression *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class TVEqualityWithTwoCVTransform: public Rule {
+ public:
+  TVEqualityWithTwoCVTransform();
+
+  int Promise(GroupExpression *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
+class TransitiveClosureConstantTransform: public Rule {
+ public:
+  TransitiveClosureConstantTransform();
+
+  int Promise(GroupExpression *group_expr, OptimizeContext *context) const override;
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const override;
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
+                 OptimizeContext *context) const override;
+};
+
 }  // namespace optimizer
 }  // namespace peloton

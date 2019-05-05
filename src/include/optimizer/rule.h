@@ -113,7 +113,8 @@ struct RuleWithPromise {
 enum class RewriteRuleSetName : uint32_t {
   PREDICATE_PUSH_DOWN = 0,
   UNNEST_SUBQUERY,
-  COMPARATOR_ELIMINATION
+  EQUIVALENT_TRANSFORM,
+  GENERIC_RULES
 };
 
 /**

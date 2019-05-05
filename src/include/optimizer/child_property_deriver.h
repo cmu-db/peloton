@@ -18,7 +18,6 @@
 namespace peloton {
 
 namespace optimizer {
-template <class Node, class OpType, class OperatorExpr>
 class Memo;
 }
 
@@ -36,9 +35,9 @@ class ChildPropertyDeriver : public OperatorVisitor {
   std::vector<std::pair<std::shared_ptr<PropertySet>,
                         std::vector<std::shared_ptr<PropertySet>>>>
 
-  GetProperties(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
+  GetProperties(GroupExpression *gexpr,
                 std::shared_ptr<PropertySet> requirements,
-                Memo<Operator,OpType,OperatorExpression> *memo);
+                Memo *memo);
 
   void Visit(const DummyScan *) override;
   void Visit(const PhysicalSeqScan *) override;
@@ -78,8 +77,8 @@ class ChildPropertyDeriver : public OperatorVisitor {
    * @brief We need the memo and gexpr because some property may depend on
    *  child's schema
    */
-  Memo<Operator,OpType,OperatorExpression> *memo_;
-  GroupExpression<Operator,OpType,OperatorExpression> *gexpr_;
+  GroupExpression *gexpr_;
+  Memo *memo_;
 };
 
 }  // namespace optimizer

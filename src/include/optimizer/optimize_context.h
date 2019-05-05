@@ -22,20 +22,18 @@
 namespace peloton {
 namespace optimizer {
 
-template <class Operator, class OperatorType, class OperatorExpr>
 class OptimizerMetadata;
 
-template <class Operator, class OperatorType, class OperatorExpr>
 class OptimizeContext {
  public:
-  OptimizeContext(OptimizerMetadata<Operator,OperatorType,OperatorExpr> *metadata,
+  OptimizeContext(OptimizerMetadata *metadata,
                   std::shared_ptr<PropertySet> required_prop,
                   double cost_upper_bound = std::numeric_limits<double>::max())
       : metadata(metadata),
         required_prop(required_prop),
         cost_upper_bound(cost_upper_bound) {}
 
-  OptimizerMetadata<Operator,OperatorType,OperatorExpr> *metadata;
+  OptimizerMetadata *metadata;
   std::shared_ptr<PropertySet> required_prop;
   double cost_upper_bound;
 };

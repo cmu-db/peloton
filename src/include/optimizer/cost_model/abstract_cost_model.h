@@ -18,7 +18,6 @@
 namespace peloton {
 namespace optimizer {
 
-template <class Node, class OperatorType, class OperatorExpr>
 class Memo;
 
 // Default cost when cost model cannot compute correct cost.
@@ -36,8 +35,8 @@ static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
 class AbstractCostModel : public OperatorVisitor {
  public:
-  virtual double CalculateCost(GroupExpression<Operator,OpType,OperatorExpression> *gexpr,
-                               Memo<Operator,OpType,OperatorExpression> *memo,
+  virtual double CalculateCost(GroupExpression *gexpr,
+                               Memo *memo,
                                concurrency::TransactionContext *txn) = 0;
 };
 

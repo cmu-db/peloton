@@ -83,6 +83,7 @@ enum class OpType {
 class OperatorVisitor;
 
 struct AbstractNode {
+  AbstractNode() {}
   AbstractNode(std::shared_ptr<AbstractNode> node) : node(node) {}
 
   ~AbstractNode() {}

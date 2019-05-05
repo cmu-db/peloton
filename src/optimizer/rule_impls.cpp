@@ -1116,7 +1116,7 @@ MarkJoinToInnerJoin::MarkJoinToInnerJoin() {
 int MarkJoinToInnerJoin::Promise(GroupExpression *group_expr,
                                  OptimizeContext *context) const {
   (void)context;
-  auto root_type = match_pattern->Type();
+  auto root_type = match_pattern->GetOpType();
   // This rule is not applicable
   if (root_type != OpType::Leaf && root_type != group_expr->Node()->GetOpType()) {
     return 0;
@@ -1167,7 +1167,7 @@ SingleJoinToInnerJoin::SingleJoinToInnerJoin() {
 int SingleJoinToInnerJoin::Promise(GroupExpression *group_expr,
                                    OptimizeContext *context) const {
   (void)context;
-  auto root_type = match_pattern->Type();
+  auto root_type = match_pattern->GetOpType();
   // This rule is not applicable
   if (root_type != OpType::Leaf && root_type != group_expr->Node()->GetOpType()) {
     return 0;
@@ -1220,7 +1220,7 @@ PullFilterThroughMarkJoin::PullFilterThroughMarkJoin() {
 int PullFilterThroughMarkJoin::Promise(GroupExpression *group_expr,
                                        OptimizeContext *context) const {
   (void)context;
-  auto root_type = match_pattern->Type();
+  auto root_type = match_pattern->GetOpType();
   // This rule is not applicable
   if (root_type != OpType::Leaf && root_type != group_expr->Node()->GetOpType()) {
     return 0;
@@ -1281,7 +1281,7 @@ PullFilterThroughAggregation::PullFilterThroughAggregation() {
 int PullFilterThroughAggregation::Promise(GroupExpression *group_expr,
                                           OptimizeContext *context) const {
   (void)context;
-  auto root_type = match_pattern->Type();
+  auto root_type = match_pattern->GetOpType();
   // This rule is not applicable
   if (root_type != OpType::Leaf && root_type != group_expr->Node()->GetOpType()) {
     return 0;

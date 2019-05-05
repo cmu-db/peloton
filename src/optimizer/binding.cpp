@@ -16,6 +16,7 @@
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/absexpr_expression.h"
+#include "expression/group_marker_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -34,11 +35,12 @@ GroupBindingIterator::GroupBindingIterator(Memo &memo, GroupID id,
   LOG_TRACE("Attempting to bind on group %d", id);
 }
 
-bool GroupBindingIterator::HasNextBinding() {
+bool GroupBindingIterator::HasNext() {
   LOG_TRACE("HasNextBinding");
 
-  // TODO(ncx): pattern
-  if (pattern_->Type() == OpType::Leaf) {
+  // TODO(): Can we do this generic pattern any better?
+  if ((pattern_->GetOpType() == OpType::Leaf && pattern_->GetExpType() == ExpressionType::INVALID) ||
+      (pattern_->GetOpType() == OpType::Undefined && pattern_->GetExpType() == ExpressionType::GROUP_MARKER)) {
     return current_item_index_ == 0;
   }
 
@@ -71,10 +73,16 @@ bool GroupBindingIterator::HasNextBinding() {
 }
 
 std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
-  // TODO(ncx): pattern
-  if (pattern_->Type() == OpType::Leaf) {
+  if (pattern_->GetOpType() == OpType::Leaf && pattern_->GetExpType() == ExpressionType::INVALID) {
     current_item_index_ = num_group_items_;
     return std::make_shared<OperatorExpression>(LeafOperator::make(group_id_));
+  }
+
+  if (pattern_->GetOpType() == OpType::Undefined && pattern_->GetExpType() == ExpressionType::GROUP_MARKER) {
+    current_item_index_ = num_group_items_;
+
+    auto expr = std::make_shared<expression::GroupMarkerExpression>(group_id_);
+    return std::make_shared<AbsExpr_Expression>(std::make_shared<AbsExpr_Container>(expr));
   }
 
   return current_iterator_->Next();
@@ -89,11 +97,18 @@ GroupExprBindingIterator::GroupExprBindingIterator(
       gexpr_(gexpr),
       pattern_(pattern),
       first_(true),
-      has_next_(false),
-      // TODO(ncx): needs workaround when Node is not an Operator
-      current_binding_(std::make_shared<OperatorExpression>(gexpr->Node())) {
-  if (gexpr->Node()->GetOpType() != pattern->Type()) {
+      has_next_(false) {
+
+  if (gexpr->Node()->GetOpType() != pattern->GetOpType() ||
+      gexpr->Node()->GetExpType() != pattern->GetExpType()) {
     return;
+  }
+
+  // Create right type of AbstractNodeExpression depending on type
+  if (gexpr->Node()->GetOpType() != OpType::Undefined) {
+    current_binding_ = std::make_shared<OperatorExpression>(gexpr->Node());
+  } else {
+    current_binding_ = std::make_shared<AbsExpr_Expression>(gexpr->Node());
   }
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
@@ -180,12 +195,6 @@ std::shared_ptr<AbstractNodeExpression> GroupExprBindingIterator::Next() {
   return current_binding_;
 }
 
-// Explicitly instantiate
-template class GroupBindingIterator<Operator,OpType,OperatorExpression>;
-template class GroupExprBindingIterator<Operator,OpType,OperatorExpression>;
-
-template class GroupBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
-template class GroupExprBindingIterator<AbsExpr_Container,ExpressionType,AbsExpr_Expression>;
 
 }  // namespace optimizer
 }  // namespace peloton

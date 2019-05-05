@@ -15,25 +15,19 @@
 namespace peloton {
 namespace optimizer {
 
-template <class OperatorType>
-Pattern<OperatorType>::Pattern(OperatorType op) : _type(op) {}
+Pattern::Pattern(OpType op) : _op_type(op) {}
+Pattern::Pattern(ExpressionType exp) : _exp_type(exp) {}
 
-template <class OperatorType>
-void Pattern<OperatorType>::AddChild(std::shared_ptr<Pattern<OperatorType>> child) {
+void Pattern::AddChild(std::shared_ptr<Pattern> child) {
   children.push_back(child);
 }
 
-template <class OperatorType>
-const std::vector<std::shared_ptr<Pattern<OperatorType>>> &Pattern<OperatorType>::Children() const {
+const std::vector<std::shared_ptr<Pattern>> &Pattern::Children() const {
   return children;
 }
 
-template <class OperatorType>
-OperatorType Pattern<OperatorType>::Type() const { return _type; }
-
-// Explicitly instantiate
-template class Pattern<OpType>;
-template class Pattern<ExpressionType>;
+OpType Pattern::GetOpType() const { return _op_type; }
+ExpressionType Pattern::GetExpType() const { return _exp_type; }
 
 }  // namespace optimizer
 }  // namespace peloton

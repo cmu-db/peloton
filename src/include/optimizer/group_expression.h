@@ -32,7 +32,6 @@ using GroupID = int32_t;
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
-template <class Node, class OperatorType, class OperatorExpr>
 class GroupExpression {
  public:
   GroupExpression(std::shared_ptr<AbstractNode> node, std::vector<GroupID> child_groups);
@@ -90,14 +89,3 @@ class GroupExpression {
 
 }  // namespace optimizer
 }  // namespace peloton
-
-namespace std {
-
-template <>
-struct hash<peloton::optimizer::GroupExpression> {
-  typedef peloton::optimizer::GroupExpression argument_type;
-  typedef std::size_t result_type;
-  result_type operator()(argument_type const &s) const { return s.Hash(); }
-};
-
-}  // namespace std
