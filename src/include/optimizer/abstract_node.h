@@ -88,29 +88,59 @@ struct AbstractNode {
 
   ~AbstractNode() {}
 
+  /**
+   * Accepts a visitor
+   * @param v Visitor
+   */
   virtual void Accept(OperatorVisitor *v) const = 0;
 
+  /**
+   * @returns Name fo the Node
+   */
   virtual std::string GetName() const = 0;
 
   // TODO(ncx): dependence on OpType and ExpressionType (ideally abstracted away)
+  /**
+   * @returns OpType of the Node
+   */
   virtual OpType GetOpType() const = 0;
 
+  /**
+   * @returns ExpressionType of the Node
+   */
   virtual ExpressionType GetExpType() const = 0;
 
+  /**
+   * @returns whether node represents a logical operator / expression
+   */
   virtual bool IsLogical() const = 0;
 
+  /**
+   * @returns whether node represents a physical operator
+   */
   virtual bool IsPhysical() const = 0;
 
+  /**
+   * Hashes the AbstractNode
+   * @returns hash
+   */
   virtual hash_t Hash() const {
     // TODO(ncx): hash should work for ExpressionType nodes
     OpType t = GetOpType();
     return HashUtil::Hash(&t);
   }
 
+  /**
+   * Base definition of whether two AbstractNodes are equal
+   * Function simply checks whether OpType/ExpType match
+   */
   virtual bool operator==(const AbstractNode &r) {
     return GetOpType() == r.GetOpType() && GetExpType() == r.GetExpType();
   }
 
+  /**
+   * @returns whether the contained node is null or not
+   */
   virtual bool IsDefined() const { return node != nullptr; }
 
   template <typename T>

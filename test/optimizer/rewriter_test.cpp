@@ -32,6 +32,7 @@ using namespace optimizer;
 class RewriterTests : public PelotonTest {};
 
 TEST_F(RewriterTests, SingleCompareEqualRewritePassFalse) {
+  // 3 = 2 ==> FALSE
   type::Value leftValue = type::ValueFactory::GetIntegerValue(3);
   type::Value rightValue = type::ValueFactory::GetIntegerValue(2);
   auto left = new expression::ConstantValueExpression(leftValue);
@@ -52,6 +53,7 @@ TEST_F(RewriterTests, SingleCompareEqualRewritePassFalse) {
 }
 
 TEST_F(RewriterTests, SingleCompareEqualRewritePassTrue) {
+  // 4 = 4 ==> TRUE
   type::Value leftValue = type::ValueFactory::GetIntegerValue(4);
   type::Value rightValue = type::ValueFactory::GetIntegerValue(4);
   auto left = new expression::ConstantValueExpression(leftValue);
@@ -73,7 +75,7 @@ TEST_F(RewriterTests, SingleCompareEqualRewritePassTrue) {
 
 TEST_F(RewriterTests, SimpleEqualityTree) {
   //                      [=]
-  //                  [=]     [=]
+  //                  [=]     [=]     ==> FALSE
   //                [4] [5] [3] [3]
   type::Value val4 = type::ValueFactory::GetIntegerValue(4);
   type::Value val5 = type::ValueFactory::GetIntegerValue(5);
@@ -109,7 +111,7 @@ TEST_F(RewriterTests, SimpleEqualityTree) {
 
 TEST_F(RewriterTests, ComparativeOperatorTest) {
   //                       [=]
-  //                  [<=]     [>=]
+  //                  [<=]     [>=]     ==> TRUE
   //                [4] [4]  [5] [3]
   type::Value val4 = type::ValueFactory::GetIntegerValue(4);
   type::Value val5 = type::ValueFactory::GetIntegerValue(5);

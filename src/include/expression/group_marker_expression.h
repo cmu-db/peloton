@@ -28,6 +28,15 @@ namespace expression {
 // GroupMarkerExpression
 //===----------------------------------------------------------------------===//
 
+/**
+ * When binding expressions to specific patterns, we allow for a "wildcard".
+ * This GroupMarkerExpression serves to encapsulate and represent an expression
+ * that was bound successfully to a "wildcard" pattern node.
+ *
+ * This class contains a single GroupID that can be used as a lookup into the
+ * Memo class for the actual expression. In short, this GroupMarkerExpression
+ * serves as an indirection wrapper pointing to the actual expression.
+ */
 class GroupMarkerExpression : public AbstractExpression {
  public:
   GroupMarkerExpression(optimizer::GroupID group_id) :

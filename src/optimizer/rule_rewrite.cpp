@@ -46,7 +46,7 @@ bool ComparatorElimination::Check(std::shared_ptr<AbstractNodeExpression> plan,
 
 void ComparatorElimination::Transform(std::shared_ptr<AbstractNodeExpression> input,
                                       std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
-                                      UNUSED_ATTRIBUTE OptimizeContext *context) const {
+                                      OptimizeContext *context) const {
   (void)transformed;
   (void)context;
 
@@ -148,7 +148,7 @@ bool EquivalentTransform::Check(std::shared_ptr<AbstractNodeExpression> plan,
 
 void EquivalentTransform::Transform(std::shared_ptr<AbstractNodeExpression> input,
                                       std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
-                                      UNUSED_ATTRIBUTE OptimizeContext *context) const {
+                                      OptimizeContext *context) const {
   (void)transformed;
   (void)context;
 
