@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "optimizer/abstract_node.h"
-
 #include <memory>
 #include <vector>
+
+#include "optimizer/abstract_node.h"
 
 namespace peloton {
 namespace optimizer {
