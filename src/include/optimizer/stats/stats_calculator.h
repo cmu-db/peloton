@@ -19,6 +19,7 @@ namespace optimizer {
 
 class Memo;
 class TableStats;
+class OperatorExpression;
 
 /**
  * @brief Derive stats for the root group using a group expression's children's
@@ -26,8 +27,10 @@ class TableStats;
  */
 class StatsCalculator : public OperatorVisitor {
  public:
-  void CalculateStats(GroupExpression *gexpr, ExprSet required_cols,
-                      Memo *memo, concurrency::TransactionContext* txn);
+  void CalculateStats(GroupExpression *gexpr,
+                      ExprSet required_cols,
+                      Memo *memo,
+                      concurrency::TransactionContext* txn);
 
   void Visit(const LogicalGet *) override;
   void Visit(const LogicalQueryDerivedGet *) override;

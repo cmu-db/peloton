@@ -2,7 +2,7 @@
 //
 //                         Peloton
 //
-// rule.h
+// optimizer_task.h
 //
 // Identification: src/include/optimizer/optimizer_task.h
 //
@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <vector>
+#include <set>
 
 #include "expression/abstract_expression.h"
 #include "common/internal_types.h"
@@ -32,6 +33,10 @@ class RuleSet;
 class Group;
 class GroupExpression;
 class OptimizerMetadata;
+
+enum class OpType;
+class Operator;
+class OperatorExpression;
 class PropertySet;
 enum class RewriteRuleSetName : uint32_t;
 using GroupID = int32_t;
@@ -116,8 +121,7 @@ class OptimizeGroup : public OptimizerTask {
  */
 class OptimizeExpression : public OptimizerTask {
  public:
-  OptimizeExpression(GroupExpression *group_expr,
-                     std::shared_ptr<OptimizeContext> context)
+  OptimizeExpression(GroupExpression *group_expr, std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_EXPR),
         group_expr_(group_expr) {}
   virtual void execute() override;
@@ -148,8 +152,7 @@ class ExploreGroup : public OptimizerTask {
  */
 class ExploreExpression : public OptimizerTask {
  public:
-  ExploreExpression(GroupExpression *group_expr,
-                    std::shared_ptr<OptimizeContext> context)
+  ExploreExpression(GroupExpression *group_expr, std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::EXPLORE_EXPR),
         group_expr_(group_expr) {}
   virtual void execute() override;
@@ -189,8 +192,7 @@ class ApplyRule : public OptimizerTask {
  */
 class OptimizeInputs : public OptimizerTask {
  public:
-  OptimizeInputs(GroupExpression *group_expr,
-                 std::shared_ptr<OptimizeContext> context)
+  OptimizeInputs(GroupExpression *group_expr, std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::OPTIMIZE_INPUTS),
         group_expr_(group_expr) {}
 
@@ -222,9 +224,7 @@ class OptimizeInputs : public OptimizerTask {
  */
 class DeriveStats : public OptimizerTask {
  public:
-  DeriveStats(GroupExpression *gexpr,
-              ExprSet required_cols,
-              std::shared_ptr<OptimizeContext> context)
+  DeriveStats(GroupExpression *gexpr, ExprSet required_cols, std::shared_ptr<OptimizeContext> context)
       : OptimizerTask(context, OptimizerTaskType::DERIVE_STATS),
         gexpr_(gexpr),
         required_cols_(required_cols) {}
@@ -241,24 +241,52 @@ class DeriveStats : public OptimizerTask {
   ExprSet required_cols_;
 };
 
+
+/**
+ * @brief Higher abstraction above TopDownRewrite and BottomUpRewrite that
+ * implements functionality similar and relied upon by both TopDownRewrite
+ * and BottomUpRewrite.
+ */
+class RewriteTask : public OptimizerTask {
+ public:
+  RewriteTask(OptimizerTaskType type, GroupID group_id,
+              std::shared_ptr<OptimizeContext> context,
+              RewriteRuleSetName rule_set_name)
+    : OptimizerTask(context, type),
+      group_id_(group_id),
+      rule_set_name_(rule_set_name) {}
+
+  virtual void execute() override {
+    LOG_ERROR("RewriteTask::execute invoked directly and not on derived");
+    PELOTON_ASSERT(0);
+  };
+
+ protected:
+  std::set<GroupID> GetUniqueChildGroupIDs();
+  bool OptimizeCurrentGroup(bool replace_on_match);
+
+  GroupID group_id_;
+  RewriteRuleSetName rule_set_name_;
+};
+
 /**
  * @brief Apply top-down rewrite pass, take in a rule set which must fulfill
  * that the lower level rewrite in the operator tree will not enable upper
  * level rewrite. An example is predicate push-down. We only push the predicates
  * from the upper level to the lower level.
  */
-class TopDownRewrite : public OptimizerTask {
+class TopDownRewrite : public RewriteTask {
  public:
   TopDownRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
                  RewriteRuleSetName rule_set_name)
-      : OptimizerTask(context, OptimizerTaskType::TOP_DOWN_REWRITE),
-        group_id_(group_id),
-        rule_set_name_(rule_set_name) {}
+      : RewriteTask(OptimizerTaskType::TOP_DOWN_REWRITE, group_id, context, rule_set_name),
+        replace_on_transform_(true) {}
+
+  void SetReplaceOnTransform(bool replace) { replace_on_transform_ = replace; }
   virtual void execute() override;
 
  private:
-  GroupID group_id_;
-  RewriteRuleSetName rule_set_name_;
+  bool replace_on_transform_;
 };
 
 /**
@@ -266,19 +294,16 @@ class TopDownRewrite : public OptimizerTask {
  * that the upper level rewrite in the operator tree will not enable lower
  * level rewrite.
  */
-class BottomUpRewrite : public OptimizerTask {
+class BottomUpRewrite : public RewriteTask {
  public:
   BottomUpRewrite(GroupID group_id, std::shared_ptr<OptimizeContext> context,
                   RewriteRuleSetName rule_set_name, bool has_optimized_child)
-      : OptimizerTask(context, OptimizerTaskType::BOTTOM_UP_REWRITE),
-        group_id_(group_id),
-        rule_set_name_(rule_set_name),
+      : RewriteTask(OptimizerTaskType::BOTTOM_UP_REWRITE, group_id, context, rule_set_name),
         has_optimized_child_(has_optimized_child) {}
+
   virtual void execute() override;
 
  private:
-  GroupID group_id_;
-  RewriteRuleSetName rule_set_name_;
   bool has_optimized_child_;
 };
 }  // namespace optimizer

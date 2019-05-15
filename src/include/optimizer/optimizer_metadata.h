@@ -19,6 +19,8 @@
 #include "optimizer/rule.h"
 #include "settings/settings_manager.h"
 
+#include <memory>
+
 namespace peloton {
 namespace catalog {
 class Catalog;
@@ -51,23 +53,22 @@ class OptimizerMetadata {
   }
 
   std::shared_ptr<GroupExpression> MakeGroupExpression(
-      std::shared_ptr<OperatorExpression> expr) {
+      std::shared_ptr<AbstractNodeExpression> expr) {
     std::vector<GroupID> child_groups;
     for (auto &child : expr->Children()) {
       auto gexpr = MakeGroupExpression(child);
       memo.InsertExpression(gexpr, false);
       child_groups.push_back(gexpr->GetGroupID());
     }
-    return std::make_shared<GroupExpression>(expr->Op(),
-                                             std::move(child_groups));
+    return std::make_shared<GroupExpression>(expr->Node(), std::move(child_groups));
   }
 
-  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
+  bool RecordTransformedExpression(std::shared_ptr<AbstractNodeExpression> expr,
                                    std::shared_ptr<GroupExpression> &gexpr) {
     return RecordTransformedExpression(expr, gexpr, UNDEFINED_GROUP);
   }
 
-  bool RecordTransformedExpression(std::shared_ptr<OperatorExpression> expr,
+  bool RecordTransformedExpression(std::shared_ptr<AbstractNodeExpression> expr,
                                    std::shared_ptr<GroupExpression> &gexpr,
                                    GroupID target_group) {
     gexpr = MakeGroupExpression(expr);
@@ -75,7 +76,7 @@ class OptimizerMetadata {
   }
 
   // TODO(boweic): check if we really need to use shared_ptr
-  void ReplaceRewritedExpression(std::shared_ptr<OperatorExpression> expr,
+  void ReplaceRewritedExpression(std::shared_ptr<AbstractNodeExpression> expr,
                                  GroupID target_group) {
     memo.EraseExpression(target_group);
     memo.InsertExpression(MakeGroupExpression(expr), target_group, false);

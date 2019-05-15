@@ -21,25 +21,26 @@ namespace optimizer {
 
 std::shared_ptr<GroupExpression> PropertyEnforcer::EnforceProperty(
     GroupExpression* gexpr, Property* property) {
+
   input_gexpr_ = gexpr;
   property->Accept(this);
   return output_gexpr_;
 }
 
-void PropertyEnforcer::Visit(const PropertyColumns *) {
-
-}
+void PropertyEnforcer::Visit(const PropertyColumns *) {}
 
 void PropertyEnforcer::Visit(const PropertySort *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ =
-      std::make_shared<GroupExpression>(PhysicalOrderBy::make(), child_groups);
+      std::make_shared<GroupExpression>(
+          std::make_shared<Operator>(PhysicalOrderBy::make()), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertyDistinct *) {
   std::vector<GroupID> child_groups(1, input_gexpr_->GetGroupID());
   output_gexpr_ =
-      std::make_shared<GroupExpression>(PhysicalDistinct::make(), child_groups);
+      std::make_shared<GroupExpression>(
+          std::make_shared<Operator>(PhysicalOrderBy::make()), child_groups);
 }
 
 void PropertyEnforcer::Visit(const PropertyLimit *) {}

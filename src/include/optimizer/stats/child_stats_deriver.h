@@ -23,13 +23,16 @@ namespace optimizer {
 
 class Memo;
 
+class OperatorExpression;
+
 // Derive child stats that has not yet been calculated for a logical group
 // expression
 class ChildStatsDeriver : public OperatorVisitor {
  public:
   std::vector<ExprSet> DeriveInputStats(
       GroupExpression *gexpr,
-      ExprSet required_cols, Memo *memo);
+      ExprSet required_cols,
+      Memo *memo);
 
   void Visit(const LogicalQueryDerivedGet *) override;
   void Visit(const LogicalInnerJoin *) override;

@@ -66,7 +66,7 @@ unique_ptr<planner::AbstractPlan> PlanGenerator::ConvertOpExpression(
   output_cols_ = move(output_cols);
   children_plans_ = move(children_plans);
   children_expr_map_ = move(children_expr_map);
-  op->Op().Accept(this);
+  op->Node()->Accept(this);
   BuildProjectionPlan();
   output_plan_->SetCardinality(estimated_cardinality);
   return move(output_plan_);

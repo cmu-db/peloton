@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "optimizer/abstract_node.h"
 #include "optimizer/property_set.h"
 #include "util/hash_util.h"
 
@@ -21,103 +22,25 @@
 namespace peloton {
 namespace optimizer {
 
-enum class OpType {
-  Undefined = 0,
-  // Special match operators
-  Leaf,
-  // Logical ops
-  Get,
-  LogicalExternalFileGet,
-  LogicalQueryDerivedGet,
-  LogicalProjection,
-  LogicalFilter,
-  LogicalMarkJoin,
-  LogicalDependentJoin,
-  LogicalSingleJoin,
-  InnerJoin,
-  LeftJoin,
-  RightJoin,
-  OuterJoin,
-  SemiJoin,
-  LogicalAggregateAndGroupBy,
-  LogicalInsert,
-  LogicalInsertSelect,
-  LogicalDelete,
-  LogicalUpdate,
-  LogicalLimit,
-  LogicalDistinct,
-  LogicalExportExternalFile,
-  // Separate between logical and physical ops
-  LogicalPhysicalDelimiter,
-  // Physical ops
-  DummyScan, /* Dummy Physical Op for SELECT without FROM*/
-  SeqScan,
-  IndexScan,
-  ExternalFileScan,
-  QueryDerivedScan,
-  OrderBy,
-  PhysicalLimit,
-  Distinct,
-  InnerNLJoin,
-  LeftNLJoin,
-  RightNLJoin,
-  OuterNLJoin,
-  InnerHashJoin,
-  LeftHashJoin,
-  RightHashJoin,
-  OuterHashJoin,
-  Insert,
-  InsertSelect,
-  Delete,
-  Update,
-  Aggregate,
-  HashGroupBy,
-  SortGroupBy,
-  ExportExternalFile,
-};
-
 //===--------------------------------------------------------------------===//
 // Operator Node
 //===--------------------------------------------------------------------===//
 class OperatorVisitor;
 
-struct BaseOperatorNode {
-  BaseOperatorNode() {}
-
-  virtual ~BaseOperatorNode() {}
-
-  virtual void Accept(OperatorVisitor *v) const = 0;
-
-  virtual std::string GetName() const = 0;
-
-  virtual OpType GetType() const = 0;
-
-  virtual bool IsLogical() const = 0;
-
-  virtual bool IsPhysical() const = 0;
-
-  virtual std::vector<PropertySet> RequiredInputProperties() const {
-    return {};
-  }
-
-  virtual hash_t Hash() const {
-    OpType t = GetType();
-    return HashUtil::Hash(&t);
-  }
-
-  virtual bool operator==(const BaseOperatorNode &r) {
-    return GetType() == r.GetType();
-  }
-};
-
-// Curiously recurring template pattern
+// TODO: should probably use a new AbstractBaseNode interface, not AbstractNode
 template <typename T>
-struct OperatorNode : public BaseOperatorNode {
+struct OperatorNode : public AbstractNode {
+  OperatorNode() : AbstractNode(nullptr) {}
+
+  virtual ~OperatorNode() {}
+
   void Accept(OperatorVisitor *v) const;
 
   std::string GetName() const { return name_; }
 
-  OpType GetType() const { return type_; }
+  OpType GetOpType() const { return op_type_; }
+
+  ExpressionType GetExpType() const { return exp_type_; }
 
   bool IsLogical() const;
 
@@ -125,47 +48,34 @@ struct OperatorNode : public BaseOperatorNode {
 
   static std::string name_;
 
-  static OpType type_;
+  static OpType op_type_;
+
+  static ExpressionType exp_type_;
 };
 
-class Operator {
+class Operator : public AbstractNode {
  public:
   Operator();
 
-  Operator(BaseOperatorNode *node);
+  Operator(std::shared_ptr<AbstractNode> node);
 
-  // Calls corresponding visitor to node
   void Accept(OperatorVisitor *v) const;
 
-  // Return name of operator
   std::string GetName() const;
 
-  // Return operator type
-  OpType GetType() const;
+  OpType GetOpType() const;
 
-  // Operator contains Logical node
+  ExpressionType GetExpType() const;
+
   bool IsLogical() const;
 
-  // Operator contains Physical node
   bool IsPhysical() const;
 
   hash_t Hash() const;
 
   bool operator==(const Operator &r);
 
-  // Operator contains physical or logical operator node
   bool IsDefined() const;
-
-  template <typename T>
-  const T *As() const {
-    if (node && typeid(*node) == typeid(T)) {
-      return (const T *)node.get();
-    }
-    return nullptr;
-  }
-
- private:
-  std::shared_ptr<BaseOperatorNode> node;
 };
 
 }  // namespace optimizer
@@ -174,8 +84,8 @@ class Operator {
 namespace std {
 
 template <>
-struct hash<peloton::optimizer::BaseOperatorNode> {
-  typedef peloton::optimizer::BaseOperatorNode argument_type;
+struct hash<peloton::optimizer::AbstractNode> {
+  typedef peloton::optimizer::AbstractNode argument_type;
   typedef std::size_t result_type;
   result_type operator()(argument_type const &s) const { return s.Hash(); }
 };

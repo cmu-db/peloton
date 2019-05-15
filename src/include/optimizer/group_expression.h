@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "optimizer/operator_node.h"
+#include "optimizer/abstract_node.h"
 #include "optimizer/stats/stats.h"
 #include "optimizer/util.h"
 #include "optimizer/property_set.h"
@@ -34,7 +34,7 @@ using GroupID = int32_t;
 //===--------------------------------------------------------------------===//
 class GroupExpression {
  public:
-  GroupExpression(Operator op, std::vector<GroupID> child_groups);
+  GroupExpression(std::shared_ptr<AbstractNode> node, std::vector<GroupID> child_groups);
 
   GroupID GetGroupID() const;
 
@@ -46,7 +46,7 @@ class GroupExpression {
 
   GroupID GetChildGroupId(int child_idx) const;
 
-  Operator Op() const;
+  std::shared_ptr<AbstractNode> Node() const;
 
   double GetCost(std::shared_ptr<PropertySet>& requirements) const;
 
@@ -75,7 +75,7 @@ class GroupExpression {
 
  private:
   GroupID group_id;
-  Operator op;
+  std::shared_ptr<AbstractNode> node;
   std::vector<GroupID> child_groups;
   std::bitset<static_cast<uint32_t>(RuleType::NUM_RULES)> rule_mask_;
   bool stats_derived_;
@@ -89,14 +89,3 @@ class GroupExpression {
 
 }  // namespace optimizer
 }  // namespace peloton
-
-namespace std {
-
-template <>
-struct hash<peloton::optimizer::GroupExpression> {
-  typedef peloton::optimizer::GroupExpression argument_type;
-  typedef std::size_t result_type;
-  result_type operator()(argument_type const &s) const { return s.Hash(); }
-};
-
-}  // namespace std

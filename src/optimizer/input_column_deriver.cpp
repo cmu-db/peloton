@@ -43,7 +43,7 @@ InputColumnDeriver::DeriveInputColumns(
   gexpr_ = gexpr;
   required_cols_ = move(required_cols);
   memo_ = memo;
-  gexpr->Op().Accept(this);
+  gexpr->Node()->Accept(this);
 
   return move(output_input_cols_);
 }
@@ -200,7 +200,7 @@ void InputColumnDeriver::ScanHelper() {
           output_cols, {}};
 }
 
-void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
+void InputColumnDeriver::AggregateHelper(const AbstractNode *op) {
   ExprSet input_cols_set;
   ExprMap output_cols_map;
   oid_t output_col_idx = 0;
@@ -232,11 +232,11 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
   // TODO(boweic): do not use shared_ptr
   vector<shared_ptr<AbstractExpression>> groupby_cols;
   vector<AnnotatedExpression> having_exprs;
-  if (op->GetType() == OpType::HashGroupBy) {
+  if (op->GetOpType() == OpType::HashGroupBy) {
     auto groupby = reinterpret_cast<const PhysicalHashGroupBy *>(op);
     groupby_cols = groupby->columns;
     having_exprs = groupby->having;
-  } else if (op->GetType() == OpType::SortGroupBy) {
+  } else if (op->GetOpType() == OpType::SortGroupBy) {
     auto groupby = reinterpret_cast<const PhysicalSortGroupBy *>(op);
     groupby_cols = groupby->columns;
     having_exprs = groupby->having;
@@ -269,17 +269,17 @@ void InputColumnDeriver::AggregateHelper(const BaseOperatorNode *op) {
           output_cols, {input_cols}};
 }
 
-void InputColumnDeriver::JoinHelper(const BaseOperatorNode *op) {
+void InputColumnDeriver::JoinHelper(const AbstractNode *op) {
   const vector<AnnotatedExpression> *join_conds = nullptr;
   const vector<unique_ptr<expression::AbstractExpression>> *left_keys = nullptr;
   const vector<unique_ptr<expression::AbstractExpression>> *right_keys =
       nullptr;
-  if (op->GetType() == OpType::InnerHashJoin) {
+  if (op->GetOpType() == OpType::InnerHashJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerHashJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);
     right_keys = &(join_op->right_keys);
-  } else if (op->GetType() == OpType::InnerNLJoin) {
+  } else if (op->GetOpType() == OpType::InnerNLJoin) {
     auto join_op = reinterpret_cast<const PhysicalInnerNLJoin *>(op);
     join_conds = &(join_op->join_predicates);
     left_keys = &(join_op->left_keys);

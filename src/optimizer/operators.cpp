@@ -21,16 +21,16 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Leaf
 //===--------------------------------------------------------------------===//
-Operator LeafOperator::make(GroupID group) {
+std::shared_ptr<AbstractNode> LeafOperator::make(GroupID group) {
   LeafOperator *op = new LeafOperator;
   op->origin_group = group;
-  return Operator(op);
+  return std::make_shared<Operator>(std::shared_ptr<LeafOperator>(op));
 }
 
 //===--------------------------------------------------------------------===//
 // Get
 //===--------------------------------------------------------------------===//
-Operator LogicalGet::make(oid_t get_id,
+std::shared_ptr<AbstractNode> LogicalGet::make(oid_t get_id,
                           std::vector<AnnotatedExpression> predicates,
                           std::shared_ptr<catalog::TableCatalogEntry> table,
                           std::string alias, bool update) {
@@ -41,19 +41,19 @@ Operator LogicalGet::make(oid_t get_id,
   get->is_for_update = update;
   get->get_id = get_id;
   util::to_lower_string(get->table_alias);
-  return Operator(get);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalGet>(get));
 }
 
 hash_t LogicalGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalGet::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::Get) return false;
+bool LogicalGet::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::Get) return false;
   const LogicalGet &node = *static_cast<const LogicalGet *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -67,9 +67,9 @@ bool LogicalGet::operator==(const BaseOperatorNode &r) {
 // External file get
 //===--------------------------------------------------------------------===//
 
-Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
-                                      std::string file_name, char delimiter,
-                                      char quote, char escape) {
+std::shared_ptr<AbstractNode> LogicalExternalFileGet::make(
+    oid_t get_id, ExternalFileFormat format, std::string file_name, char delimiter,
+    char quote, char escape) {
   auto *get = new LogicalExternalFileGet();
   get->get_id = get_id;
   get->format = format;
@@ -77,11 +77,11 @@ Operator LogicalExternalFileGet::make(oid_t get_id, ExternalFileFormat format,
   get->delimiter = delimiter;
   get->quote = quote;
   get->escape = escape;
-  return Operator(get);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalExternalFileGet>(get));
 }
 
-bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::LogicalExternalFileGet) return false;
+bool LogicalExternalFileGet::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::LogicalExternalFileGet) return false;
   const auto &get = *static_cast<const LogicalExternalFileGet *>(&node);
   return (get_id == get.get_id && format == get.format &&
           file_name == get.file_name && delimiter == get.delimiter &&
@@ -89,7 +89,7 @@ bool LogicalExternalFileGet::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalExternalFileGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
@@ -103,7 +103,7 @@ hash_t LogicalExternalFileGet::Hash() const {
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator LogicalQueryDerivedGet::make(
+std::shared_ptr<AbstractNode> LogicalQueryDerivedGet::make(
     oid_t get_id, std::string &alias,
     std::unordered_map<std::string,
                        std::shared_ptr<expression::AbstractExpression>>
@@ -113,18 +113,18 @@ Operator LogicalQueryDerivedGet::make(
   get->alias_to_expr_map = alias_to_expr_map;
   get->get_id = get_id;
 
-  return Operator(get);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalQueryDerivedGet>(get));
 }
 
-bool LogicalQueryDerivedGet::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::LogicalQueryDerivedGet) return false;
+bool LogicalQueryDerivedGet::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::LogicalQueryDerivedGet) return false;
   const LogicalQueryDerivedGet &r =
       *static_cast<const LogicalQueryDerivedGet *>(&node);
   return get_id == r.get_id;
 }
 
 hash_t LogicalQueryDerivedGet::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
@@ -132,21 +132,21 @@ hash_t LogicalQueryDerivedGet::Hash() const {
 //===--------------------------------------------------------------------===//
 // Select
 //===--------------------------------------------------------------------===//
-Operator LogicalFilter::make(std::vector<AnnotatedExpression> &filter) {
+std::shared_ptr<AbstractNode> LogicalFilter::make(std::vector<AnnotatedExpression> &filter) {
   LogicalFilter *select = new LogicalFilter;
   select->predicates = std::move(filter);
-  return Operator(select);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalFilter>(select));
 }
 
 hash_t LogicalFilter::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalFilter::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::LogicalFilter) return false;
+bool LogicalFilter::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::LogicalFilter) return false;
   const LogicalFilter &node = *static_cast<const LogicalFilter *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -158,38 +158,38 @@ bool LogicalFilter::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // Project
 //===--------------------------------------------------------------------===//
-Operator LogicalProjection::make(
+std::shared_ptr<AbstractNode> LogicalProjection::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &elements) {
   LogicalProjection *projection = new LogicalProjection;
   projection->expressions = std::move(elements);
-  return Operator(projection);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalProjection>(projection));
 }
 
 //===--------------------------------------------------------------------===//
 // DependentJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalDependentJoin::make() {
+std::shared_ptr<AbstractNode> LogicalDependentJoin::make() {
   LogicalDependentJoin *join = new LogicalDependentJoin;
   join->join_predicates = {};
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalDependentJoin>(join));
 }
 
-Operator LogicalDependentJoin::make(
+std::shared_ptr<AbstractNode> LogicalDependentJoin::make(
     std::vector<AnnotatedExpression> &conditions) {
   LogicalDependentJoin *join = new LogicalDependentJoin;
   join->join_predicates = std::move(conditions);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalDependentJoin>(join));
 }
 
 hash_t LogicalDependentJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::LogicalDependentJoin) return false;
+bool LogicalDependentJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::LogicalDependentJoin) return false;
   const LogicalDependentJoin &node =
       *static_cast<const LogicalDependentJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
@@ -204,27 +204,27 @@ bool LogicalDependentJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // MarkJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalMarkJoin::make() {
+std::shared_ptr<AbstractNode> LogicalMarkJoin::make() {
   LogicalMarkJoin *join = new LogicalMarkJoin;
   join->join_predicates = {};
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalMarkJoin>(join));
 }
 
-Operator LogicalMarkJoin::make(std::vector<AnnotatedExpression> &conditions) {
+std::shared_ptr<AbstractNode> LogicalMarkJoin::make(std::vector<AnnotatedExpression> &conditions) {
   LogicalMarkJoin *join = new LogicalMarkJoin;
   join->join_predicates = std::move(conditions);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalMarkJoin>(join));
 }
 
 hash_t LogicalMarkJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::LogicalMarkJoin) return false;
+bool LogicalMarkJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::LogicalMarkJoin) return false;
   const LogicalMarkJoin &node = *static_cast<const LogicalMarkJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -238,27 +238,27 @@ bool LogicalMarkJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // SingleJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalSingleJoin::make() {
+std::shared_ptr<AbstractNode> LogicalSingleJoin::make() {
   LogicalMarkJoin *join = new LogicalMarkJoin;
   join->join_predicates = {};
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalMarkJoin>(join));
 }
 
-Operator LogicalSingleJoin::make(std::vector<AnnotatedExpression> &conditions) {
+std::shared_ptr<AbstractNode> LogicalSingleJoin::make(std::vector<AnnotatedExpression> &conditions) {
   LogicalSingleJoin *join = new LogicalSingleJoin;
   join->join_predicates = std::move(conditions);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalSingleJoin>(join));
 }
 
 hash_t LogicalSingleJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::LogicalSingleJoin) return false;
+bool LogicalSingleJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::LogicalSingleJoin) return false;
   const LogicalSingleJoin &node = *static_cast<const LogicalSingleJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -272,27 +272,27 @@ bool LogicalSingleJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // InnerJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalInnerJoin::make() {
+std::shared_ptr<AbstractNode> LogicalInnerJoin::make() {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->join_predicates = {};
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalInnerJoin>(join));
 }
 
-Operator LogicalInnerJoin::make(std::vector<AnnotatedExpression> &conditions) {
+std::shared_ptr<AbstractNode> LogicalInnerJoin::make(std::vector<AnnotatedExpression> &conditions) {
   LogicalInnerJoin *join = new LogicalInnerJoin;
   join->join_predicates = std::move(conditions);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalInnerJoin>(join));
 }
 
 hash_t LogicalInnerJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : join_predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
   return hash;
 }
 
-bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerJoin) return false;
+bool LogicalInnerJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::InnerJoin) return false;
   const LogicalInnerJoin &node = *static_cast<const LogicalInnerJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size()) return false;
   for (size_t i = 0; i < join_predicates.size(); i++) {
@@ -306,70 +306,70 @@ bool LogicalInnerJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // LeftJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalLeftJoin::make(expression::AbstractExpression *condition) {
+std::shared_ptr<AbstractNode> LogicalLeftJoin::make(expression::AbstractExpression *condition) {
   LogicalLeftJoin *join = new LogicalLeftJoin;
   join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalLeftJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // RightJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalRightJoin::make(expression::AbstractExpression *condition) {
+std::shared_ptr<AbstractNode> LogicalRightJoin::make(expression::AbstractExpression *condition) {
   LogicalRightJoin *join = new LogicalRightJoin;
   join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalRightJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalOuterJoin::make(expression::AbstractExpression *condition) {
+std::shared_ptr<AbstractNode> LogicalOuterJoin::make(expression::AbstractExpression *condition) {
   LogicalOuterJoin *join = new LogicalOuterJoin;
   join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalOuterJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // OuterJoin
 //===--------------------------------------------------------------------===//
-Operator LogicalSemiJoin::make(expression::AbstractExpression *condition) {
+std::shared_ptr<AbstractNode> LogicalSemiJoin::make(expression::AbstractExpression *condition) {
   LogicalSemiJoin *join = new LogicalSemiJoin;
   join->join_predicate =
       std::shared_ptr<expression::AbstractExpression>(condition);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalSemiJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // Aggregate
 //===--------------------------------------------------------------------===//
-Operator LogicalAggregateAndGroupBy::make() {
+std::shared_ptr<AbstractNode> LogicalAggregateAndGroupBy::make() {
   LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
   group_by->columns = {};
-  return Operator(group_by);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalAggregateAndGroupBy>(group_by));
 }
 
-Operator LogicalAggregateAndGroupBy::make(
+std::shared_ptr<AbstractNode> LogicalAggregateAndGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &columns) {
   LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
   group_by->columns = move(columns);
-  return Operator(group_by);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalAggregateAndGroupBy>(group_by));
 }
 
-Operator LogicalAggregateAndGroupBy::make(
+std::shared_ptr<AbstractNode> LogicalAggregateAndGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> &columns,
     std::vector<AnnotatedExpression> &having) {
   LogicalAggregateAndGroupBy *group_by = new LogicalAggregateAndGroupBy;
   group_by->columns = move(columns);
   group_by->having = move(having);
-  return Operator(group_by);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalAggregateAndGroupBy>(group_by));
 }
 
-bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::LogicalAggregateAndGroupBy) return false;
+bool LogicalAggregateAndGroupBy::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::LogicalAggregateAndGroupBy) return false;
   const LogicalAggregateAndGroupBy &r =
       *static_cast<const LogicalAggregateAndGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -381,7 +381,7 @@ bool LogicalAggregateAndGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalAggregateAndGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
@@ -390,7 +390,7 @@ hash_t LogicalAggregateAndGroupBy::Hash() const {
 //===--------------------------------------------------------------------===//
 // Insert
 //===--------------------------------------------------------------------===//
-Operator LogicalInsert::make(
+std::shared_ptr<AbstractNode> LogicalInsert::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::string> *columns,
     const std::vector<std::vector<
@@ -399,51 +399,50 @@ Operator LogicalInsert::make(
   insert_op->target_table = target_table;
   insert_op->columns = columns;
   insert_op->values = values;
-  return Operator(insert_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalInsert>(insert_op));
 }
 
-Operator LogicalInsertSelect::make(
+std::shared_ptr<AbstractNode> LogicalInsertSelect::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   LogicalInsertSelect *insert_op = new LogicalInsertSelect;
   insert_op->target_table = target_table;
-  return Operator(insert_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalInsertSelect>(insert_op));
 }
 
 //===--------------------------------------------------------------------===//
 // Delete
 //===--------------------------------------------------------------------===//
-Operator LogicalDelete::make(
+std::shared_ptr<AbstractNode> LogicalDelete::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   LogicalDelete *delete_op = new LogicalDelete;
   delete_op->target_table = target_table;
-  return Operator(delete_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalDelete>(delete_op));
 }
 
 //===--------------------------------------------------------------------===//
 // Update
 //===--------------------------------------------------------------------===//
-Operator LogicalUpdate::make(
+std::shared_ptr<AbstractNode> LogicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   LogicalUpdate *update_op = new LogicalUpdate;
   update_op->target_table = target_table;
   update_op->updates = updates;
-  return Operator(update_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalUpdate>(update_op));
 }
 
 //===--------------------------------------------------------------------===//
 // Distinct
 //===--------------------------------------------------------------------===//
-Operator LogicalDistinct::make() {
-  LogicalDistinct *distinct = new LogicalDistinct;
-  return Operator(distinct);
+std::shared_ptr<AbstractNode> LogicalDistinct::make() {
+  return std::make_shared<LogicalDistinct>();
 }
 
 //===--------------------------------------------------------------------===//
 // Limit
 //===--------------------------------------------------------------------===//
-Operator LogicalLimit::make(
+std::shared_ptr<AbstractNode> LogicalLimit::make(
     int64_t offset, int64_t limit,
     std::vector<expression::AbstractExpression *> &&sort_exprs,
     std::vector<bool> &&sort_ascending) {
@@ -452,13 +451,13 @@ Operator LogicalLimit::make(
   limit_op->limit = limit;
   limit_op->sort_exprs = std::move(sort_exprs);
   limit_op->sort_ascending = std::move(sort_ascending);
-  return Operator(limit_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalLimit>(limit_op));
 }
 
 //===--------------------------------------------------------------------===//
 // External file output
 //===--------------------------------------------------------------------===//
-Operator LogicalExportExternalFile::make(ExternalFileFormat format,
+std::shared_ptr<AbstractNode> LogicalExportExternalFile::make(ExternalFileFormat format,
                                          std::string file_name, char delimiter,
                                          char quote, char escape) {
   auto *export_op = new LogicalExportExternalFile();
@@ -467,11 +466,11 @@ Operator LogicalExportExternalFile::make(ExternalFileFormat format,
   export_op->delimiter = delimiter;
   export_op->quote = quote;
   export_op->escape = escape;
-  return Operator(export_op);
+  return std::make_shared<Operator>(std::shared_ptr<LogicalExportExternalFile>(export_op));
 }
 
-bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::LogicalExportExternalFile) return false;
+bool LogicalExportExternalFile::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::LogicalExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const LogicalExportExternalFile *>(&node);
   return (format == export_op.format && file_name == export_op.file_name &&
@@ -480,7 +479,7 @@ bool LogicalExportExternalFile::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t LogicalExportExternalFile::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
@@ -493,15 +492,14 @@ hash_t LogicalExportExternalFile::Hash() const {
 //===--------------------------------------------------------------------===//
 // DummyScan
 //===--------------------------------------------------------------------===//
-Operator DummyScan::make() {
-  DummyScan *dummy = new DummyScan;
-  return Operator(dummy);
+std::shared_ptr<AbstractNode> DummyScan::make() {
+  return std::make_shared<DummyScan>();
 }
 
 //===--------------------------------------------------------------------===//
 // SeqScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalSeqScan::make(
+std::shared_ptr<AbstractNode> PhysicalSeqScan::make(
     oid_t get_id, std::shared_ptr<catalog::TableCatalogEntry> table,
     std::string alias, std::vector<AnnotatedExpression> predicates,
     bool update) {
@@ -513,11 +511,11 @@ Operator PhysicalSeqScan::make(
   scan->is_for_update = update;
   scan->get_id = get_id;
 
-  return Operator(scan);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalSeqScan>(scan));
 }
 
-bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::SeqScan) return false;
+bool PhysicalSeqScan::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::SeqScan) return false;
   const PhysicalSeqScan &node = *static_cast<const PhysicalSeqScan *>(&r);
   if (predicates.size() != node.predicates.size()) return false;
   for (size_t i = 0; i < predicates.size(); i++) {
@@ -528,7 +526,7 @@ bool PhysicalSeqScan::operator==(const BaseOperatorNode &r) {
 }
 
 hash_t PhysicalSeqScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
     hash = HashUtil::CombineHashes(hash, pred.expr->Hash());
@@ -538,7 +536,7 @@ hash_t PhysicalSeqScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // IndexScan
 //===--------------------------------------------------------------------===//
-Operator PhysicalIndexScan::make(
+std::shared_ptr<AbstractNode> PhysicalIndexScan::make(
     oid_t get_id, std::shared_ptr<catalog::TableCatalogEntry> table,
     std::string alias, std::vector<AnnotatedExpression> predicates, bool update,
     oid_t index_id, std::vector<oid_t> key_column_id_list,
@@ -556,11 +554,11 @@ Operator PhysicalIndexScan::make(
   scan->expr_type_list = std::move(expr_type_list);
   scan->value_list = std::move(value_list);
 
-  return Operator(scan);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalIndexScan>(scan));
 }
 
-bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::IndexScan) return false;
+bool PhysicalIndexScan::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::IndexScan) return false;
   const PhysicalIndexScan &node = *static_cast<const PhysicalIndexScan *>(&r);
   // TODO: Should also check value list
   if (index_id != node.index_id ||
@@ -577,7 +575,7 @@ bool PhysicalIndexScan::operator==(const BaseOperatorNode &r) {
 }
 
 hash_t PhysicalIndexScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&index_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   for (auto &pred : predicates)
@@ -588,7 +586,7 @@ hash_t PhysicalIndexScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // Physical external file scan
 //===--------------------------------------------------------------------===//
-Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
+std::shared_ptr<AbstractNode> ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
                                 std::string file_name, char delimiter,
                                 char quote, char escape) {
   auto *get = new ExternalFileScan();
@@ -598,11 +596,11 @@ Operator ExternalFileScan::make(oid_t get_id, ExternalFileFormat format,
   get->delimiter = delimiter;
   get->quote = quote;
   get->escape = escape;
-  return Operator(get);
+  return std::make_shared<Operator>(std::shared_ptr<ExternalFileScan>(get));
 }
 
-bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::QueryDerivedScan) return false;
+bool ExternalFileScan::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::QueryDerivedScan) return false;
   const auto &get = *static_cast<const ExternalFileScan *>(&node);
   return (get_id == get.get_id && format == get.format &&
           file_name == get.file_name && delimiter == get.delimiter &&
@@ -610,7 +608,7 @@ bool ExternalFileScan::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t ExternalFileScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
@@ -624,7 +622,7 @@ hash_t ExternalFileScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // Query derived get
 //===--------------------------------------------------------------------===//
-Operator QueryDerivedScan::make(
+std::shared_ptr<AbstractNode> QueryDerivedScan::make(
     oid_t get_id, std::string alias,
     std::unordered_map<std::string,
                        std::shared_ptr<expression::AbstractExpression>>
@@ -634,17 +632,17 @@ Operator QueryDerivedScan::make(
   get->alias_to_expr_map = alias_to_expr_map;
   get->get_id = get_id;
 
-  return Operator(get);
+  return std::make_shared<Operator>(std::shared_ptr<QueryDerivedScan>(get));
 }
 
-bool QueryDerivedScan::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::QueryDerivedScan) return false;
+bool QueryDerivedScan::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::QueryDerivedScan) return false;
   const QueryDerivedScan &r = *static_cast<const QueryDerivedScan *>(&node);
   return get_id == r.get_id;
 }
 
 hash_t QueryDerivedScan::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&get_id));
   return hash;
 }
@@ -652,16 +650,14 @@ hash_t QueryDerivedScan::Hash() const {
 //===--------------------------------------------------------------------===//
 // OrderBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalOrderBy::make() {
-  PhysicalOrderBy *order_by = new PhysicalOrderBy;
-
-  return Operator(order_by);
+std::shared_ptr<AbstractNode> PhysicalOrderBy::make() {
+  return std::make_shared<PhysicalOrderBy>();
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalLimit
 //===--------------------------------------------------------------------===//
-Operator PhysicalLimit::make(
+std::shared_ptr<AbstractNode> PhysicalLimit::make(
     int64_t offset, int64_t limit,
     std::vector<expression::AbstractExpression *> sort_exprs,
     std::vector<bool> sort_ascending) {
@@ -670,13 +666,13 @@ Operator PhysicalLimit::make(
   limit_op->limit = limit;
   limit_op->sort_exprs = sort_exprs;
   limit_op->sort_acsending = sort_ascending;
-  return Operator(limit_op);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalLimit>(limit_op));
 }
 
 //===--------------------------------------------------------------------===//
 // InnerNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerNLJoin::make(
+std::shared_ptr<AbstractNode> PhysicalInnerNLJoin::make(
     std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
@@ -685,11 +681,11 @@ Operator PhysicalInnerNLJoin::make(
   join->left_keys = std::move(left_keys);
   join->right_keys = std::move(right_keys);
 
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalInnerNLJoin>(join));
 }
 
 hash_t PhysicalInnerNLJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto &expr : right_keys)
@@ -699,8 +695,8 @@ hash_t PhysicalInnerNLJoin::Hash() const {
   return hash;
 }
 
-bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerNLJoin) return false;
+bool PhysicalInnerNLJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::InnerNLJoin) return false;
   const PhysicalInnerNLJoin &node =
       *static_cast<const PhysicalInnerNLJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -724,37 +720,37 @@ bool PhysicalInnerNLJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // LeftNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftNLJoin::make(
+std::shared_ptr<AbstractNode> PhysicalLeftNLJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftNLJoin *join = new PhysicalLeftNLJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalLeftNLJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // RightNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightNLJoin::make(
+std::shared_ptr<AbstractNode> PhysicalRightNLJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightNLJoin *join = new PhysicalRightNLJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalRightNLJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // OuterNLJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterNLJoin::make(
+std::shared_ptr<AbstractNode> PhysicalOuterNLJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterNLJoin *join = new PhysicalOuterNLJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalOuterNLJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // InnerHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalInnerHashJoin::make(
+std::shared_ptr<AbstractNode> PhysicalInnerHashJoin::make(
     std::vector<AnnotatedExpression> conditions,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &left_keys,
     std::vector<std::unique_ptr<expression::AbstractExpression>> &right_keys) {
@@ -762,11 +758,11 @@ Operator PhysicalInnerHashJoin::make(
   join->join_predicates = std::move(conditions);
   join->left_keys = std::move(left_keys);
   join->right_keys = std::move(right_keys);
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalInnerHashJoin>(join));
 }
 
 hash_t PhysicalInnerHashJoin::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &expr : left_keys)
     hash = HashUtil::CombineHashes(hash, expr->Hash());
   for (auto &expr : right_keys)
@@ -776,8 +772,8 @@ hash_t PhysicalInnerHashJoin::Hash() const {
   return hash;
 }
 
-bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
-  if (r.GetType() != OpType::InnerHashJoin) return false;
+bool PhysicalInnerHashJoin::operator==(const AbstractNode &r) {
+  if (r.GetOpType() != OpType::InnerHashJoin) return false;
   const PhysicalInnerHashJoin &node =
       *static_cast<const PhysicalInnerHashJoin *>(&r);
   if (join_predicates.size() != node.join_predicates.size() ||
@@ -801,37 +797,37 @@ bool PhysicalInnerHashJoin::operator==(const BaseOperatorNode &r) {
 //===--------------------------------------------------------------------===//
 // LeftHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalLeftHashJoin::make(
+std::shared_ptr<AbstractNode> PhysicalLeftHashJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalLeftHashJoin *join = new PhysicalLeftHashJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalLeftHashJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // RightHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalRightHashJoin::make(
+std::shared_ptr<AbstractNode> PhysicalRightHashJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalRightHashJoin *join = new PhysicalRightHashJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalRightHashJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // OuterHashJoin
 //===--------------------------------------------------------------------===//
-Operator PhysicalOuterHashJoin::make(
+std::shared_ptr<AbstractNode> PhysicalOuterHashJoin::make(
     std::shared_ptr<expression::AbstractExpression> join_predicate) {
   PhysicalOuterHashJoin *join = new PhysicalOuterHashJoin();
   join->join_predicate = join_predicate;
-  return Operator(join);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalOuterHashJoin>(join));
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalInsert
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsert::make(
+std::shared_ptr<AbstractNode> PhysicalInsert::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::string> *columns,
     const std::vector<std::vector<
@@ -840,46 +836,46 @@ Operator PhysicalInsert::make(
   insert_op->target_table = target_table;
   insert_op->columns = columns;
   insert_op->values = values;
-  return Operator(insert_op);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalInsert>(insert_op));
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalInsertSelect
 //===--------------------------------------------------------------------===//
-Operator PhysicalInsertSelect::make(
+std::shared_ptr<AbstractNode> PhysicalInsertSelect::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   PhysicalInsertSelect *insert_op = new PhysicalInsertSelect;
   insert_op->target_table = target_table;
-  return Operator(insert_op);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalInsertSelect>(insert_op));
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalDelete
 //===--------------------------------------------------------------------===//
-Operator PhysicalDelete::make(
+std::shared_ptr<AbstractNode> PhysicalDelete::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table) {
   PhysicalDelete *delete_op = new PhysicalDelete;
   delete_op->target_table = target_table;
-  return Operator(delete_op);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalDelete>(delete_op));
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalUpdate
 //===--------------------------------------------------------------------===//
-Operator PhysicalUpdate::make(
+std::shared_ptr<AbstractNode> PhysicalUpdate::make(
     std::shared_ptr<catalog::TableCatalogEntry> target_table,
     const std::vector<std::unique_ptr<peloton::parser::UpdateClause>> *
         updates) {
   PhysicalUpdate *update = new PhysicalUpdate;
   update->target_table = target_table;
   update->updates = updates;
-  return Operator(update);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalUpdate>(update));
 }
 
 //===--------------------------------------------------------------------===//
 // PhysicalExportExternalFile
 //===--------------------------------------------------------------------===//
-Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
+std::shared_ptr<AbstractNode> PhysicalExportExternalFile::make(ExternalFileFormat format,
                                           std::string file_name, char delimiter,
                                           char quote, char escape) {
   auto *export_op = new PhysicalExportExternalFile();
@@ -888,11 +884,11 @@ Operator PhysicalExportExternalFile::make(ExternalFileFormat format,
   export_op->delimiter = delimiter;
   export_op->quote = quote;
   export_op->escape = escape;
-  return Operator(export_op);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalExportExternalFile>(export_op));
 }
 
-bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::ExportExternalFile) return false;
+bool PhysicalExportExternalFile::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::ExportExternalFile) return false;
   const auto &export_op =
       *static_cast<const PhysicalExportExternalFile *>(&node);
   return (format == export_op.format && file_name == export_op.file_name &&
@@ -901,7 +897,7 @@ bool PhysicalExportExternalFile::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalExportExternalFile::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   hash = HashUtil::CombineHashes(hash, HashUtil::Hash(&format));
   hash = HashUtil::CombineHashes(
       hash, HashUtil::HashBytes(file_name.data(), file_name.length()));
@@ -914,17 +910,17 @@ hash_t PhysicalExportExternalFile::Hash() const {
 //===--------------------------------------------------------------------===//
 // PhysicalHashGroupBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalHashGroupBy::make(
+std::shared_ptr<AbstractNode> PhysicalHashGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     std::vector<AnnotatedExpression> having) {
   PhysicalHashGroupBy *agg = new PhysicalHashGroupBy;
   agg->columns = columns;
   agg->having = move(having);
-  return Operator(agg);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalHashGroupBy>(agg));
 }
 
-bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::HashGroupBy) return false;
+bool PhysicalHashGroupBy::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::HashGroupBy) return false;
   const PhysicalHashGroupBy &r =
       *static_cast<const PhysicalHashGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -936,7 +932,7 @@ bool PhysicalHashGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalHashGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
@@ -945,17 +941,17 @@ hash_t PhysicalHashGroupBy::Hash() const {
 //===--------------------------------------------------------------------===//
 // PhysicalSortGroupBy
 //===--------------------------------------------------------------------===//
-Operator PhysicalSortGroupBy::make(
+std::shared_ptr<AbstractNode> PhysicalSortGroupBy::make(
     std::vector<std::shared_ptr<expression::AbstractExpression>> columns,
     std::vector<AnnotatedExpression> having) {
   PhysicalSortGroupBy *agg = new PhysicalSortGroupBy;
   agg->columns = std::move(columns);
   agg->having = move(having);
-  return Operator(agg);
+  return std::make_shared<Operator>(std::shared_ptr<PhysicalSortGroupBy>(agg));
 }
 
-bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
-  if (node.GetType() != OpType::SortGroupBy) return false;
+bool PhysicalSortGroupBy::operator==(const AbstractNode &node) {
+  if (node.GetOpType() != OpType::SortGroupBy) return false;
   const PhysicalSortGroupBy &r =
       *static_cast<const PhysicalSortGroupBy *>(&node);
   if (having.size() != r.having.size() || columns.size() != r.columns.size())
@@ -967,7 +963,7 @@ bool PhysicalSortGroupBy::operator==(const BaseOperatorNode &node) {
 }
 
 hash_t PhysicalSortGroupBy::Hash() const {
-  hash_t hash = BaseOperatorNode::Hash();
+  hash_t hash = AbstractNode::Hash();
   for (auto &pred : having) hash = HashUtil::SumHashes(hash, pred.expr->Hash());
   for (auto expr : columns) hash = HashUtil::SumHashes(hash, expr->Hash());
   return hash;
@@ -976,17 +972,15 @@ hash_t PhysicalSortGroupBy::Hash() const {
 //===--------------------------------------------------------------------===//
 // PhysicalAggregate
 //===--------------------------------------------------------------------===//
-Operator PhysicalAggregate::make() {
-  PhysicalAggregate *agg = new PhysicalAggregate;
-  return Operator(agg);
+std::shared_ptr<AbstractNode> PhysicalAggregate::make() {
+  return std::make_shared<PhysicalAggregate>();
 }
 
 //===--------------------------------------------------------------------===//
 // Physical Hash
 //===--------------------------------------------------------------------===//
-Operator PhysicalDistinct::make() {
-  PhysicalDistinct *hash = new PhysicalDistinct;
-  return Operator(hash);
+std::shared_ptr<AbstractNode> PhysicalDistinct::make() {
+  return std::make_shared<PhysicalDistinct>();
 }
 
 //===--------------------------------------------------------------------===//
@@ -1099,113 +1093,118 @@ std::string OperatorNode<PhysicalExportExternalFile>::name_ =
 
 //===--------------------------------------------------------------------===//
 template <>
-OpType OperatorNode<LeafOperator>::type_ = OpType::Leaf;
+OpType OperatorNode<LeafOperator>::op_type_ = OpType::Leaf;
 template <>
-OpType OperatorNode<LogicalGet>::type_ = OpType::Get;
+OpType OperatorNode<LogicalGet>::op_type_ = OpType::Get;
 template <>
-OpType OperatorNode<LogicalExternalFileGet>::type_ =
+OpType OperatorNode<LogicalExternalFileGet>::op_type_ =
     OpType::LogicalExternalFileGet;
 template <>
-OpType OperatorNode<LogicalQueryDerivedGet>::type_ =
+OpType OperatorNode<LogicalQueryDerivedGet>::op_type_ =
     OpType::LogicalQueryDerivedGet;
 template <>
-OpType OperatorNode<LogicalFilter>::type_ = OpType::LogicalFilter;
+OpType OperatorNode<LogicalFilter>::op_type_ = OpType::LogicalFilter;
 template <>
-OpType OperatorNode<LogicalProjection>::type_ = OpType::LogicalProjection;
+OpType OperatorNode<LogicalProjection>::op_type_ = OpType::LogicalProjection;
 template <>
-OpType OperatorNode<LogicalMarkJoin>::type_ = OpType::LogicalMarkJoin;
+OpType OperatorNode<LogicalMarkJoin>::op_type_ = OpType::LogicalMarkJoin;
 template <>
-OpType OperatorNode<LogicalSingleJoin>::type_ = OpType::LogicalSingleJoin;
+OpType OperatorNode<LogicalSingleJoin>::op_type_ = OpType::LogicalSingleJoin;
 template <>
-OpType OperatorNode<LogicalDependentJoin>::type_ = OpType::LogicalDependentJoin;
+OpType OperatorNode<LogicalDependentJoin>::op_type_ = OpType::LogicalDependentJoin;
 template <>
-OpType OperatorNode<LogicalInnerJoin>::type_ = OpType::InnerJoin;
+OpType OperatorNode<LogicalInnerJoin>::op_type_ = OpType::InnerJoin;
 template <>
-OpType OperatorNode<LogicalLeftJoin>::type_ = OpType::LeftJoin;
+OpType OperatorNode<LogicalLeftJoin>::op_type_ = OpType::LeftJoin;
 template <>
-OpType OperatorNode<LogicalRightJoin>::type_ = OpType::RightJoin;
+OpType OperatorNode<LogicalRightJoin>::op_type_ = OpType::RightJoin;
 template <>
-OpType OperatorNode<LogicalOuterJoin>::type_ = OpType::OuterJoin;
+OpType OperatorNode<LogicalOuterJoin>::op_type_ = OpType::OuterJoin;
 template <>
-OpType OperatorNode<LogicalSemiJoin>::type_ = OpType::SemiJoin;
+OpType OperatorNode<LogicalSemiJoin>::op_type_ = OpType::SemiJoin;
 template <>
-OpType OperatorNode<LogicalAggregateAndGroupBy>::type_ =
+OpType OperatorNode<LogicalAggregateAndGroupBy>::op_type_ =
     OpType::LogicalAggregateAndGroupBy;
 template <>
-OpType OperatorNode<LogicalInsert>::type_ = OpType::LogicalInsert;
+OpType OperatorNode<LogicalInsert>::op_type_ = OpType::LogicalInsert;
 template <>
-OpType OperatorNode<LogicalInsertSelect>::type_ = OpType::LogicalInsertSelect;
+OpType OperatorNode<LogicalInsertSelect>::op_type_ = OpType::LogicalInsertSelect;
 template <>
-OpType OperatorNode<LogicalUpdate>::type_ = OpType::LogicalUpdate;
+OpType OperatorNode<LogicalUpdate>::op_type_ = OpType::LogicalUpdate;
 template <>
-OpType OperatorNode<LogicalDelete>::type_ = OpType::LogicalDelete;
+OpType OperatorNode<LogicalDelete>::op_type_ = OpType::LogicalDelete;
 template <>
-OpType OperatorNode<LogicalDistinct>::type_ = OpType::LogicalDistinct;
+OpType OperatorNode<LogicalDistinct>::op_type_ = OpType::LogicalDistinct;
 template <>
-OpType OperatorNode<LogicalLimit>::type_ = OpType::LogicalLimit;
+OpType OperatorNode<LogicalLimit>::op_type_ = OpType::LogicalLimit;
 template <>
-OpType OperatorNode<LogicalExportExternalFile>::type_ =
+OpType OperatorNode<LogicalExportExternalFile>::op_type_ =
     OpType::LogicalExportExternalFile;
 
 template <>
-OpType OperatorNode<DummyScan>::type_ = OpType::DummyScan;
+OpType OperatorNode<DummyScan>::op_type_ = OpType::DummyScan;
 template <>
-OpType OperatorNode<PhysicalSeqScan>::type_ = OpType::SeqScan;
+OpType OperatorNode<PhysicalSeqScan>::op_type_ = OpType::SeqScan;
 template <>
-OpType OperatorNode<PhysicalIndexScan>::type_ = OpType::IndexScan;
+OpType OperatorNode<PhysicalIndexScan>::op_type_ = OpType::IndexScan;
 template <>
-OpType OperatorNode<ExternalFileScan>::type_ = OpType::ExternalFileScan;
+OpType OperatorNode<ExternalFileScan>::op_type_ = OpType::ExternalFileScan;
 template <>
-OpType OperatorNode<QueryDerivedScan>::type_ = OpType::QueryDerivedScan;
+OpType OperatorNode<QueryDerivedScan>::op_type_ = OpType::QueryDerivedScan;
 template <>
-OpType OperatorNode<PhysicalOrderBy>::type_ = OpType::OrderBy;
+OpType OperatorNode<PhysicalOrderBy>::op_type_ = OpType::OrderBy;
 template <>
-OpType OperatorNode<PhysicalDistinct>::type_ = OpType::Distinct;
+OpType OperatorNode<PhysicalDistinct>::op_type_ = OpType::Distinct;
 template <>
-OpType OperatorNode<PhysicalLimit>::type_ = OpType::PhysicalLimit;
+OpType OperatorNode<PhysicalLimit>::op_type_ = OpType::PhysicalLimit;
 template <>
-OpType OperatorNode<PhysicalInnerNLJoin>::type_ = OpType::InnerNLJoin;
+OpType OperatorNode<PhysicalInnerNLJoin>::op_type_ = OpType::InnerNLJoin;
 template <>
-OpType OperatorNode<PhysicalLeftNLJoin>::type_ = OpType::LeftNLJoin;
+OpType OperatorNode<PhysicalLeftNLJoin>::op_type_ = OpType::LeftNLJoin;
 template <>
-OpType OperatorNode<PhysicalRightNLJoin>::type_ = OpType::RightNLJoin;
+OpType OperatorNode<PhysicalRightNLJoin>::op_type_ = OpType::RightNLJoin;
 template <>
-OpType OperatorNode<PhysicalOuterNLJoin>::type_ = OpType::OuterNLJoin;
+OpType OperatorNode<PhysicalOuterNLJoin>::op_type_ = OpType::OuterNLJoin;
 template <>
-OpType OperatorNode<PhysicalInnerHashJoin>::type_ = OpType::InnerHashJoin;
+OpType OperatorNode<PhysicalInnerHashJoin>::op_type_ = OpType::InnerHashJoin;
 template <>
-OpType OperatorNode<PhysicalLeftHashJoin>::type_ = OpType::LeftHashJoin;
+OpType OperatorNode<PhysicalLeftHashJoin>::op_type_ = OpType::LeftHashJoin;
 template <>
-OpType OperatorNode<PhysicalRightHashJoin>::type_ = OpType::RightHashJoin;
+OpType OperatorNode<PhysicalRightHashJoin>::op_type_ = OpType::RightHashJoin;
 template <>
-OpType OperatorNode<PhysicalOuterHashJoin>::type_ = OpType::OuterHashJoin;
+OpType OperatorNode<PhysicalOuterHashJoin>::op_type_ = OpType::OuterHashJoin;
 template <>
-OpType OperatorNode<PhysicalInsert>::type_ = OpType::Insert;
+OpType OperatorNode<PhysicalInsert>::op_type_ = OpType::Insert;
 template <>
-OpType OperatorNode<PhysicalInsertSelect>::type_ = OpType::InsertSelect;
+OpType OperatorNode<PhysicalInsertSelect>::op_type_ = OpType::InsertSelect;
 template <>
-OpType OperatorNode<PhysicalDelete>::type_ = OpType::Delete;
+OpType OperatorNode<PhysicalDelete>::op_type_ = OpType::Delete;
 template <>
-OpType OperatorNode<PhysicalUpdate>::type_ = OpType::Update;
+OpType OperatorNode<PhysicalUpdate>::op_type_ = OpType::Update;
 template <>
-OpType OperatorNode<PhysicalHashGroupBy>::type_ = OpType::HashGroupBy;
+OpType OperatorNode<PhysicalHashGroupBy>::op_type_ = OpType::HashGroupBy;
 template <>
-OpType OperatorNode<PhysicalSortGroupBy>::type_ = OpType::SortGroupBy;
+OpType OperatorNode<PhysicalSortGroupBy>::op_type_ = OpType::SortGroupBy;
 template <>
-OpType OperatorNode<PhysicalAggregate>::type_ = OpType::Aggregate;
+OpType OperatorNode<PhysicalAggregate>::op_type_ = OpType::Aggregate;
 template <>
-OpType OperatorNode<PhysicalExportExternalFile>::type_ =
+OpType OperatorNode<PhysicalExportExternalFile>::op_type_ =
     OpType::ExportExternalFile;
+
+//===--------------------------------------------------------------------===//
+template <typename T>
+ExpressionType OperatorNode<T>::exp_type_ = ExpressionType::INVALID;
+
 //===--------------------------------------------------------------------===//
 
 template <typename T>
 bool OperatorNode<T>::IsLogical() const {
-  return type_ < OpType::LogicalPhysicalDelimiter;
+  return op_type_ < OpType::LogicalPhysicalDelimiter;
 }
 
 template <typename T>
 bool OperatorNode<T>::IsPhysical() const {
-  return type_ > OpType::LogicalPhysicalDelimiter;
+  return op_type_ > OpType::LogicalPhysicalDelimiter;
 }
 
 template <>

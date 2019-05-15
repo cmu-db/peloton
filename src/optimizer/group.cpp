@@ -11,6 +11,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "optimizer/group.h"
+#include "optimizer/operator_expression.h"
+#include "optimizer/absexpr_expression.h"
 
 #include "common/logger.h"
 
@@ -27,11 +29,18 @@ Group::Group(GroupID id, std::unordered_set<std::string> table_aliases)
 
 void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
                           bool enforced) {
+
+  // Additional assertion checks for AddExpression() with AST rewriting
+  if (expr->Node()->GetExpType() != ExpressionType::INVALID) {
+    PELOTON_ASSERT(!enforced);
+    PELOTON_ASSERT(!expr->Node()->IsPhysical());
+  }
+
   // Do duplicate detection
   expr->SetGroupID(id_);
   if (enforced)
     enforced_exprs_.push_back(expr);
-  else if (expr->Op().IsPhysical())
+  else if (expr->Node()->IsPhysical())
     physical_expressions_.push_back(expr);
   else
     logical_expressions_.push_back(expr);
@@ -39,8 +48,9 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 
 bool Group::SetExpressionCost(GroupExpression *expr, double cost,
                               std::shared_ptr<PropertySet> &properties) {
+
   LOG_TRACE("Adding expression cost on group %d with op %s, req %s",
-            expr->GetGroupID(), expr->Op().GetName().c_str(),
+            expr->GetGroupID(), expr->Node()->GetName().c_str(),
             properties->ToString().c_str());
   auto it = lowest_cost_expressions_.find(properties);
   if (it == lowest_cost_expressions_.end() || std::get<0>(it->second) > cost) {
@@ -51,8 +61,10 @@ bool Group::SetExpressionCost(GroupExpression *expr, double cost,
   }
   return false;
 }
+
 GroupExpression *Group::GetBestExpression(
     std::shared_ptr<PropertySet> &properties) {
+
   auto it = lowest_cost_expressions_.find(properties);
   if (it != lowest_cost_expressions_.end()) {
     return std::get<1>(it->second);
@@ -64,6 +76,7 @@ GroupExpression *Group::GetBestExpression(
 
 bool Group::HasExpressions(
     const std::shared_ptr<PropertySet> &properties) const {
+
   const auto &it = lowest_cost_expressions_.find(properties);
   return (it != lowest_cost_expressions_.end());
 }
@@ -76,68 +89,68 @@ std::shared_ptr<ColumnStats> Group::GetStats(std::string column_name) {
 }
 
 const std::string Group::GetInfo(int num_indent) const {
-    std::ostringstream os;
-    os << StringUtil::Indent(num_indent)
-       << "GroupID: " << GetID() << std::endl;
+  std::ostringstream os;
+  os << StringUtil::Indent(num_indent)
+     << "GroupID: " << GetID() << std::endl;
 
-    if (logical_expressions_.size() > 0)
-        os << StringUtil::Indent(num_indent + 2)
-           << "logical_expressions_: \n";
-    
-    for (auto expr : logical_expressions_) {
-        os << StringUtil::Indent(num_indent + 4)
-           << expr->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
-        if (ChildGroupIDs.size() > 0) {        
-            os << StringUtil::Indent(num_indent + 6)
-               << "ChildGroupIDs: ";
-            for (auto childGroupID : ChildGroupIDs)
-                os << childGroupID << " ";
-            os << std::endl;
-        }
-    }
+  if (logical_expressions_.size() > 0)
+      os << StringUtil::Indent(num_indent + 2)
+         << "logical_expressions_: \n";
+  
+  for (auto expr : logical_expressions_) {
+      os << StringUtil::Indent(num_indent + 4)
+         << expr->Node()->GetName() << std::endl;
+      const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
+      if (ChildGroupIDs.size() > 0) {        
+          os << StringUtil::Indent(num_indent + 6)
+             << "ChildGroupIDs: ";
+          for (auto childGroupID : ChildGroupIDs)
+              os << childGroupID << " ";
+          os << std::endl;
+      }
+  }
 
-    if (physical_expressions_.size() > 0)
-        os << StringUtil::Indent(num_indent + 2)
-           << "physical_expressions_: \n";
-    for (auto expr : physical_expressions_) {
-        os << StringUtil::Indent(num_indent + 4)
-           << expr->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
-        if (ChildGroupIDs.size() > 0) {
-            os << StringUtil::Indent(num_indent + 6)
-               << "ChildGroupIDs: ";
-            for (auto childGroupID : ChildGroupIDs) 
-                os << childGroupID << " ";
-            os << std::endl;
-        }
+  if (physical_expressions_.size() > 0)
+      os << StringUtil::Indent(num_indent + 2)
+         << "physical_expressions_: \n";
+  for (auto expr : physical_expressions_) {
+      os << StringUtil::Indent(num_indent + 4)
+         << expr->Node()->GetName() << std::endl;
+      const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
+      if (ChildGroupIDs.size() > 0) {
+          os << StringUtil::Indent(num_indent + 6)
+             << "ChildGroupIDs: ";
+          for (auto childGroupID : ChildGroupIDs) 
+              os << childGroupID << " ";
+          os << std::endl;
+      }
 
-    }
+  }
 
-    if (enforced_exprs_.size() > 0)
-        os << StringUtil::Indent(num_indent + 2)
-           << "enforced_exprs_: \n";
-    for (auto expr : enforced_exprs_) {
-        os << StringUtil::Indent(num_indent + 4)
-           << expr->Op().GetName() << std::endl;
-        const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
-        if (ChildGroupIDs.size() > 0) {
-            os << StringUtil::Indent(num_indent + 6)
-               << "ChildGroupIDs: \n";
-            for (auto childGroupID : ChildGroupIDs) {
-                os << childGroupID << " ";
-            }
-            os << std::endl;
-        }
-    }
+  if (enforced_exprs_.size() > 0)
+      os << StringUtil::Indent(num_indent + 2)
+         << "enforced_exprs_: \n";
+  for (auto expr : enforced_exprs_) {
+      os << StringUtil::Indent(num_indent + 4)
+         << expr->Node()->GetName() << std::endl;
+      const std::vector<GroupID> ChildGroupIDs = expr->GetChildGroupIDs();
+      if (ChildGroupIDs.size() > 0) {
+          os << StringUtil::Indent(num_indent + 6)
+             << "ChildGroupIDs: \n";
+          for (auto childGroupID : ChildGroupIDs) {
+              os << childGroupID << " ";
+          }
+          os << std::endl;
+      }
+  }
 
-    return os.str();
+  return os.str();
 }
 
 const std::string Group::GetInfo() const {
-    std::ostringstream os;
-    os << GetInfo(0);
-    return os.str();
+  std::ostringstream os;
+  os << GetInfo(0);
+  return os.str();
 }
 
 

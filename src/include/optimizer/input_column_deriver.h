@@ -100,8 +100,8 @@ class InputColumnDeriver : public OperatorVisitor {
    * @brief Provide all tuple value expressions needed in the expression
    */
   void ScanHelper();
-  void AggregateHelper(const BaseOperatorNode *);
-  void JoinHelper(const BaseOperatorNode *op);
+  void AggregateHelper(const AbstractNode *);
+  void JoinHelper(const AbstractNode *op);
 
   /**
    * @brief Some operators, for example limit, directly pass down column

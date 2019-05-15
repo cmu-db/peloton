@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "common/internal_types.h"
+#include "optimizer/absexpr_expression.h"
 #include "optimizer/group_expression.h"
 #include "optimizer/group.h"
 #include "optimizer/rule.h"
@@ -21,9 +22,10 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 // Group Expression
 //===--------------------------------------------------------------------===//
-GroupExpression::GroupExpression(Operator op, std::vector<GroupID> child_groups)
+GroupExpression::GroupExpression(std::shared_ptr<AbstractNode> node,
+                                 std::vector<GroupID> child_groups)
     : group_id(UNDEFINED_GROUP),
-      op(op),
+      node(node),
       child_groups(child_groups),
       stats_derived_(false) {}
 
@@ -43,7 +45,9 @@ GroupID GroupExpression::GetChildGroupId(int child_idx) const {
   return child_groups[child_idx];
 }
 
-Operator GroupExpression::Op() const { return op; }
+std::shared_ptr<AbstractNode> GroupExpression::Node() const {
+  return std::shared_ptr<AbstractNode>(node);
+}
 
 double GroupExpression::GetCost(
     std::shared_ptr<PropertySet> &requirements) const {
@@ -74,7 +78,7 @@ void GroupExpression::SetLocalHashTable(
 }
 
 hash_t GroupExpression::Hash() const {
-  size_t hash = op.Hash();
+  size_t hash = node->Hash();
 
   for (size_t i = 0; i < child_groups.size(); ++i) {
     hash = HashUtil::CombineHashes(hash,
@@ -85,7 +89,7 @@ hash_t GroupExpression::Hash() const {
 }
 
 bool GroupExpression::operator==(const GroupExpression &r) {
-  return (op == r.Op()) && (child_groups == r.child_groups);
+  return (*node == *r.Node()) && (child_groups == r.child_groups);
 }
 
 void GroupExpression::SetRuleExplored(Rule *rule) {
