@@ -34,7 +34,7 @@ int ComparatorElimination::Promise(GroupExpression *group_expr,
                                    OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::MEDIUM);
+  return static_cast<int>(MEDIUM_PRIORITY);
 }
 
 bool ComparatorElimination::Check(std::shared_ptr<AbstractNodeExpression> plan,
@@ -54,8 +54,8 @@ void ComparatorElimination::Transform(std::shared_ptr<AbstractNodeExpression> in
   // Since the binding succeeded, there are guaranteed to be two children.
   PELOTON_ASSERT(input->Children().size() == 2);
 
-  auto left_abs = std::dynamic_pointer_cast<AbsExpr_Container>(input->Children()[0]->Node());
-  auto right_abs = std::dynamic_pointer_cast<AbsExpr_Container>(input->Children()[1]->Node());
+  auto left_abs = std::dynamic_pointer_cast<AbsExprNode>(input->Children()[0]->Node());
+  auto right_abs = std::dynamic_pointer_cast<AbsExprNode>(input->Children()[1]->Node());
   PELOTON_ASSERT(left_abs != nullptr && right_abs != nullptr);
 
   auto left = left_abs->GetExpr();
@@ -105,8 +105,8 @@ void ComparatorElimination::Transform(std::shared_ptr<AbstractNodeExpression> in
     // Create the replacement
     type::Value val = type::ValueFactory::GetBooleanValue(cmp);
     auto expr = std::make_shared<expression::ConstantValueExpression>(val);
-    auto container = std::make_shared<AbsExpr_Container>(AbsExpr_Container(expr));
-    auto shared = std::make_shared<AbsExpr_Expression>(container);
+    auto container = std::make_shared<AbsExprNode>(AbsExprNode(expr));
+    auto shared = std::make_shared<AbsExprExpression>(container);
     transformed.push_back(shared);
   }
 
@@ -136,7 +136,7 @@ int EquivalentTransform::Promise(GroupExpression *group_expr,
                                    OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::HIGH);
+  return static_cast<int>(HIGH_PRIORITY);
 }
 
 bool EquivalentTransform::Check(std::shared_ptr<AbstractNodeExpression> plan,
@@ -163,8 +163,8 @@ void EquivalentTransform::Transform(std::shared_ptr<AbstractNodeExpression> inpu
   // The children do not strictly matter anymore
   auto type = match_pattern->GetExpType();
   auto expr = std::make_shared<expression::ConjunctionExpression>(type);
-  auto a_expr = std::make_shared<AbsExpr_Container>(expr);
-  auto shared = std::make_shared<AbsExpr_Expression>(a_expr);
+  auto a_expr = std::make_shared<AbsExprNode>(expr);
+  auto shared = std::make_shared<AbsExprExpression>(a_expr);
 
   // Create flipped ordering at logical level
   shared->PushChild(right);
@@ -204,7 +204,7 @@ TVEqualityWithTwoCVTransform::TVEqualityWithTwoCVTransform() {
 int TVEqualityWithTwoCVTransform::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::LOW);
+  return static_cast<int>(LOW_PRIORITY);
 }
 
 bool TVEqualityWithTwoCVTransform::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -245,10 +245,10 @@ void TVEqualityWithTwoCVTransform::Transform(std::shared_ptr<AbstractNodeExpress
   PELOTON_ASSERT(r_tv->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
   PELOTON_ASSERT(r_cv->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
 
-  auto l_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_tv->Node());
-  auto r_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv->Node());
-  auto l_cv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_cv->Node());
-  auto r_cv_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_cv->Node());
+  auto l_tv_c = std::dynamic_pointer_cast<AbsExprNode>(l_tv->Node());
+  auto r_tv_c = std::dynamic_pointer_cast<AbsExprNode>(r_tv->Node());
+  auto l_cv_c = std::dynamic_pointer_cast<AbsExprNode>(l_cv->Node());
+  auto r_cv_c = std::dynamic_pointer_cast<AbsExprNode>(r_cv->Node());
   PELOTON_ASSERT(l_tv_c != nullptr && r_tv_c != nullptr);
   PELOTON_ASSERT(l_cv_c != nullptr && r_cv_c != nullptr);
 
@@ -278,7 +278,7 @@ void TVEqualityWithTwoCVTransform::Transform(std::shared_ptr<AbstractNodeExpress
       } else {
         auto val = type::ValueFactory::GetBooleanValue(false);
         auto constant = std::make_shared<expression::ConstantValueExpression>(val);
-        auto abs_expr = std::make_shared<AbsExpr_Expression>(std::make_shared<AbsExpr_Container>(AbsExpr_Container(constant)));
+        auto abs_expr = std::make_shared<AbsExprExpression>(std::make_shared<AbsExprNode>(AbsExprNode(constant)));
         transformed.push_back(abs_expr);
       }
 
@@ -314,7 +314,7 @@ TransitiveClosureConstantTransform::TransitiveClosureConstantTransform() {
 int TransitiveClosureConstantTransform::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::LOW);
+  return static_cast<int>(LOW_PRIORITY);
 }
 
 bool TransitiveClosureConstantTransform::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -355,9 +355,9 @@ void TransitiveClosureConstantTransform::Transform(std::shared_ptr<AbstractNodeE
   PELOTON_ASSERT(r_tv_l->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
   PELOTON_ASSERT(r_tv_r->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
 
-  auto l_tv_c = std::dynamic_pointer_cast<AbsExpr_Container>(l_tv->Node());
-  auto r_tv_l_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv_l->Node());
-  auto r_tv_r_c = std::dynamic_pointer_cast<AbsExpr_Container>(r_tv_r->Node());
+  auto l_tv_c = std::dynamic_pointer_cast<AbsExprNode>(l_tv->Node());
+  auto r_tv_l_c = std::dynamic_pointer_cast<AbsExprNode>(r_tv_l->Node());
+  auto r_tv_r_c = std::dynamic_pointer_cast<AbsExprNode>(r_tv_r->Node());
   PELOTON_ASSERT(l_tv_c != nullptr && r_tv_l_c != nullptr && r_tv_r_c != nullptr);
 
   auto l_tv_expr = l_tv_c->GetExpr();
@@ -379,7 +379,7 @@ void TransitiveClosureConstantTransform::Transform(std::shared_ptr<AbstractNodeE
 
   auto new_left_eq = l_eq;
   auto right_val_copy = l_cv;
-  auto new_right_eq = std::make_shared<AbsExpr_Expression>(r_eq->Node());
+  auto new_right_eq = std::make_shared<AbsExprExpression>(r_eq->Node());
 
   // At this stage, we have knowledge that C.D != E.F
   if (l_tv_expr->ExactlyEquals(*r_tv_l_expr)) {
@@ -393,7 +393,7 @@ void TransitiveClosureConstantTransform::Transform(std::shared_ptr<AbstractNodeE
   }
 
   // Create new root expression
-  auto abs_expr = std::make_shared<AbsExpr_Expression>(input->Node());
+  auto abs_expr = std::make_shared<AbsExprExpression>(input->Node());
   abs_expr->PushChild(new_left_eq);
   abs_expr->PushChild(new_right_eq);
   transformed.push_back(abs_expr);
@@ -419,7 +419,7 @@ AndShortCircuit::AndShortCircuit() {
 int AndShortCircuit::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::HIGH);
+  return static_cast<int>(HIGH_PRIORITY);
 }
 
 bool AndShortCircuit::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -443,7 +443,7 @@ void AndShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
   PELOTON_ASSERT(left->Children().size() == 0);
   PELOTON_ASSERT(left->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
 
-  std::shared_ptr<AbsExpr_Container> left_c = std::dynamic_pointer_cast<AbsExpr_Container>(left->Node());
+  std::shared_ptr<AbsExprNode> left_c = std::dynamic_pointer_cast<AbsExprNode>(left->Node());
   PELOTON_ASSERT(left_c != nullptr);
 
   auto left_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(left_c->GetExpr());
@@ -455,8 +455,8 @@ void AndShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
   if (left_value.GetTypeId() == type::TypeId::BOOLEAN && left_value.IsFalse()) {
     type::Value val_false = type::ValueFactory::GetBooleanValue(false);
     std::shared_ptr<expression::ConstantValueExpression> false_expr = std::make_shared<expression::ConstantValueExpression>(val_false);
-    std::shared_ptr<AbsExpr_Container> false_cnt = std::make_shared<AbsExpr_Container>(false_expr);
-    std::shared_ptr<AbsExpr_Expression> false_container = std::make_shared<AbsExpr_Expression>(false_cnt);
+    std::shared_ptr<AbsExprNode> false_cnt = std::make_shared<AbsExprNode>(false_expr);
+    std::shared_ptr<AbsExprExpression> false_container = std::make_shared<AbsExprExpression>(false_cnt);
     transformed.push_back(false_container);
   }
 }
@@ -477,7 +477,7 @@ OrShortCircuit::OrShortCircuit() {
 int OrShortCircuit::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::HIGH);
+  return static_cast<int>(HIGH_PRIORITY);
 }
 
 bool OrShortCircuit::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -501,7 +501,7 @@ void OrShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
   PELOTON_ASSERT(left->Children().size() == 0);
   PELOTON_ASSERT(left->Node()->GetExpType() == ExpressionType::VALUE_CONSTANT);
 
-  std::shared_ptr<AbsExpr_Container> left_c = std::dynamic_pointer_cast<AbsExpr_Container>(left->Node());
+  std::shared_ptr<AbsExprNode> left_c = std::dynamic_pointer_cast<AbsExprNode>(left->Node());
   PELOTON_ASSERT(left_c != nullptr);
 
   auto left_cv_expr = std::dynamic_pointer_cast<expression::ConstantValueExpression>(left_c->GetExpr());
@@ -511,8 +511,8 @@ void OrShortCircuit::Transform(std::shared_ptr<AbstractNodeExpression> input,
   if (left_value.GetTypeId() == type::TypeId::BOOLEAN && left_value.IsTrue()) {
     type::Value val_true = type::ValueFactory::GetBooleanValue(true);
     std::shared_ptr<expression::ConstantValueExpression> true_expr = std::make_shared<expression::ConstantValueExpression>(val_true);
-    std::shared_ptr<AbsExpr_Container> true_cnt = std::make_shared<AbsExpr_Container>(true_expr);
-    std::shared_ptr<AbsExpr_Expression> true_container = std::make_shared<AbsExpr_Expression>(true_cnt);
+    std::shared_ptr<AbsExprNode> true_cnt = std::make_shared<AbsExprNode>(true_expr);
+    std::shared_ptr<AbsExprExpression> true_container = std::make_shared<AbsExprExpression>(true_cnt);
     transformed.push_back(true_container);
   }
 }
@@ -531,7 +531,7 @@ NullLookupOnNotNullColumn::NullLookupOnNotNullColumn() {
 int NullLookupOnNotNullColumn::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::LOW);
+  return static_cast<int>(LOW_PRIORITY);
 }
 
 bool NullLookupOnNotNullColumn::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -555,7 +555,7 @@ void NullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpression
   PELOTON_ASSERT(child->Children().size() == 0);
   PELOTON_ASSERT(child->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
 
-  std::shared_ptr<AbsExpr_Container> child_c = std::dynamic_pointer_cast<AbsExpr_Container>(child->Node());
+  std::shared_ptr<AbsExprNode> child_c = std::dynamic_pointer_cast<AbsExprNode>(child->Node());
   PELOTON_ASSERT(child_c != nullptr);
 
   auto tuple_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(child_c->GetExpr());
@@ -565,8 +565,8 @@ void NullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpression
   if (tuple_expr->GetIsNotNull()) {
     type::Value val_false = type::ValueFactory::GetBooleanValue(false);
     std::shared_ptr<expression::ConstantValueExpression> false_expr = std::make_shared<expression::ConstantValueExpression>(val_false);
-    std::shared_ptr<AbsExpr_Container> false_cnt = std::make_shared<AbsExpr_Container>(false_expr);
-    std::shared_ptr<AbsExpr_Expression> false_container = std::make_shared<AbsExpr_Expression>(false_cnt);
+    std::shared_ptr<AbsExprNode> false_cnt = std::make_shared<AbsExprNode>(false_expr);
+    std::shared_ptr<AbsExprExpression> false_container = std::make_shared<AbsExprExpression>(false_cnt);
     transformed.push_back(false_container);
   }
 }
@@ -584,7 +584,7 @@ NotNullLookupOnNotNullColumn::NotNullLookupOnNotNullColumn() {
 int NotNullLookupOnNotNullColumn::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   (void)group_expr;
   (void)context;
-  return static_cast<int>(RulePriority::LOW);
+  return static_cast<int>(LOW_PRIORITY);
 }
 
 bool NotNullLookupOnNotNullColumn::Check(std::shared_ptr<AbstractNodeExpression> plan, OptimizeContext *context) const {
@@ -608,7 +608,7 @@ void NotNullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpress
   PELOTON_ASSERT(child->Children().size() == 0);
   PELOTON_ASSERT(child->Node()->GetExpType() == ExpressionType::VALUE_TUPLE);
 
-  std::shared_ptr<AbsExpr_Container> child_c = std::dynamic_pointer_cast<AbsExpr_Container>(child->Node());
+  std::shared_ptr<AbsExprNode> child_c = std::dynamic_pointer_cast<AbsExprNode>(child->Node());
   auto tuple_expr = std::dynamic_pointer_cast<expression::TupleValueExpression>(child_c->GetExpr());
 
   // Only transform into [TRUE] if the tuple value expression is specifically non-NULL,
@@ -616,8 +616,8 @@ void NotNullLookupOnNotNullColumn::Transform(std::shared_ptr<AbstractNodeExpress
   if (tuple_expr->GetIsNotNull()) {
     type::Value val_true = type::ValueFactory::GetBooleanValue(true);
     std::shared_ptr<expression::ConstantValueExpression> true_expr = std::make_shared<expression::ConstantValueExpression>(val_true);
-    std::shared_ptr<AbsExpr_Container> true_cnt = std::make_shared<AbsExpr_Container>(true_expr);
-    std::shared_ptr<AbsExpr_Expression> true_container = std::make_shared<AbsExpr_Expression>(true_cnt);
+    std::shared_ptr<AbsExprNode> true_cnt = std::make_shared<AbsExprNode>(true_expr);
+    std::shared_ptr<AbsExprExpression> true_container = std::make_shared<AbsExprExpression>(true_cnt);
     transformed.push_back(true_container);
   }
 }

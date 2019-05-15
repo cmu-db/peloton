@@ -24,11 +24,9 @@ using GroupExprTemplate = GroupExpression;
 using OptimizeContext = OptimizeContext;
 
 /* Rules are applied from high to low priority */
-enum class RulePriority : int {
-  HIGH = 3,
-  MEDIUM = 2,
-  LOW = 1
-};
+#define HIGH_PRIORITY 3
+#define MEDIUM_PRIORITY 2
+#define LOW_PRIORITY 1
 
 class ComparatorElimination: public Rule {
  public:

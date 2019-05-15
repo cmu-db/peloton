@@ -79,7 +79,7 @@ TEST_F(AbsExprTest, CompareTest) {
   auto right = new expression::ParameterValueExpression(1);
   for (auto type : compares) {
     auto cmp_expr = std::make_shared<expression::ComparisonExpression>(type, left->Copy(), right->Copy());
-    AbsExpr_Container op = AbsExpr_Container(cmp_expr);
+    AbsExprNode op = AbsExprNode(cmp_expr);
     expression::AbstractExpression *rebuilt = op.CopyWithChildren({left->Copy(), right->Copy()});
     EXPECT_TRUE(rebuilt != nullptr);
 
@@ -114,7 +114,7 @@ TEST_F(AbsExprTest, ConjunctionTest) {
   auto right = new expression::ConstantValueExpression(fval);
   for (auto type : compares) {
     auto cmp_expr = std::make_shared<expression::ConjunctionExpression>(type, left->Copy(), right->Copy());
-    AbsExpr_Container op = AbsExpr_Container(cmp_expr);
+    AbsExprNode op = AbsExprNode(cmp_expr);
     expression::AbstractExpression *rebuilt = op.CopyWithChildren({left->Copy(), right->Copy()});
     EXPECT_TRUE(rebuilt != nullptr);
 
@@ -156,7 +156,7 @@ TEST_F(AbsExprTest, OperatorTest) {
     auto op_expr = std::make_shared<expression::OperatorExpression>(type, type::TypeId::INTEGER, left->Copy(), right->Copy());
     op_expr->DeduceExpressionType();
 
-    AbsExpr_Container op = AbsExpr_Container(op_expr);
+    AbsExprNode op = AbsExprNode(op_expr);
     expression::AbstractExpression *rebuilt = op.CopyWithChildren({left->Copy(), right->Copy()});
     EXPECT_TRUE(rebuilt != nullptr);
     rebuilt->DeduceExpressionType();
@@ -180,7 +180,7 @@ TEST_F(AbsExprTest, OperatorTest) {
     auto op_expr = std::make_shared<expression::OperatorExpression>(type, type::TypeId::INTEGER, left->Copy(), nullptr);
     op_expr->DeduceExpressionType();
 
-    AbsExpr_Container op = AbsExpr_Container(op_expr);
+    AbsExprNode op = AbsExprNode(op_expr);
     expression::AbstractExpression *rebuilt = op.CopyWithChildren({left->Copy()});
     EXPECT_TRUE(rebuilt != nullptr);
     rebuilt->DeduceExpressionType();
@@ -205,7 +205,7 @@ TEST_F(AbsExprTest, OperatorUnaryMinusTest) {
   auto left = GetConstantExpression(25);
   auto unary = std::make_shared<expression::OperatorUnaryMinusExpression>(left->Copy());
 
-  AbsExpr_Container op = AbsExpr_Container(unary);
+  AbsExprNode op = AbsExprNode(unary);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({left->Copy()});
   EXPECT_TRUE(rebuilt != nullptr);
     
@@ -220,7 +220,7 @@ TEST_F(AbsExprTest, OperatorUnaryMinusTest) {
 
 TEST_F(AbsExprTest, StarTest) {
   auto expr = std::make_shared<expression::StarExpression>();
-  AbsExpr_Container op = AbsExpr_Container(expr);
+  AbsExprNode op = AbsExprNode(expr);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
 
   EXPECT_EQ(*expr, *rebuilt);
@@ -230,7 +230,7 @@ TEST_F(AbsExprTest, StarTest) {
 TEST_F(AbsExprTest, ValueConstantTest) {
   auto cv_expr = dynamic_cast<expression::ConstantValueExpression*>(GetConstantExpression(721));
   auto expr = std::shared_ptr<expression::ConstantValueExpression>(cv_expr);
-  AbsExpr_Container op = AbsExpr_Container(expr);
+  AbsExprNode op = AbsExprNode(expr);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
 
   EXPECT_EQ(*expr, *rebuilt); // this does not check value
@@ -249,7 +249,7 @@ TEST_F(AbsExprTest, ValueConstantTest) {
 
 TEST_F(AbsExprTest, ValueParameterTest) {
   auto expr = std::make_shared<expression::ParameterValueExpression>(15);
-  AbsExpr_Container op = AbsExpr_Container(expr);
+  AbsExprNode op = AbsExprNode(expr);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
 
   EXPECT_EQ(*expr, *rebuilt); // does not check value_idx_
@@ -264,7 +264,7 @@ TEST_F(AbsExprTest, ValueTupleTest) {
   expr_col->SetTupleValueExpressionParams(type::TypeId::INTEGER, 1, 1);
   expr_col->SetTableName("tbl");
 
-  AbsExpr_Container op = AbsExpr_Container(expr_col);
+  AbsExprNode op = AbsExprNode(expr_col);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
 
   EXPECT_EQ(*expr_col, *rebuilt); // checks tbl_name, col_name
@@ -293,7 +293,7 @@ TEST_F(AbsExprTest, AggregateNodeTest) {
     auto agg_expr = std::make_shared<expression::AggregateExpression>(type, true, child->Copy());
     agg_expr->DeduceExpressionType();
 
-    AbsExpr_Container op = AbsExpr_Container(agg_expr);
+    AbsExprNode op = AbsExprNode(agg_expr);
     expression::AbstractExpression *rebuilt = op.CopyWithChildren({child->Copy()});
     EXPECT_TRUE(rebuilt != nullptr);
 
@@ -317,7 +317,7 @@ TEST_F(AbsExprTest, AggregateNodeTest) {
   agg_expr->DeduceExpressionType();
   EXPECT_TRUE(agg_expr->GetExpressionType() == ExpressionType::AGGREGATE_COUNT_STAR);
 
-  AbsExpr_Container op = AbsExpr_Container(agg_expr);
+  AbsExprNode op = AbsExprNode(agg_expr);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
   rebuilt->DeduceExpressionType();
 
@@ -343,7 +343,7 @@ TEST_F(AbsExprTest, CaseExpressionTest) {
   clauses.push_back(expression::CaseExpression::WhenClause(std::move(where3), std::move(res3)));
 
   auto expr = std::make_shared<expression::CaseExpression>(type::TypeId::INTEGER, clauses, std::move(def_c));
-  AbsExpr_Container op = AbsExpr_Container(expr);
+  AbsExprNode op = AbsExprNode(expr);
   expression::AbstractExpression *rebuilt = op.CopyWithChildren({});
 
   // Checks every clause except for ConstantValue values
@@ -396,7 +396,7 @@ TEST_F(AbsExprTest, SubqueryTest) {
   auto expr = std::make_shared<expression::SubqueryExpression>();
   expr->SetSubSelect(sel);
 
-  AbsExpr_Container container = AbsExpr_Container(expr);
+  AbsExprNode container = AbsExprNode(expr);
   expression::AbstractExpression *rebuild = container.CopyWithChildren({});
 
   EXPECT_EQ(rebuild->GetExpressionType(), expr->GetExpressionType());
@@ -426,7 +426,7 @@ TEST_F(AbsExprTest, FunctionExpressionTest) {
   auto expr = std::make_shared<expression::FunctionExpression>("func", child1);
   expr->SetBuiltinFunctionExpressionParameters(func_ptr, type::TypeId::INTEGER, types);
 
-  AbsExpr_Container container = AbsExpr_Container(expr);
+  AbsExprNode container = AbsExprNode(expr);
   expression::AbstractExpression* rebuild = container.CopyWithChildren(child2);
 
   EXPECT_EQ(rebuild->GetExpressionType(), expr->GetExpressionType());

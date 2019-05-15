@@ -69,7 +69,7 @@ class Rewriter {
    * @param expr expression to convert
    * @returns shared pointer to rewriter internal representation
    */
-  std::shared_ptr<AbsExpr_Expression> ConvertToAbsExpr(const expression::AbstractExpression *expr);
+  std::shared_ptr<AbsExprExpression> ConvertToAbsExpr(const expression::AbstractExpression *expr);
 
   /**
    * Records the original groups (subtrees) of the AbstractExpression.

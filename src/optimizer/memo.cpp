@@ -44,7 +44,7 @@ GroupExpression *Memo::InsertExpression(std::shared_ptr<GroupExpression> gexpr,
   if (gexpr->Node()->GetOpType() == OpType::Undefined &&
       gexpr->Node()->GetExpType() == ExpressionType::GROUP_MARKER) {
 
-    auto abs_node = std::dynamic_pointer_cast<AbsExpr_Container>(gexpr->Node());
+    auto abs_node = std::dynamic_pointer_cast<AbsExprNode>(gexpr->Node());
     PELOTON_ASSERT(abs_node != nullptr);
 
     auto gm_expr = std::dynamic_pointer_cast<expression::GroupMarkerExpression>(abs_node->GetExpr());

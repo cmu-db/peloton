@@ -23,22 +23,22 @@
 namespace peloton {
 namespace optimizer {
 
-// AbsExpr_Container and AbsExpr_Expression provides and serves an analogous purpose
-// to Operator and OperatorExpression. Each AbsExpr_Container wraps a single
-// AbstractExpression node with the children placed inside the AbsExpr_Expression.
+// AbsExprNode and AbsExprExpression provides and serves an analogous purpose
+// to Operator and OperatorExpression. Each AbsExprNode wraps a single
+// AbstractExpression with the children placed inside the AbsExprExpression.
 //
 // This is done to export the correct interface from the wrapped AbstractExpression
-// to the rest of the core rule/optimizer code/logic.
-class AbsExpr_Container: public AbstractNode {
+// to the rest of the core optimizer logic.
+class AbsExprNode: public AbstractNode {
  public:
   // Default constructors
-  AbsExpr_Container() = default;
-  AbsExpr_Container(const AbsExpr_Container &other):
+  AbsExprNode() = default;
+  AbsExprNode(const AbsExprNode &other):
     AbstractNode() {
     expr = other.expr;
   }
 
-  AbsExpr_Container(std::shared_ptr<expression::AbstractExpression> expr_) {
+  AbsExprNode(std::shared_ptr<expression::AbstractExpression> expr_) {
     expr = expr_;
   }
 
@@ -78,8 +78,7 @@ class AbsExpr_Container: public AbstractNode {
     if (IsDefined()) {
       return expr->GetExpressionName();
     }
-
-    return "Undefined";
+    throw OptimizerException("Undefined expression name.");
   }
 
   hash_t Hash() const {
@@ -91,14 +90,14 @@ class AbsExpr_Container: public AbstractNode {
 
   bool operator==(const AbstractNode &r) {
     if (r.GetExpType() != ExpressionType::INVALID) {
-      const AbsExpr_Container &cnt = dynamic_cast<const AbsExpr_Container&>(r);
+      const AbsExprNode &cnt = dynamic_cast<const AbsExprNode&>(r);
       return (*this == cnt);
     }
 
     return false;
   }
 
-  bool operator==(const AbsExpr_Container &r) {
+  bool operator==(const AbsExprNode &r) {
     if (IsDefined() && r.IsDefined()) {
       //TODO(): proper equality check when migrate to terrier
       // Equality check relies on performing the following:
@@ -108,7 +107,7 @@ class AbsExpr_Container: public AbstractNode {
       // are children-less, operator== provides sufficient checking.
       // The reason behind why the children-less guarantee is required,
       // is that the "real" children are actually tracked by the
-      // AbsExpr_Expression class.
+      // AbsExprExpression class.
       return false;
     } else if (!IsDefined() && !r.IsDefined()) {
       return true;
@@ -130,17 +129,17 @@ class AbsExpr_Container: public AbstractNode {
 };
 
 
-class AbsExpr_Expression: public AbstractNodeExpression {
+class AbsExprExpression: public AbstractNodeExpression {
  public:
-  AbsExpr_Expression(std::shared_ptr<AbstractNode> n) {
-    std::shared_ptr<AbsExpr_Container> cnt = std::dynamic_pointer_cast<AbsExpr_Container>(n);
+  AbsExprExpression(std::shared_ptr<AbstractNode> n) {
+    std::shared_ptr<AbsExprNode> cnt = std::dynamic_pointer_cast<AbsExprNode>(n);
     PELOTON_ASSERT(cnt != nullptr);
 
     node = n;
   }
 
   // Disallow copy and move constructor
-  DISALLOW_COPY_AND_MOVE(AbsExpr_Expression);
+  DISALLOW_COPY_AND_MOVE(AbsExprExpression);
 
   void PushChild(std::shared_ptr<AbstractNodeExpression> op) {
     children.push_back(op);
@@ -156,7 +155,7 @@ class AbsExpr_Expression: public AbstractNodeExpression {
 
   const std::shared_ptr<AbstractNode> Node() const {
     // Integrity constraint
-    std::shared_ptr<AbsExpr_Container> cnt = std::dynamic_pointer_cast<AbsExpr_Container>(node);
+    std::shared_ptr<AbsExprNode> cnt = std::dynamic_pointer_cast<AbsExprNode>(node);
     PELOTON_ASSERT(cnt != nullptr);
 
     return node;

@@ -86,24 +86,24 @@ expression::AbstractExpression* Rewriter::RebuildExpression(int root) {
     child_exprs.push_back(child);
   }
 
-  std::shared_ptr<AbsExpr_Container> c = std::dynamic_pointer_cast<AbsExpr_Container>(expr->Node());
+  std::shared_ptr<AbsExprNode> c = std::dynamic_pointer_cast<AbsExprNode>(expr->Node());
   PELOTON_ASSERT(c != nullptr);
 
   return c->CopyWithChildren(child_exprs);
 }
 
-std::shared_ptr<AbsExpr_Expression> Rewriter::ConvertToAbsExpr(const expression::AbstractExpression* expr) {
+std::shared_ptr<AbsExprExpression> Rewriter::ConvertToAbsExpr(const expression::AbstractExpression* expr) {
   // TODO(): remove the Copy invocation when in terrier since terrier uses shared_ptr
   //
   // This Copy() is not very efficient at all. but within Peloton, this is the only way
-  // to present a std::shared_ptr to the AbsExpr_Container/Expression classes. In terrier,
+  // to present a std::shared_ptr to the AbsExprNode/Expression classes. In terrier,
   // this Copy() is *definitely* not needed because the AbstractExpression there already
   // utilizes std::shared_ptr properly.
   std::shared_ptr<expression::AbstractExpression> copy = std::shared_ptr<expression::AbstractExpression>(expr->Copy());
 
-  // Create current AbsExpr_Expression
-  auto container = std::make_shared<AbsExpr_Container>(copy);
-  auto expression = std::make_shared<AbsExpr_Expression>(container);
+  // Create current AbsExprExpression
+  auto container = std::make_shared<AbsExprNode>(copy);
+  auto expression = std::make_shared<AbsExprExpression>(container);
 
   // Convert all the children
   size_t child_count = expr->GetChildrenSize();
@@ -116,7 +116,7 @@ std::shared_ptr<AbsExpr_Expression> Rewriter::ConvertToAbsExpr(const expression:
 }
 
 std::shared_ptr<GroupExpression> Rewriter::RecordTreeGroups(const expression::AbstractExpression *expr) {
-  std::shared_ptr<AbsExpr_Expression> exp = ConvertToAbsExpr(expr);
+  std::shared_ptr<AbsExprExpression> exp = ConvertToAbsExpr(expr);
   std::shared_ptr<GroupExpression> gexpr;
   metadata_.RecordTransformedExpression(exp, gexpr);
   return gexpr;

@@ -32,7 +32,7 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
 
   // Additional assertion checks for AddExpression() with AST rewriting
   // TODO(ncx): get group expression type
-  // if (std::is_same<Node, AbsExpr_Container>::value) {
+  // if (std::is_same<Node, AbsExprContainer>::value) {
   //   PELOTON_ASSERT(!enforced);
   //   PELOTON_ASSERT(!expr->Op().IsPhysical());
   // }

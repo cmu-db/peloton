@@ -86,7 +86,7 @@ std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
     current_item_index_ = num_group_items_;
 
     auto expr = std::make_shared<expression::GroupMarkerExpression>(group_id_);
-    return std::make_shared<AbsExpr_Expression>(std::make_shared<AbsExpr_Container>(expr));
+    return std::make_shared<AbsExprExpression>(std::make_shared<AbsExprNode>(expr));
   }
 
   return current_iterator_->Next();
@@ -112,7 +112,7 @@ GroupExprBindingIterator::GroupExprBindingIterator(
   if (gexpr->Node()->GetOpType() != OpType::Undefined) {
     current_binding_ = std::make_shared<OperatorExpression>(gexpr->Node());
   } else {
-    current_binding_ = std::make_shared<AbsExpr_Expression>(gexpr->Node());
+    current_binding_ = std::make_shared<AbsExprExpression>(gexpr->Node());
   }
 
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();

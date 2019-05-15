@@ -19,7 +19,7 @@
 namespace peloton {
 namespace optimizer {
 
-expression::AbstractExpression *AbsExpr_Container::CopyWithChildren(std::vector<expression::AbstractExpression*> children) {
+expression::AbstractExpression *AbsExprNode::CopyWithChildren(std::vector<expression::AbstractExpression*> children) {
   // Pre-compute left and right
   expression::AbstractExpression *left = nullptr;
   expression::AbstractExpression *right = nullptr;
