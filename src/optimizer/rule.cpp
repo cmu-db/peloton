@@ -40,7 +40,6 @@ int Rule::Promise(GroupExpression *group_expr, OptimizeContext *context) const {
   return LOG_PROMISE;
 }
 
-// TODO(ncx): best way to specialize for constructors?
 RuleSet::RuleSet() {
   // Comparator Elimination related rules
   std::vector<std::pair<RuleType,ExpressionType>> comp_elim_pairs = {

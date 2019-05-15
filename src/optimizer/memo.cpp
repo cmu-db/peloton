@@ -115,7 +115,6 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
   std::unordered_set<std::string> table_aliases;
   auto op_type = gexpr->Node()->GetOpType();
 
-  // TODO(ncx): specialize (if not OpType, then just add new group)
   if (op_type == OpType::Get) {
     // For base group, the table alias can get directly from logical get
     const LogicalGet *logical_get = gexpr->Node()->As<LogicalGet>();
@@ -124,7 +123,7 @@ GroupID Memo::AddNewGroup(std::shared_ptr<GroupExpression> gexpr) {
     const LogicalQueryDerivedGet *query_get =
         gexpr->Node()->As<LogicalQueryDerivedGet>();
     table_aliases.insert(query_get->table_alias);
-  } else {
+  } else if (op_type != OpType::Undefined) {
     // For other groups, need to aggregate the table alias from children
     for (auto child_group_id : gexpr->GetChildGroupIDs()) {
       Group *child_group = GetGroupByID(child_group_id);

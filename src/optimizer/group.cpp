@@ -31,11 +31,10 @@ void Group::AddExpression(std::shared_ptr<GroupExpression> expr,
                           bool enforced) {
 
   // Additional assertion checks for AddExpression() with AST rewriting
-  // TODO(ncx): get group expression type
-  // if (std::is_same<Node, AbsExprContainer>::value) {
-  //   PELOTON_ASSERT(!enforced);
-  //   PELOTON_ASSERT(!expr->Op().IsPhysical());
-  // }
+  if (expr->Node()->GetExpType() != ExpressionType::INVALID) {
+    PELOTON_ASSERT(!enforced);
+    PELOTON_ASSERT(!expr->Node()->IsPhysical());
+  }
 
   // Do duplicate detection
   expr->SetGroupID(id_);

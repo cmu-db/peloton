@@ -30,7 +30,6 @@ class Rule {
  public:
   virtual ~Rule(){};
 
-  // TODO(ncx): pattern
   std::shared_ptr<Pattern> GetMatchPattern() const { return match_pattern; }
 
   bool IsPhysical() const {
@@ -92,7 +91,6 @@ class Rule {
   inline uint32_t GetRuleIdx() { return static_cast<uint32_t>(type_); }
 
  protected:
-  // TODO(ncx): pattern
   std::shared_ptr<Pattern> match_pattern;
   RuleType type_;
 };

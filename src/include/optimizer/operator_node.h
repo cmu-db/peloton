@@ -27,7 +27,7 @@ namespace optimizer {
 //===--------------------------------------------------------------------===//
 class OperatorVisitor;
 
-// Curiously recurring template pattern
+// TODO: should probably use a new AbstractBaseNode interface, not AbstractNode
 template <typename T>
 struct OperatorNode : public AbstractNode {
   OperatorNode() : AbstractNode(nullptr) {}

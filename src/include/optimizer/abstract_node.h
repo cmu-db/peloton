@@ -79,7 +79,6 @@ enum class OpType {
 //===--------------------------------------------------------------------===//
 // Abstract Node
 //===--------------------------------------------------------------------===//
-//TODO(ncx): dependence on OperatorVisitor
 class OperatorVisitor;
 
 struct AbstractNode {
@@ -88,6 +87,7 @@ struct AbstractNode {
 
   ~AbstractNode() {}
 
+  //TODO: dependence on OperatorVisitor should ideally be abstracted away
   /**
    * Accepts a visitor
    * @param v Visitor
@@ -99,7 +99,7 @@ struct AbstractNode {
    */
   virtual std::string GetName() const = 0;
 
-  // TODO(ncx): dependence on OpType and ExpressionType (ideally abstracted away)
+  // TODO: dependencies on OpType and ExpressionType also not ideal
   /**
    * @returns OpType of the Node
    */
@@ -125,9 +125,9 @@ struct AbstractNode {
    * @returns hash
    */
   virtual hash_t Hash() const {
-    // TODO(ncx): hash should work for ExpressionType nodes
     OpType t = GetOpType();
-    return HashUtil::Hash(&t);
+    ExpressionType u = GetExpType();
+    return t != OpType::Undefined ? HashUtil::Hash(&t) : HashUtil::Hash(&u);
   }
 
   /**
