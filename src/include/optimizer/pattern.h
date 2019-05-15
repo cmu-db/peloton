@@ -24,16 +24,21 @@ class Pattern {
  public:
   Pattern(OpType op);
 
+  Pattern(ExpressionType exp_type);
+
   void AddChild(std::shared_ptr<Pattern> child);
 
   const std::vector<std::shared_ptr<Pattern>> &Children() const;
 
   inline size_t GetChildPatternsSize() const { return children.size(); }
 
-  OpType Type() const;
+  OpType GetOpType() const;
+
+  ExpressionType GetExpType() const;
 
  private:
-  OpType _type;
+  OpType _op_type = OpType::Undefined;
+  ExpressionType _exp_type = ExpressionType::INVALID;
   std::vector<std::shared_ptr<Pattern>> children;
 };
 

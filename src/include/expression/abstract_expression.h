@@ -111,6 +111,24 @@ class AbstractExpression : public Printable {
     children_[index].reset(expr);
   }
 
+  void ClearChildren() {
+    // The rewriter copies the AbstractExpression presented to the rewriter.
+    // This function is used by the rewriter to properly wipe all the children
+    // of AbstractExpression once the AbstractExpression tree has been converted
+    // to the intermediary AbsExpr_Container/Expression tree.
+    //
+    // This function should only be invoked on copied AbstractExpressions and
+    // never on original ones passed into the [rewriter] otherwise we would
+    // violate immutable properties. We do not believe this function is strictly
+    // necessary in terrier, however this function does serve some usefulness.
+    //
+    // This allows us to reduce our memory footprint while also providing better
+    // implementation constraints within the rewriter (i.e: the rewriter should
+    // not be trying to operate directly on AbstractExpression but rather on the
+    // intermediary representation).
+    children_.clear();
+  }
+
   void SetExpressionType(ExpressionType type) { exp_type_ = type; }
 
   //////////////////////////////////////////////////////////////////////////////

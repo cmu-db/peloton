@@ -24,6 +24,7 @@ namespace optimizer {
  *  is identical to a stack but we may need to implement a different data
  *  structure for multi-threaded optimization
  */
+
 class OptimizerTaskPool {
  public:
   virtual std::unique_ptr<OptimizerTask> Pop() = 0;

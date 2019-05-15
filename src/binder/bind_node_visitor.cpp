@@ -12,6 +12,8 @@
 
 #include "binder/bind_node_visitor.h"
 #include "catalog/catalog.h"
+#include "catalog/table_catalog.h"
+#include "catalog/column_catalog.h"
 #include "expression/expression_util.h"
 #include "expression/star_expression.h"
 #include "type/type_id.h"
@@ -250,6 +252,21 @@ void BindNodeVisitor::Visit(expression::TupleValueExpression *expr) {
     expr->SetColName(col_name);
     expr->SetValueType(value_type);
     expr->SetBoundOid(col_pos_tuple);
+
+    // TODO(esargent): Uncommenting the following code makes AddressSanitizer get mad at me with a
+    //   heap buffer overflow whenever I try a query that references the same non-null attribute multiple
+    //   times (e.g. 'SELECT id FROM t WHERE id < 3 AND id > 1'). Leaving it commented out prevents the
+    //   memory error, but then this prevents the is_not_null flag of a tuple expression from being
+    //   populated in some cases (specifically, when the expression's table name is initially empty).
+
+    //if (table_obj == nullptr) {
+    //  LOG_DEBUG("Extracting regular table object");
+    //  BinderContext::GetRegularTableObj(context_, table_name, table_obj, depth);
+    //}
+
+    if (table_obj != nullptr) {
+      expr->SetIsNotNull(table_obj->GetColumnCatalogEntry(std::get<2>(col_pos_tuple), false)->IsNotNull());
+    }
   }
 }
 

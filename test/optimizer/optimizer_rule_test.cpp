@@ -61,7 +61,7 @@ TEST_F(OptimizerRuleTests, SimpleCommutativeRuleTest) {
 
   EXPECT_TRUE(rule.Check(join, nullptr));
 
-  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  std::vector<std::shared_ptr<AbstractNodeExpression>> outputs;
   rule.Transform(join, outputs, nullptr);
   EXPECT_EQ(outputs.size(), 1);
 
@@ -139,17 +139,17 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
   EXPECT_EQ(right_leaf, parent_join->Children()[1]);
   EXPECT_EQ(1,
-            parent_join->Op().As<LogicalInnerJoin>()->join_predicates.size());
+            parent_join->Node()->As<LogicalInnerJoin>()->join_predicates.size());
   EXPECT_EQ(1, parent_join->Children()[0]
-                   ->Op()
-                   .As<LogicalInnerJoin>()
+                   ->Node()
+                   ->As<LogicalInnerJoin>()
                    ->join_predicates.size());
 
   // Setup rule
   InnerJoinAssociativity rule;
 
   EXPECT_TRUE(rule.Check(parent_join, root_context));
-  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  std::vector<std::shared_ptr<AbstractNodeExpression>> outputs;
   rule.Transform(parent_join, outputs, root_context);
   EXPECT_EQ(1, outputs.size());
 
@@ -159,8 +159,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest) {
   EXPECT_EQ(middle_leaf, output_join->Children()[1]->Children()[0]);
   EXPECT_EQ(right_leaf, output_join->Children()[1]->Children()[1]);
 
-  auto parent_join_op = output_join->Op().As<LogicalInnerJoin>();
-  auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
+  auto parent_join_op = output_join->Node()->As<LogicalInnerJoin>();
+  auto child_join_op = output_join->Children()[1]->Node()->As<LogicalInnerJoin>();
   EXPECT_EQ(2, parent_join_op->join_predicates.size());
   EXPECT_EQ(0, child_join_op->join_predicates.size());
   delete root_context;
@@ -234,17 +234,17 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   EXPECT_EQ(middle_leaf, parent_join->Children()[0]->Children()[1]);
   EXPECT_EQ(right_leaf, parent_join->Children()[1]);
   EXPECT_EQ(2,
-            parent_join->Op().As<LogicalInnerJoin>()->join_predicates.size());
+            parent_join->Node()->As<LogicalInnerJoin>()->join_predicates.size());
   EXPECT_EQ(0, parent_join->Children()[0]
-                   ->Op()
-                   .As<LogicalInnerJoin>()
+                   ->Node()
+                   ->As<LogicalInnerJoin>()
                    ->join_predicates.size());
 
   // Setup rule
   InnerJoinAssociativity rule;
 
   EXPECT_TRUE(rule.Check(parent_join, root_context));
-  std::vector<std::shared_ptr<OperatorExpression>> outputs;
+  std::vector<std::shared_ptr<AbstractNodeExpression>> outputs;
   rule.Transform(parent_join, outputs, root_context);
   EXPECT_EQ(1, outputs.size());
 
@@ -254,8 +254,8 @@ TEST_F(OptimizerRuleTests, SimpleAssociativeRuleTest2) {
   EXPECT_EQ(middle_leaf, output_join->Children()[1]->Children()[0]);
   EXPECT_EQ(right_leaf, output_join->Children()[1]->Children()[1]);
 
-  auto parent_join_op = output_join->Op().As<LogicalInnerJoin>();
-  auto child_join_op = output_join->Children()[1]->Op().As<LogicalInnerJoin>();
+  auto parent_join_op = output_join->Node()->As<LogicalInnerJoin>();
+  auto child_join_op = output_join->Children()[1]->Node()->As<LogicalInnerJoin>();
   EXPECT_EQ(1, parent_join_op->join_predicates.size());
   EXPECT_EQ(1, child_join_op->join_predicates.size());
   delete root_context;

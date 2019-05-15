@@ -89,7 +89,9 @@ class Optimizer : public AbstractOptimizer {
 
   /* For test purposes only */
   std::shared_ptr<GroupExpression> TestInsertQueryTree(
-      parser::SQLStatement *tree, concurrency::TransactionContext *txn) {
+    parser::SQLStatement *tree,
+    concurrency::TransactionContext *txn) {
+
     return InsertQueryTree(tree, txn);
   }
   /* For test purposes only */

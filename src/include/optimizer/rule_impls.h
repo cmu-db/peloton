@@ -30,11 +30,11 @@ class InnerJoinCommutativity : public Rule {
  public:
   InnerJoinCommutativity();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -46,11 +46,11 @@ class InnerJoinAssociativity : public Rule {
  public:
   InnerJoinAssociativity();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -65,11 +65,11 @@ class GetToSeqScan : public Rule {
  public:
   GetToSeqScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -77,11 +77,11 @@ class LogicalExternalFileGetToPhysical : public Rule {
  public:
   LogicalExternalFileGetToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -93,11 +93,11 @@ class GetToDummyScan : public Rule {
  public:
   GetToDummyScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -108,11 +108,11 @@ class GetToIndexScan : public Rule {
  public:
   GetToIndexScan();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -123,11 +123,11 @@ class LogicalQueryDerivedGetToPhysical : public Rule {
  public:
   LogicalQueryDerivedGetToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -138,11 +138,11 @@ class LogicalDeleteToPhysical : public Rule {
  public:
   LogicalDeleteToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -153,11 +153,11 @@ class LogicalUpdateToPhysical : public Rule {
  public:
   LogicalUpdateToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -168,11 +168,11 @@ class LogicalInsertToPhysical : public Rule {
  public:
   LogicalInsertToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -183,11 +183,11 @@ class LogicalInsertSelectToPhysical : public Rule {
  public:
   LogicalInsertSelectToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -198,11 +198,11 @@ class LogicalGroupByToHashGroupBy : public Rule {
  public:
   LogicalGroupByToHashGroupBy();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -213,11 +213,11 @@ class LogicalAggregateToPhysical : public Rule {
  public:
   LogicalAggregateToPhysical();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -228,11 +228,11 @@ class InnerJoinToInnerNLJoin : public Rule {
  public:
   InnerJoinToInnerNLJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -243,11 +243,11 @@ class InnerJoinToInnerHashJoin : public Rule {
  public:
   InnerJoinToInnerHashJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -258,11 +258,11 @@ class ImplementDistinct : public Rule {
  public:
   ImplementDistinct();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -273,11 +273,11 @@ class ImplementLimit : public Rule {
  public:
   ImplementLimit();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -288,11 +288,11 @@ class LogicalExportToPhysicalExport : public Rule {
  public:
   LogicalExportToPhysicalExport();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -310,11 +310,11 @@ class PushFilterThroughJoin : public Rule {
  public:
   PushFilterThroughJoin();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -325,11 +325,11 @@ class CombineConsecutiveFilter : public Rule {
  public:
   CombineConsecutiveFilter();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -341,11 +341,11 @@ class PushFilterThroughAggregation : public Rule {
  public:
   PushFilterThroughAggregation();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 /**
@@ -357,11 +357,11 @@ class EmbedFilterIntoGet : public Rule {
  public:
   EmbedFilterIntoGet();
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -384,11 +384,11 @@ class MarkJoinToInnerJoin : public Rule {
   int Promise(GroupExpression *group_expr,
               OptimizeContext *context) const override;
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 ///////////////////////////////////////////////////////////////////////////////
@@ -400,11 +400,11 @@ class SingleJoinToInnerJoin : public Rule {
   int Promise(GroupExpression *group_expr,
               OptimizeContext *context) const override;
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -417,11 +417,11 @@ class PullFilterThroughMarkJoin : public Rule {
   int Promise(GroupExpression *group_expr,
               OptimizeContext *context) const override;
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 
@@ -434,11 +434,11 @@ class PullFilterThroughAggregation : public Rule {
   int Promise(GroupExpression *group_expr,
               OptimizeContext *context) const override;
 
-  bool Check(std::shared_ptr<OperatorExpression> plan,
+  bool Check(std::shared_ptr<AbstractNodeExpression> plan,
              OptimizeContext *context) const override;
 
-  void Transform(std::shared_ptr<OperatorExpression> input,
-                 std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+  void Transform(std::shared_ptr<AbstractNodeExpression> input,
+                 std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
                  OptimizeContext *context) const override;
 };
 }  // namespace optimizer

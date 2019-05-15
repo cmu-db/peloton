@@ -27,8 +27,7 @@ struct GExprPtrHash {
 };
 
 struct GExprPtrEq {
-  bool operator()(GroupExpression* const& t1,
-                  GroupExpression* const& t2) const {
+  bool operator()(GroupExpression* const& t1, GroupExpression* const& t2) const {
     return *t1 == *t2;
   }
 };
@@ -48,11 +47,9 @@ class Memo {
    * target_group: an optional target group to insert expression into
    * return: existing expression if found. Otherwise, return the new expr
    */
-  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                                    bool enforced);
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr, bool enforced);
 
-  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr,
-                                    GroupID target_group, bool enforced);
+  GroupExpression* InsertExpression(std::shared_ptr<GroupExpression> gexpr, GroupID target_group, bool enforced);
 
   std::vector<std::unique_ptr<Group>>& Groups();
 
@@ -78,8 +75,11 @@ class Memo {
   // a new one, which reqires us to first remove the original gexpr from the
   // memo
   void EraseExpression(GroupID group_id) {
-    auto gexpr = groups_[group_id]->GetLogicalExpression();
-    group_expressions_.erase(gexpr);
+    std::vector<std::shared_ptr<GroupExpression>> gexprs = groups_[group_id]->GetLogicalExpressions();
+    for (auto gexpr : gexprs) {
+      group_expressions_.erase(gexpr.get());
+    }
+
     groups_[group_id]->EraseLogicalExpression();
   }
 
@@ -87,8 +87,7 @@ class Memo {
   GroupID AddNewGroup(std::shared_ptr<GroupExpression> gexpr);
 
   // The group owns the group expressions, not the memo
-  std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq>
-      group_expressions_;
+  std::unordered_set<GroupExpression*, GExprPtrHash, GExprPtrEq> group_expressions_;
   std::vector<std::unique_ptr<Group>> groups_;
   size_t rule_set_size_;
 };

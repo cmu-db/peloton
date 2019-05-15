@@ -12,9 +12,15 @@
 
 #include "optimizer/binding.h"
 
+#include <memory>
+
 #include "common/logger.h"
 #include "optimizer/operator_visitor.h"
 #include "optimizer/optimizer.h"
+#include "optimizer/absexpr_expression.h"
+#include "expression/group_marker_expression.h"
+#include "expression/abstract_expression.h"
+#include "expression/tuple_value_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -27,15 +33,18 @@ GroupBindingIterator::GroupBindingIterator(Memo &memo, GroupID id,
     : BindingIterator(memo),
       group_id_(id),
       pattern_(pattern),
-      target_group_(memo_.GetGroupByID(id)),
+      target_group_(this->memo_.GetGroupByID(id)),
       num_group_items_(target_group_->GetLogicalExpressions().size()),
       current_item_index_(0) {
   LOG_TRACE("Attempting to bind on group %d", id);
 }
 
 bool GroupBindingIterator::HasNext() {
-  LOG_TRACE("HasNext");
-  if (pattern_->Type() == OpType::Leaf) {
+  LOG_TRACE("HasNextBinding");
+
+  // TODO(): Can we do this generic pattern any better?
+  if ((pattern_->GetOpType() == OpType::Leaf && pattern_->GetExpType() == ExpressionType::INVALID) ||
+      (pattern_->GetOpType() == OpType::Undefined && pattern_->GetExpType() == ExpressionType::GROUP_MARKER)) {
     return current_item_index_ == 0;
   }
 
@@ -51,7 +60,7 @@ bool GroupBindingIterator::HasNext() {
     // Keep checking item iterators until we find a match
     while (current_item_index_ < num_group_items_) {
       current_iterator_.reset(new GroupExprBindingIterator(
-          memo_,
+          this->memo_,
           target_group_->GetLogicalExpressions()[current_item_index_].get(),
           pattern_));
 
@@ -67,11 +76,19 @@ bool GroupBindingIterator::HasNext() {
   return current_iterator_ != nullptr;
 }
 
-std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
-  if (pattern_->Type() == OpType::Leaf) {
+std::shared_ptr<AbstractNodeExpression> GroupBindingIterator::Next() {
+  if (pattern_->GetOpType() == OpType::Leaf && pattern_->GetExpType() == ExpressionType::INVALID) {
     current_item_index_ = num_group_items_;
     return std::make_shared<OperatorExpression>(LeafOperator::make(group_id_));
   }
+
+  if (pattern_->GetOpType() == OpType::Undefined && pattern_->GetExpType() == ExpressionType::GROUP_MARKER) {
+    current_item_index_ = num_group_items_;
+
+    auto expr = std::make_shared<expression::GroupMarkerExpression>(group_id_);
+    return std::make_shared<AbsExprExpression>(std::make_shared<AbsExprNode>(expr));
+  }
+
   return current_iterator_->Next();
 }
 
@@ -79,20 +96,27 @@ std::shared_ptr<OperatorExpression> GroupBindingIterator::Next() {
 // Item Binding Iterator
 //===--------------------------------------------------------------------===//
 GroupExprBindingIterator::GroupExprBindingIterator(
-    Memo &memo, GroupExpression *gexpr, std::shared_ptr<Pattern> pattern)
+  Memo &memo, GroupExpression *gexpr, std::shared_ptr<Pattern> pattern)
     : BindingIterator(memo),
       gexpr_(gexpr),
       pattern_(pattern),
       first_(true),
-      has_next_(false),
-      current_binding_(std::make_shared<OperatorExpression>(gexpr->Op())) {
-  if (gexpr->Op().GetType() != pattern->Type()) {
+      has_next_(false) {
+
+  if (gexpr->Node()->GetOpType() != pattern->GetOpType() ||
+      gexpr->Node()->GetExpType() != pattern->GetExpType()) {
     return;
   }
 
+  // Create right type of AbstractNodeExpression depending on type
+  if (gexpr->Node()->GetOpType() != OpType::Undefined) {
+    current_binding_ = std::make_shared<OperatorExpression>(gexpr->Node());
+  } else {
+    current_binding_ = std::make_shared<AbsExprExpression>(gexpr->Node());
+  }
+
   const std::vector<GroupID> &child_groups = gexpr->GetChildGroupIDs();
-  const std::vector<std::shared_ptr<Pattern>> &child_patterns =
-      pattern->Children();
+  const std::vector<std::shared_ptr<Pattern>> &child_patterns = pattern->Children();
 
   if (child_groups.size() != child_patterns.size()) {
     return;
@@ -100,16 +124,16 @@ GroupExprBindingIterator::GroupExprBindingIterator(
   LOG_TRACE(
       "Attempting to bind on group %d with expression of type %s, children "
       "size %lu",
-      gexpr->GetGroupID(), gexpr->Op().GetName().c_str(), child_groups.size());
+      gexpr->GetGroupID(), gexpr->Node()->GetName().c_str(), child_groups.size());
 
   // Find all bindings for children
   children_bindings_.resize(child_groups.size(), {});
   children_bindings_pos_.resize(child_groups.size(), 0);
   for (size_t i = 0; i < child_groups.size(); ++i) {
     // Try to find a match in the given group
-    std::vector<std::shared_ptr<OperatorExpression>> &child_bindings =
+    std::vector<std::shared_ptr<AbstractNodeExpression>> &child_bindings =
         children_bindings_[i];
-    GroupBindingIterator iterator(memo_, child_groups[i], child_patterns[i]);
+    GroupBindingIterator iterator(this->memo_, child_groups[i], child_patterns[i]);
 
     // Get all bindings
     while (iterator.HasNext()) {
@@ -137,7 +161,7 @@ bool GroupExprBindingIterator::HasNext() {
     // The first child to be modified
     int first_modified_idx = children_bindings_pos_.size() - 1;
     for (; first_modified_idx >= 0; --first_modified_idx) {
-      const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
+      const std::vector<std::shared_ptr<AbstractNodeExpression>> &child_binding =
           children_bindings_[first_modified_idx];
 
       // Try to increment idx from the back
@@ -154,16 +178,15 @@ bool GroupExprBindingIterator::HasNext() {
       has_next_ = false;
     } else {
       // Pop all updated childrens
-      for (size_t idx = first_modified_idx; idx < children_bindings_pos_.size();
-           idx++) {
+      for (size_t idx = first_modified_idx; idx < children_bindings_pos_.size(); idx++) {
         current_binding_->PopChild();
       }
       // Add new children to end
       for (size_t offset = first_modified_idx;
            offset < children_bindings_pos_.size(); ++offset) {
-        const std::vector<std::shared_ptr<OperatorExpression>> &child_binding =
+        const std::vector<std::shared_ptr<AbstractNodeExpression>> &child_binding =
             children_bindings_[offset];
-        std::shared_ptr<OperatorExpression> binding =
+        std::shared_ptr<AbstractNodeExpression> binding =
             child_binding[children_bindings_pos_[offset]];
         current_binding_->PushChild(binding);
       }
@@ -172,9 +195,10 @@ bool GroupExprBindingIterator::HasNext() {
   return has_next_;
 }
 
-std::shared_ptr<OperatorExpression> GroupExprBindingIterator::Next() {
+std::shared_ptr<AbstractNodeExpression> GroupExprBindingIterator::Next() {
   return current_binding_;
 }
+
 
 }  // namespace optimizer
 }  // namespace peloton

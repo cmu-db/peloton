@@ -24,17 +24,18 @@ namespace peloton {
 namespace optimizer {
 
 class Memo;
+
 // Derive cost for a physical group expression
 class DefaultCostModel : public AbstractCostModel {
  public:
   DefaultCostModel(){};
 
   double CalculateCost(GroupExpression *gexpr, Memo *memo,
-                                       concurrency::TransactionContext *txn) {
+                       concurrency::TransactionContext *txn) {
     gexpr_ = gexpr;
     memo_ = memo;
     txn_ = txn;
-    gexpr_->Op().Accept(this);
+    gexpr_->Node()->Accept(this);
     return output_cost_;
   }
 

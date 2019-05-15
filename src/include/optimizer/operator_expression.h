@@ -2,16 +2,17 @@
 //
 //                         Peloton
 //
-// op_expression.h
+// operator_expression.h
 //
-// Identification: src/include/optimizer/op_expression.h
+// Identification: src/include/optimizer/operator_expression.h
 //
-// Copyright (c) 2015-16, Carnegie Mellon University Database Group
+// Copyright (c) 2015-19, Carnegie Mellon University Database Group
 //
 //===----------------------------------------------------------------------===//
 
 #pragma once
 
+#include "optimizer/abstract_node_expression.h"
 #include "optimizer/operator_node.h"
 
 #include <memory>
@@ -21,25 +22,25 @@ namespace peloton {
 namespace optimizer {
 
 //===--------------------------------------------------------------------===//
-// Operator Expr
+// Operator Expression
 //===--------------------------------------------------------------------===//
-class OperatorExpression {
+class OperatorExpression : public AbstractNodeExpression {
  public:
-  OperatorExpression(Operator op);
+  OperatorExpression(std::shared_ptr<AbstractNode> node);
 
-  void PushChild(std::shared_ptr<OperatorExpression> op);
+  void PushChild(std::shared_ptr<AbstractNodeExpression> child);
 
   void PopChild();
 
-  const std::vector<std::shared_ptr<OperatorExpression>> &Children() const;
+  const std::vector<std::shared_ptr<AbstractNodeExpression>> &Children() const;
 
-  const Operator &Op() const;
+  const std::shared_ptr<AbstractNode> Node() const;
 
   const std::string GetInfo() const;
 
  private:
-  Operator op;
-  std::vector<std::shared_ptr<OperatorExpression>> children;
+  std::shared_ptr<AbstractNode> node;
+  std::vector<std::shared_ptr<AbstractNodeExpression>> children;
 };
 
 }  // namespace optimizer

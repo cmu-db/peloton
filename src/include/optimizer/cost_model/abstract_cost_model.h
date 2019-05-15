@@ -13,6 +13,7 @@
 #pragma once
 
 #include "optimizer/operator_visitor.h"
+#include "optimizer/operator_expression.h"
 
 namespace peloton {
 namespace optimizer {
@@ -34,7 +35,8 @@ static constexpr double DEFAULT_OPERATOR_COST = 0.0025;
 
 class AbstractCostModel : public OperatorVisitor {
  public:
-  virtual double CalculateCost(GroupExpression *gexpr, Memo *memo,
+  virtual double CalculateCost(GroupExpression *gexpr,
+                               Memo *memo,
                                concurrency::TransactionContext *txn) = 0;
 };
 

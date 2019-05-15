@@ -25,6 +25,7 @@
 #include "common/statement.h"
 #include "executor/plan_executor.h"
 #include "optimizer/abstract_optimizer.h"
+#include "optimizer/rewriter.h"
 #include "parser/sql_statement.h"
 #include "type/type.h"
 
@@ -196,6 +197,8 @@ class TrafficCop {
   // still a HACK
   void GetTableColumns(parser::TableRef *from_table,
                        std::vector<catalog::Column> &target_tables);
+
+  optimizer::Rewriter rewriter_;
 };
 
 }  // namespace tcop

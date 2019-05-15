@@ -26,9 +26,6 @@ class GroupExpression;
 #define PHYS_PROMISE 3
 #define LOG_PROMISE 1
 
-/**
- * @brief The base class of all rules
- */
 class Rule {
  public:
   virtual ~Rule(){};
@@ -74,7 +71,7 @@ class Rule {
    *
    * @return If the rule is applicable, return true, otherwise return false
    */
-  virtual bool Check(std::shared_ptr<OperatorExpression> expr,
+  virtual bool Check(std::shared_ptr<AbstractNodeExpression> expr,
                      OptimizeContext *context) const = 0;
 
   /**
@@ -85,8 +82,8 @@ class Rule {
    * @param context The current optimization context
    */
   virtual void Transform(
-      std::shared_ptr<OperatorExpression> input,
-      std::vector<std::shared_ptr<OperatorExpression>> &transformed,
+      std::shared_ptr<AbstractNodeExpression> input,
+      std::vector<std::shared_ptr<AbstractNodeExpression>> &transformed,
       OptimizeContext *context) const = 0;
 
   inline RuleType GetType() { return type_; }
@@ -113,7 +110,9 @@ struct RuleWithPromise {
 
 enum class RewriteRuleSetName : uint32_t {
   PREDICATE_PUSH_DOWN = 0,
-  UNNEST_SUBQUERY
+  UNNEST_SUBQUERY,
+  EQUIVALENT_TRANSFORM,
+  GENERIC_RULES
 };
 
 /**
@@ -146,9 +145,13 @@ class RuleSet {
     return rewrite_rules_map_[static_cast<uint32_t>(set)];
   }
 
-  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() { return rewrite_rules_map_; }
+  std::unordered_map<uint32_t, std::vector<std::unique_ptr<Rule>>> &GetRewriteRulesMap() {
+    return rewrite_rules_map_;
+  }
 
-  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() { return predicate_push_down_rules_; }
+  std::vector<std::unique_ptr<Rule>> &GetPredicatePushDownRules() {
+    return predicate_push_down_rules_;
+  }
 
  private:
   std::vector<std::unique_ptr<Rule>> transformation_rules_;
